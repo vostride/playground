@@ -191,7 +191,7 @@ export default function App() {
                   style={styles.appCard}
                 >
                   <View style={[styles.appIcon, { backgroundColor: app.tint }]}>
-                    <Image source={app.logo} style={{ width: 31, height: 31 }} accessible={false} />
+                    <Image source={app.logo} style={{ width: 32, height: 32 }} accessible={false} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.appName}>{app.name}</Text>

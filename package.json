@@ -15,6 +15,7 @@
     "dev": "npm run dev -w @playground/shop",
     "build": "node scripts/build.mjs",
     "build:shop": "npm run build -w @playground/shop",
+    "export:brands": "node --import tsx scripts/export-brands.tsx",
     "preview": "node scripts/serve.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test packages/core/src/*.test.ts",

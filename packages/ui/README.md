@@ -10,7 +10,11 @@ The default design is dark: charcoal panels, clear borders, 14–15px body text,
 
 Rectangular UI uses 0–2px corners, including buttons, fields, dialogs, badges, and the app launcher. Navigation uses flat rows and active text/icon color, without a boxed active background or accent strip. Use compact transparent sections and divider-separated rows instead of card containers. Brello’s draggable task items are the exception: compact cards with a subtle fill, thin border and 2px corners. Circular avatars, status dots, radio controls, and spinners retain their functional shapes.
 
-`BrandMark` contains four original vector marks for Komazon, Looking, PepaPog, and Brello. Standalone SVGs live in `public/brands`; matching transparent PNGs are bundled by the native app. Logos are decorative when paired with a visible name and can receive an accessible title when used alone. The four product names are display branding; `/shop/`, `/flights/`, `/observability/`, `/tasks/`, session keys, and stable automation IDs remain unchanged.
+`BrandMark` is the source for all product artwork: Komazon's warm serif monogram, Looking's teal flight ribbons, Brello's modular geometric B, and PepaPog's pixel pug with a purple headset. PepaPog preserves the exact 16×12 sprite and palette from vostride.com's Connector Hell article (`app/(marketing)/blog/connector-hell/pixel-art.tsx`); the sprite is copied locally, with no dependency on the landing repository.
+
+Standalone SVGs live in `public/brands`; matching transparent 128px PNGs are bundled by the native app. After editing `BrandMark`, regenerate both with `npm run export:brands` from the repository root. The exporter uses the pinned Chromium installed by `PLAYWRIGHT_BROWSERS_PATH=.cache/playwright npx playwright install chromium`. Use `npm run export:brands -- --check` to render previews into `.cache/brand-export-preview` without replacing product assets.
+
+Logos are decorative when paired with a visible name and can receive an accessible title when used alone. The four product names are display branding; `/shop/`, `/flights/`, `/observability/`, `/tasks/`, session keys, and stable automation IDs remain unchanged.
 
 This package styles the web products. React Native screens use native components and matching bundled logo images; they do not render shadcn components or remote web content for their product screens.
 

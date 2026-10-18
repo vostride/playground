@@ -128,8 +128,7 @@
     height: 34px;
     margin-right: 10px;
     border-radius: 2px;
-    background: var(--primary);
-    color: var(--primary-foreground);
+    background: transparent;
   }
   .brand-mark svg {
     flex: none;
@@ -1809,7 +1808,7 @@
       margin-right: 8px;
     }
     .brand-mark svg {
-      width: 20px;
+      width: 24px;
     }
     .site-header nav {
       gap: 20px;

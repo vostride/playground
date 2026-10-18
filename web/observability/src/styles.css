@@ -3041,8 +3041,8 @@
   }
   .brand-mark {
     color: #82aaff;
-    background: #1c2c4b;
-    border: 1px solid #35517c;
+    background: transparent;
+    border: 0;
     border-radius: 2px;
     width: 33px;
     height: 33px;

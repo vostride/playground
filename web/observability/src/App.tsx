@@ -439,11 +439,9 @@ export default function App() {
             aria-label="PepaPog home"
           >
             <div className="brand-mark">
-              <BrandMark app="observability" size={24} className="size-6" />
+              <BrandMark app="observability" size={32} className="size-8 shrink-0" />
             </div>
-            <span>
-              PepaPog<span className="brand-dot">.</span>
-            </span>
+            <span>PepaPog</span>
           </a>
           <nav aria-label="Main navigation">
             {navigation.map((item) => (

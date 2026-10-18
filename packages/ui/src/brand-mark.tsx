@@ -8,52 +8,79 @@ export type BrandMarkProps = Omit<SVGProps<SVGSVGElement>, 'children'> & {
   title?: string;
 };
 
+// Original PepaPog sprite from vostride.com's Connector Hell article.
+// Keep its 16×12 pixel grid and palette intact across every product surface.
+const pepaPogRows = [
+  '....PPPPPPPP....',
+  '...P........P...',
+  '..DDFFFFFFFFDD..',
+  '.DDDFFFFFFFFDDD.',
+  'PPDDFFFFFFFFDDPP',
+  'PPDDFfFFFFfFDDPP',
+  '..DDWKFFFFKWDDp.',
+  '..DDFFDDDDFFDDp.',
+  '...DFFDKKDFFD.p.',
+  '...FFFDDDDFFFpp.',
+  '....FFDTTDFF....',
+  '.....FFFFFF.....',
+];
+const pepaPogColors: Record<string, string> = {
+  P: '#7c5cff',
+  p: '#a08cff',
+  D: '#4a342a',
+  F: '#e4b97f',
+  f: '#f2d3a0',
+  K: '#1f1b16',
+  W: '#ffffff',
+  T: '#ff7b9c',
+};
+
 const marks: Record<BrandApp, ReactNode> = {
   shop: (
-    <path
-      fill="currentColor"
-      d="M3 5.5 8 3v7.3L17.5 3 21 6.5 13.8 12l7.2 5.5-3.5 3.5L8 13.7V21l-5-2.5V5.5Z"
-    />
+    <>
+      <path fill="#eea36b" d="M1 1h22v22H1z" />
+      <path
+        fill="#302319"
+        d="M6.2 4h5.2L9.6 12l5-4h4.8l-.3 1.3h-1.6l-4.1 3.3 3 6.1h1.8l-.3 1.3h-5.1l-3.2-6.4L8.2 20H3.5l.3-1.3h1.5l3-13.4H5.9L6.2 4Z"
+      />
+    </>
   ),
   flights: (
     <>
+      <path fill="#48c9b8" d="M1 15.5C8.6 14.8 14.9 9.7 23 3c-2.7 8.1-9.5 14.4-18.3 15.4L1 15.5Z" />
       <path
-        d="M16 13.5A6.5 6.5 0 1 1 9.5 7m4.7 11.2 5.3 3.3"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        fill="#168579"
+        d="M5.4 20.3c6.1-1.5 11.8-5.9 15.5-11.1-1.8 5.9-6.3 10.6-12.1 12.3l-3.4-1.2Z"
       />
-      <path fill="currentColor" d="M13.5 2.5H22V11l-3.1-3.1-7 7-2.8-2.8 7-7-2.6-2.6Z" />
     </>
   ),
   observability: (
-    <>
-      <rect x="2" y="7" width="8" height="13" rx="4" stroke="currentColor" strokeWidth="2.2" />
-      <rect x="14" y="3" width="8" height="13" rx="4" stroke="currentColor" strokeWidth="2.2" />
-      <path
-        d="M6 13h4l2-4 2 8 2-4h2"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </>
+    <g transform="translate(0 3) scale(1.5)" shapeRendering="crispEdges">
+      {pepaPogRows.flatMap((row, y) =>
+        [...row].flatMap((pixel, x) =>
+          pepaPogColors[pixel] ? (
+            <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill={pepaPogColors[pixel]} />
+          ) : (
+            []
+          ),
+        ),
+      )}
+    </g>
   ),
   tasks: (
     <>
-      <rect x="3" y="3" width="5" height="18" rx="2" fill="currentColor" />
+      <path fill="#707de8" d="M2 2h5v20H2z" />
+      <path fill="#b3baff" fillRule="evenodd" d="M8 2h10l3 3v4l-3 2H8V2Zm4 3v3h4l1-1V6l-1-1h-4Z" />
       <path
-        fill="currentColor"
+        fill="#8b96f5"
         fillRule="evenodd"
-        clipRule="evenodd"
-        d="M12 5h4a5 5 0 0 1 5 5c0 1.3-.5 2.5-1.4 3.4.9.8 1.4 1.9 1.4 3.1a4.5 4.5 0 0 1-4.5 4.5H12a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm1.5 3v3H16a1.5 1.5 0 0 0 0-3h-2.5Zm0 7v3H16a1.5 1.5 0 0 0 0-3h-2.5Z"
+        d="M8 12h11l3 3v4l-3 3H8V12Zm4 3v4h4.5l1.5-1.5v-1L16.5 15H12Z"
       />
     </>
   ),
 };
 
-/** Original product marks. Decorative by default when accompanied by brand text. */
+/** Product marks, decorative by default when accompanied by brand text. */
 export function BrandMark({ app, size = 24, title, className, ...props }: BrandMarkProps) {
   const titleId = useId();
   const hasName = Boolean(title || props['aria-label'] || props['aria-labelledby']);
