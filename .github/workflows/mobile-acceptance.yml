@@ -98,6 +98,7 @@ jobs:
           if (!['android', 'ios'].includes(platform)) throw new Error('Unsupported candidate platform.');
           const paths = ['apps/mobile', 'packages/core', 'package.json', 'package-lock.json'];
           const excludedNativeProject = `apps/mobile/${platform === 'ios' ? 'android' : 'ios'}`;
+          const excludedDocumentation = ['apps/mobile/README.md'];
           const tree = (directory) => {
             const entries = execFileSync('git', ['-C', directory, 'ls-tree', '-r', '-z', '--full-tree', 'HEAD', '--', ...paths], {encoding: 'utf8'});
             return Object.fromEntries(entries.split('\0').filter(Boolean).map((entry) => {
@@ -105,18 +106,18 @@ jobs:
               const metadata = /^(\d{6}) (blob|commit) ([a-f0-9]{40,64})$/.exec(entry.slice(0, separator));
               if (separator < 0 || !metadata) throw new Error('Unexpected Git tree entry.');
               return [entry.slice(separator + 1), {mode: metadata[1], type: metadata[2], object: metadata[3]}];
-            }).filter(([path]) => path !== excludedNativeProject && !path.startsWith(`${excludedNativeProject}/`)).sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0));
+            }).filter(([path]) => path !== excludedNativeProject && !path.startsWith(`${excludedNativeProject}/`) && !excludedDocumentation.includes(path)).sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0));
           };
           const candidate = tree('candidate-source');
           const current = tree('.');
           const changed = [...new Set([...Object.keys(candidate), ...Object.keys(current)])].sort().filter((path) => JSON.stringify(candidate[path]) !== JSON.stringify(current[path]));
           const file = `maestro-reports/${platform}/provenance.json`;
           const provenance = JSON.parse(readFileSync(file, 'utf8'));
-          provenance.sourceComparison = {excludedNativeProject, candidate, current, changed};
+          provenance.sourceComparison = {excludedNativeProject, excludedDocumentation, candidate, current, changed};
           provenance.sourceFingerprint = createHash('sha256').update(JSON.stringify(current)).digest('hex');
           writeFileSync(file, JSON.stringify(provenance, null, 2));
-          if (changed.length) throw new Error(`Relevant app source or dependencies changed: ${changed.join(', ')}. Build a fresh candidate; only harness/workflow changes and changes confined to ${excludedNativeProject}/ can reuse this binary.`);
-          appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\nApp source and dependency files match, including Git modes. Only ${excludedNativeProject}/ is excluded. Fingerprint: ${provenance.sourceFingerprint}\n`);
+          if (changed.length) throw new Error(`Relevant app source or dependencies changed: ${changed.join(', ')}. Build a fresh candidate; only harness/workflow changes, ${excludedNativeProject}/, and ${excludedDocumentation.join(', ')} can differ when reusing this binary.`);
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\nApp source and dependency files match, including Git modes. Excluded: ${excludedNativeProject}/ and documentation ${excludedDocumentation.join(', ')}. Fingerprint: ${provenance.sourceFingerprint}\n`);
           NODE
       - name: Download only the verified diagnostic artifact
         uses: actions/download-artifact@v4

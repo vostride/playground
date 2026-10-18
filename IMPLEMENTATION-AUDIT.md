@@ -12,6 +12,7 @@ The four web products, their shared product models, and the four native product 
 - [Mobile source run 39133315578](https://github.com/vostride/playground/actions/runs/39133315578), commit `645a23a`: source and Metro bundle checks passed. This is not native runtime acceptance.
 - [Initial native candidate 39125896939](https://github.com/vostride/playground/actions/runs/39125896939): the unsigned iOS simulator app compiled and launched on GitHub. All five Maestro journeys failed, exposing scroll-target visibility and keyboard-dismiss issues. Those failures are retained as evidence rather than counted as passing acceptance.
 - Native candidate `39133316123` tests the fixes in `645a23a`. Its final results remain pending in this audit.
+- [Android candidate 39134005393](https://github.com/vostride/playground/actions/runs/39134005393), commit `629ed2c`: the standalone APK compiled successfully. Its initial metadata gate rejected AndroidX's internal signature permission. Inspection of the preserved APK with the corrected shared validator passes: the app requests no system permissions, its sole receiver permission has signature protection `0x2`, and both `arm64-v8a` and `x86_64` are present. Emulator acceptance remains pending.
 - Repository release immutability is enabled. No mobile release has been published.
 
 ## Required verification still outstanding
@@ -39,6 +40,8 @@ The four web products, their shared product models, and the four native product 
 - **Native keyboard dismissal:** forms expose a keyboard-visible “Done typing” action; single-line fields submit with Done. Acceptance helpers wait for the control to disappear after dismissal.
 - **Native scroll target visibility:** Maestro scroll targets are centered before tapping, keeping targets above fixed bottom navigation. Screenshots from the first iOS run demonstrated why screen-level visibility alone was insufficient.
 - **Android runner setup:** installation no longer requests the retired SDK `tools` package, and the version code is parsed as an integer before assignment to the Gradle DSL.
+- **Workspace Hermes compiler:** Android explicitly resolves the compiler in the repository's hoisted `node_modules`; Gradle's package-local default could bundle JavaScript but could not compile it to Hermes bytecode.
+- **Merged APK inspection:** release and diagnostic workflows share a validator for app identity, permission declarations and requests, and native architectures. It preserves AndroidX's app-owned signature receiver protection while rejecting every system permission and other custom request.
 - **Continuous native drag checks:** Android uses held `draganddrop` input and iOS uses an XCTest press-and-drag. Both check reordering, movement across columns, and undo. Source validation passes; runtime results remain pending.
 
 ## Requirement map
