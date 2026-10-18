@@ -123,7 +123,7 @@ function Sheet({
 }) {
   return (
     <Modal visible animationType="slide" transparent onRequestClose={onClose}>
-      <SafeModalArea style={styles.modalOuter}>
+      <SafeModalArea accessibilityViewIsModal style={styles.modalOuter}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={{ flex: 1, justifyContent: 'flex-end' }}
@@ -133,7 +133,7 @@ function Sheet({
             style={StyleSheet.absoluteFill}
             onPress={onClose}
           />
-          <View accessibilityViewIsModal style={styles.sheet}>
+          <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
             <PlaygroundNotice />
             <View style={styles.sheetHeader}>
