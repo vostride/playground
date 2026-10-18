@@ -22,6 +22,7 @@ import {
   atomicJSON,
   evidenceFailures,
   execute,
+  makeAnchor,
   monoMs,
   pf,
   readJSON,
@@ -131,6 +132,7 @@ export async function runOffline(device) {
   const reportDir = join(workspace, 'maestro-reports/ios/offline');
   mkdirSync(reportDir, { recursive: true });
   const id = randomUUID();
+  const anchor = makeAnchor(id); // Validate namespace and Darwin's byte bound before any PF call.
   const directory = join(reportDir, id);
   mkdirSync(directory);
   const report = {
@@ -264,7 +266,6 @@ export async function runOffline(device) {
 
     report.mainRules = (await pf(['-s', 'rules'])).stdout;
     assertMainRules(report.mainRules);
-    const anchor = `com.apple/000.playground-offline-${id}`;
     if ((await pf(['-a', anchor, '-s', 'rules'])).stdout.trim())
       throw new Error('Unique anchor is not empty.');
     config = {

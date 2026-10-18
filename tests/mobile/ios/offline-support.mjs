@@ -16,8 +16,18 @@ export function assertCI({ platform = process.platform, env = process.env, devic
 }
 
 export function assertAnchor(anchor) {
-  if (!/^com\.apple\/000\.playground-offline-[0-9a-f-]{36}$/.test(anchor || ''))
+  // Darwin pfctl copies the full CLI anchor argument into a 64-byte name field.
+  // Leave room for the terminating NUL, even though the kernel also has a longer path field.
+  if (typeof anchor !== 'string' || Buffer.byteLength(anchor, 'utf8') >= 64)
+    throw new Error('PF anchor must fit its 64-byte name field, including the terminating NUL.');
+  if (!/^com\.apple\/000\.pg-offline-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(anchor))
     throw new Error('Refusing to operate on any anchor except this harness’s unique child.');
+}
+
+export function makeAnchor(id) {
+  const anchor = `com.apple/000.pg-offline-${id}`;
+  assertAnchor(anchor);
+  return anchor;
 }
 
 export function assertMainRules(text) {
@@ -67,6 +77,7 @@ export function assertAnchorOrder(text, anchor, requireAttached = true) {
 
 // One root daemon owns activation AND restoration; interruptions are checked between operations.
 export async function activateBlock(config, { run, shouldStop }) {
+  assertAnchor(config.anchor);
   const check = () => {
     if (shouldStop()) throw new Error('Activation cancelled or deadline expired.');
   };

@@ -8,12 +8,13 @@ import {
   assertCI,
   assertMainRules,
   evidenceFailures,
+  makeAnchor,
   restore,
   RULES,
 } from './offline-support.mjs';
 
 const device = '11111111-2222-3333-4444-555555555555';
-const anchor = `com.apple/000.playground-offline-${device}`;
+const anchor = makeAnchor(device);
 const success = (stdout = '') => ({ code: 0, stdout, stderr: '', timedOut: false });
 const stockScrub = 'scrub-anchor "com.apple/*" all fragment reassemble';
 const filterHook = 'anchor "com.apple/*" all';
@@ -32,6 +33,46 @@ test('mutation guard requires macOS GitHub CI and a concrete UUID', () => {
     assert.throws(() => assertCI(invalid));
   for (const value of ['com.apple', 'com.apple/*', 'playground/test', `${anchor}/child`])
     assert.throws(() => assertAnchor(value));
+});
+
+test('unique full-UUID anchor fits Darwin’s 64-byte name field including its terminator', () => {
+  assert.equal(anchor, `com.apple/000.pg-offline-${device}`);
+  assert.equal(Buffer.byteLength(anchor, 'utf8'), 61);
+  assert.doesNotThrow(() => assertAnchor(anchor));
+  const previous = `com.apple/000.playground-offline-${device}`;
+  assert.equal(Buffer.byteLength(previous, 'utf8'), 69);
+  assert.throws(() => assertAnchor(previous), /64-byte/);
+  assert.throws(() => assertAnchor(`${anchor}abc`), /64-byte/);
+  for (const id of [
+    '',
+    '-'.repeat(36),
+    device.replace('-', ''),
+    device.replace('11111111', 'gggggggg'),
+  ])
+    assert.throws(() => makeAnchor(id));
+  for (const value of [
+    anchor.replace('000.', '001.'),
+    anchor.replace('com.apple', 'com.other'),
+    `${anchor}/x`,
+  ])
+    assert.throws(() => assertAnchor(value));
+});
+
+test('invalid anchor names fail before activation or restoration can invoke PF', async () => {
+  let calls = 0;
+  const run = async () => {
+    calls++;
+    return success();
+  };
+  for (const invalid of [
+    `com.apple/000.playground-offline-${device}`,
+    `${anchor}abc`,
+    'com.apple/*',
+  ]) {
+    await assert.rejects(activateBlock({ anchor: invalid }, { run, shouldStop: () => false }));
+    await assert.rejects(restore({ anchor: invalid, token: '1234' }, true, run));
+  }
+  assert.equal(calls, 0);
 });
 
 test('rejects inert, bypassable, or single-family PF rules', () => {
