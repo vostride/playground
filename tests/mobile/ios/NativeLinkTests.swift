@@ -42,7 +42,7 @@ final class NativeLinkTests: XCTestCase {
 
         visit("playground://flights", named: "Looking search") {
             self.requireText("Flight search")
-            self.requireElement(self.app.buttons["Flights"], "Looking navigation")
+            self.requireElement(self.element("flight-tab-search"), "Looking Search tab")
         }
 
         visit("playground://flights/bookings", named: "Looking bookings") {
