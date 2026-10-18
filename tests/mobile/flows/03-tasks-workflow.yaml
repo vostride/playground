@@ -66,11 +66,38 @@ name: Brello boards, task properties, refresh, move, undo, and both bug switches
       VALUE: Confirm mobile flow
 - tapOn:
     id: task-checklist-add
-- assertVisible: Confirm mobile flow
-- tapOn: Confirm mobile flow
-- assertVisible:
-    text: Confirm mobile flow
-    checked: true
+- assertVisible: '^Confirm mobile flow$'
+# In iOS run 39151281803 the custom checkbox changed its accessible value to
+# "checkbox, checked", while Maestro still normalized checked to false.
+# Copy from the exact item label so these value checks cannot match another row.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - copyTextFrom: '^Confirm mobile flow$'
+      - evalScript: ${if (maestro.copiedText !== 'checkbox, unchecked') throw new Error('Confirm mobile flow must start unchecked')}
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - assertVisible:
+          text: '^Confirm mobile flow$'
+          checked: false
+- tapOn: '^Confirm mobile flow$'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - assertVisible: '^Confirm mobile flow$'
+      - copyTextFrom: '^Confirm mobile flow$'
+      - evalScript: ${if (maestro.copiedText !== 'checkbox, checked') throw new Error('Confirm mobile flow must be checked after tapping')}
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - assertVisible:
+          text: '^Confirm mobile flow$'
+          checked: true
 - scrollUntilVisible:
     centerElement: true
     element:
@@ -93,11 +120,22 @@ name: Brello boards, task properties, refresh, move, undo, and both bug switches
 - scrollUntilVisible:
     centerElement: true
     element:
-      text: Confirm mobile flow
+      text: '^Confirm mobile flow$'
     direction: DOWN
-- assertVisible:
-    text: Confirm mobile flow
-    checked: true
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - assertVisible: '^Confirm mobile flow$'
+      - copyTextFrom: '^Confirm mobile flow$'
+      - evalScript: ${if (maestro.copiedText !== 'checkbox, checked') throw new Error('Confirm mobile flow must stay checked after reopening')}
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - assertVisible:
+          text: '^Confirm mobile flow$'
+          checked: true
 - takeScreenshot: corkboard-task-persisted
 - runFlow: ../helpers/tasks-assert-properties.yaml
 - runFlow: ../helpers/tasks-filter-bug.yaml
