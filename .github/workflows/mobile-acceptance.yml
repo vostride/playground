@@ -148,7 +148,7 @@ jobs:
           NODE
       - run: npm ci --ignore-scripts
       - run: npm run test:mobile:flows
-      - run: node --test tests/mobile/android-drag.test.mjs
+      - run: node --test tests/mobile/android-drag.test.mjs tests/mobile/inspect-apk.test.mjs
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -169,21 +169,11 @@ jobs:
         if: inputs.platform == 'android'
         with:
           packages: platform-tools
-      - name: Check the preserved APK identity and permissions
+      - name: Check the preserved APK identity, permissions and architectures
         if: inputs.platform == 'android'
         run: |
           sdkmanager 'build-tools;36.0.0'
-          node --input-type=module <<'NODE'
-          import {writeFileSync} from 'node:fs';
-          import {execFileSync} from 'node:child_process';
-          const aapt = `${process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT}/build-tools/36.0.0/aapt`;
-          const permissions = execFileSync(aapt, ['dump', 'permissions', process.env.CANDIDATE_BINARY], {encoding: 'utf8'});
-          const metadata = execFileSync(aapt, ['dump', 'badging', process.env.CANDIDATE_BINARY], {encoding: 'utf8'});
-          writeFileSync('maestro-reports/android/apk-permissions.txt', permissions);
-          writeFileSync('maestro-reports/android/apk-metadata.txt', metadata);
-          if (!metadata.includes("package: name='dev.vostride.playground'")) throw new Error('Unexpected Android app ID.');
-          if (/^uses-permission/m.test(permissions)) throw new Error('The preserved APK requests permissions.');
-          NODE
+          node tests/mobile/inspect-apk.mjs "$CANDIDATE_BINARY"
       - name: Enable Android emulator hardware acceleration
         if: inputs.platform == 'android'
         run: |

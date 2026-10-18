@@ -16,7 +16,7 @@ maestro --device "$DEVICE_ID" test \
   tests/mobile/flows/
 ```
 
-The workflow pins Maestro 2.11.0 and verifies the downloaded archive checksum. Each flow launches a fresh session with every runtime permission denied. The app requests no release permissions.
+The workflow pins Maestro 2.11.0 and verifies the downloaded archive checksum. Each flow launches a fresh session with every runtime permission denied. The release APK requests no Android/system permissions. Its only permitted custom permission is AndroidX’s app-owned signature receiver protection; it never prompts the user.
 
 For local source validation only:
 
@@ -24,7 +24,16 @@ For local source validation only:
 npm run test:mobile:flows
 ```
 
-This checks both YAML documents, supported command names, selectors, helper references, cycles, fresh-session setup, and the presence of outcome assertions and screenshot capture.
+APK metadata inspection is shared by release and diagnostic acceptance:
+
+```sh
+node --test tests/mobile/inspect-apk.test.mjs
+node tests/mobile/inspect-apk.mjs path/to/app-release.apk
+```
+
+With Android build-tools 36.0.0 available through `ANDROID_HOME` or `ANDROID_SDK_ROOT`, the inspector saves permission, binary manifest, architecture and JSON reports under `maestro-reports/android/`. It requires `dev.vostride.playground` and both `arm64-v8a` and `x86_64`. The sole permission allowance requires an exact matching declaration and request for `dev.vostride.playground.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, with protection level exactly `signature` (`0x2`). Every other request, including SDK-specific aliases and Internet access, fails. AndroidX uses this [signature permission](https://raw.githubusercontent.com/androidx/androidx/androidx-main/core/core/src/main/AndroidManifest.xml) to [protect non-exported receivers on older Android versions](https://raw.githubusercontent.com/androidx/androidx/androidx-main/core/core/src/main/java/androidx/core/content/ContextCompat.java); [signature permissions are granted by certificate matching](https://developer.android.com/guide/topics/manifest/permission-element#plevel), without a runtime prompt.
+
+The flow validation command checks both YAML documents, supported command names, selectors, helper references, cycles, fresh-session setup, and the presence of outcome assertions and screenshot capture.
 
 ## Retest a preserved candidate
 
