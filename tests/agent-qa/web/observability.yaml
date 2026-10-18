@@ -1,0 +1,25 @@
+test-id: t_hello-shire-angler-hunt-limit-plat-alite-non-urent-simple
+name: PepaPog log queries, trace inspection and monitor lifecycle
+target: web-observability
+context: >-
+  Use the visible dashboard, log query form, trace dialog and monitor builder.
+  Do not mutate browser storage, use application internals or make API calls.
+  All diagnostic data is seeded locally. Reset through the toolbar before the
+  test; monitor changes should persist when this browser tab reloads.
+meta:
+  timeout: 20m
+  retries: 0
+steps:
+  - Reset playground session through the toolbar. Verify Production overview and populated service metrics are visible.
+  - Open Log explorer. Verify a populated Log events table is displayed.
+  - Enter unknown:value in Log search query and click Search. Verify a query validation error is visible.
+  - Replace the query with service:checkout status:error and click Search. Verify the query error disappears and the first visible log rows all show checkout service and error status.
+  - Open the first matching log event. Verify its detail dialog identifies checkout and error, and displays a timestamp and trace link.
+  - Click View trace. Verify Trace details opens with the Trace waterfall, multiple span rows and nonnegative duration labels.
+  - Select a non-root span. Verify the selected span's detail shows the same operation name as its waterfall row and its duration. Close Trace details.
+  - Open Monitors and click New monitor. Click Create monitor with required text fields empty. Verify the builder remains open and the monitor-name and notification-recipient validation errors are shown.
+  - Enter Agent QA checkout monitor in Monitor name and oncall@example.test in Notify, leaving the valid default metric and thresholds unchanged. Create the monitor.
+  - Verify Agent QA checkout monitor is present in the monitors list. Reload this browser tab and verify the same monitor remains present.
+  - Pause Agent QA checkout monitor. Verify that row is Paused and its action changes to Resume Agent QA checkout monitor.
+  - Resume the same monitor. Verify its row is no longer Paused and the action changes back to Pause Agent QA checkout monitor.
+  - Delete Agent QA checkout monitor and confirm Delete monitor inside the dialog. Verify that exact monitor is absent and the other seeded monitors remain.

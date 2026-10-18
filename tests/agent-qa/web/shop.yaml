@@ -1,0 +1,26 @@
+test-id: t_early-rame-dow-legend-scalar-raad-locale-asem-cell-ball
+name: Komazon quantity, bug recovery, validated checkout and cancellation
+target: web-shop
+context: >-
+  Exercise the product through visible controls in the same browser tab. Do not
+  write browser storage, call internal application APIs, or use scripts to change
+  state. The account printed on the sign-in screen is intentional public test
+  data. Reset through the toolbar before starting so order IDs are repeatable.
+meta:
+  timeout: 20m
+  retries: 0
+steps:
+  - Click the toolbar button named Reset playground session. Verify the shopping bag is empty and no deliberate bug is enabled.
+  - Search products for impossiblexyz. Verify the No products found empty state, then use Clear filters to restore the catalog.
+  - Add Everyday Ceramic Mug to the bag, open the shopping bag, and increase that product's quantity to two.
+  - Verify the bag contains exactly two Everyday Ceramic Mugs and the order total is $53.00.
+  - Open Test controls and choose Incorrect cart total in Active bug. After the page reloads, verify the deliberate-bug notice names Incorrect cart total and the same two mugs now produce the incorrect total $29.00.
+  - Click Disable in the deliberate-bug notice. Verify the quantity remains two, the total returns to $53.00, and the deliberate-bug notice disappears.
+  - Continue to checkout. Sign in with the email and password printed in the sign-in form, then verify the shipping step is shown.
+  - Click Continue to delivery with the street address blank. Verify Enter a street address. is shown and the shipping form remains open.
+  - Enter street address 24 Cedar Lane, city Portland and postal code 97205. Continue to delivery.
+  - Select Express delivery and continue with Review order. Verify the review shows two Everyday Ceramic Mugs, the entered address, Express delivery and a total of $60.00.
+  - Place the order using Place order · $60.00. Verify Order confirmed and that the bag is empty.
+  - Open View orders. Verify Order FW-1001 contains two Everyday Ceramic Mugs and the $60.00 total.
+  - Reload this browser tab. Verify Order FW-1001 is still present with the same items and total.
+  - Cancel Order FW-1001 and confirm cancellation in its dialog. Verify this order's status is Cancelled.

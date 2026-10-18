@@ -36,6 +36,8 @@ Playground is a product fixture, not the agent-qa runtime, its generated sample 
 
 Sibling repositories can provide context when the task authorizes reading them. Keep changes in this repository unless the task explicitly includes another one. Installing or configuring agent-qa for a consumer is separate work from maintaining Playground.
 
+The repository also owns the explicitly requested advisory journeys in `tests/agent-qa/`. These use pinned agent-qa development dependencies and the root `agent-qa.config.yaml`; they do not change application runtime behavior or import private evaluations. See [their setup guide](tests/agent-qa/README.md) for the dashboard, mobile device bindings, subscription authentication, and non-blocking CI. Keep machine-specific bindings, generated configs, reports, and OAuth credentials out of git.
+
 ## Products and live entry points
 
 The launcher is [playground.vostride.dev](https://playground.vostride.dev/). The Cloudflare Pages hostname is [playground-kgs.pages.dev](https://playground-kgs.pages.dev/).
@@ -138,6 +140,7 @@ The source of truth for current CI behavior is `.github/workflows/`:
 - `mobile-ci.yml`: native TypeScript, core/helper/YAML checks, and Android/iOS Metro bundles.
 - `mobile-release.yml`: every push to `main` builds the **latest commit in that push**, then publishes only after both native platforms pass the required checks. A multi-commit push does not create a release for each intermediate commit. Manual dispatch builds candidates and never publishes.
 - `mobile-acceptance.yml`: retests preserved CI-built candidates with a selected harness. It checks application-source identity and never publishes or substitutes for the release gate.
+- `agent-qa.yml`: independently runs advisory web/Android/iOS journeys against exact CI artifacts using agent-qa 0.1.21, OpenAI subscription authentication, and gpt-6.1-sol. No publication job depends on it; missing authentication is reported as a skip. Never upload credentials with reports.
 
 Mobile versions are `yy.mm.dd-<7 lowercase SHA characters>` using the commit's **UTC date**; tags are `mobile-<version>`. `scripts/mobile-release-version.mjs` derives native-safe metadata separately. `scripts/mobile-release.mjs` verifies the full checkout SHA, rejects tag collisions/drafts/incomplete releases, and leaves an already verified published release untouched. Each publication includes an APK, an iOS simulator ZIP, their SHA-256 sidecars, and `manifest.json` with source and artifact identity. The two binaries receive GitHub provenance attestations. There are no release-creating commits back into the repository.
 

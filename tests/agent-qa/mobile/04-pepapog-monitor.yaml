@@ -1,0 +1,29 @@
+test-id: t_sports-headed-day-vole-anton-uke-factor-asem-lemma-dan
+name: PepaPog mobile log investigation and monitor lifecycle
+target: playground-mobile
+context: >-
+  Exercise PepaPog inside the installed Playground app using its actual product tabs,
+  forms, and confirmation dialogs. Keep deliberate bugs off. Pause live updates before
+  checking log results so the investigation has a stable time range. The monitor recipient
+  is fixture data, not a real notification destination. Use Done typing when a keyboard
+  covers controls, and scroll inside the active form or sheet rather than behind it.
+use:
+  mobile:
+    appState: reset
+meta:
+  timeout: 20m
+steps:
+  - Open Test controls, select Reset playground session, and open PepaPog from Home. Verify Overview is selected and request-rate, latency, and error-rate metrics are displayed.
+  - Turn off Live updates and verify Paused is displayed. Change the time range to Past 24 hours.
+  - Open the Logs bottom tab. Search for service:checkout status:error and verify matching log rows show checkout service and error status.
+  - Open one matching log event. Verify its details identify checkout, error, and a Trace ID.
+  - Choose View trace from that log event. Verify the corresponding trace opens with a waterfall and spans. Select a span and verify its duration and service details are displayed, then close the Trace details sheet.
+  - Open the Monitors bottom tab and choose New monitor. Set Alert threshold to 0 and attempt Create monitor without a name or recipient.
+  - Verify the monitor form remains open with validation errors for the threshold, monitor name, and notification recipient.
+  - Set metric to Error rate, comparison to Above, threshold to 2, evaluation window to 5 minutes, name to Agent QA checkout error rate, and Notify to oncall@example.test. Keep All services selected.
+  - Create the monitor, search monitors for Agent QA checkout error rate, and verify its condition is Error rate > 2 % · 5 minutes.
+  - Pause Agent QA checkout error rate. Verify its status is Paused and its action changes to Resume Agent QA checkout error rate.
+  - Resume the monitor, open its editor, change the threshold to 3 and Notify to sre@example.test, and save changes.
+  - Open Overview and return to Monitors. Search for Agent QA checkout error rate and verify its condition is now Error rate > 3 % · 5 minutes.
+  - Reopen the monitor editor and verify the saved Notify field is sre@example.test, then close the editor without changing anything.
+  - Delete that monitor and confirm Delete monitor in the native confirmation alert. Verify the unchanged name search now shows No matching monitors.

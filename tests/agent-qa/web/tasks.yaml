@@ -1,0 +1,24 @@
+test-id: t_syntax-dish-forge-ural-bloc-anat-token-fee-kin-anion
+name: Brello task properties, checklist, movement, undo and persistence
+target: web-tasks
+context: >-
+  Interact with the visible board and dialogs. Do not inject task data, change
+  browser storage or call application APIs. Reset first; the Product launch board
+  has a seeded CKB-001 task in Backlog. The toolbar Undo last change reverses one
+  product edit, and closing task details commits text edits.
+meta:
+  timeout: 20m
+  retries: 0
+steps:
+  - Reset playground session from the toolbar. Verify the Product launch board and its Backlog, To do, In progress, In review and Done columns are visible.
+  - Search tasks for unmatchable-xyz. Verify No tasks match your filters, then Clear filters and verify task CKB-001 is visible in Backlog.
+  - Open task CKB-001. Change its title to Agent QA onboarding review, priority to Urgent and due date to November 15, 2026.
+  - Open the Assignees control and select Alex Morgan if not already selected. Open Labels and select Bug if not already selected.
+  - Add a checklist item named Verify release candidate and mark that exact item complete.
+  - Close task details, reopen CKB-001, and verify the edited title, Urgent priority, November 15 due date, Alex Morgan assignment, Bug label and checked Verify release candidate item persisted.
+  - Change Status from Backlog to In progress. Close task details and verify CKB-001 now appears in In progress rather than Backlog.
+  - Click Undo last change. Verify CKB-001 returns to Backlog while the edited title remains Agent QA onboarding review.
+  - Reopen CKB-001 and verify its Bug label and completed checklist item survived the move and undo. Close the details.
+  - Click New task. Enter title Agent QA release checklist, choose To do status, and create the task. Verify the new task appears in To do.
+  - Search tasks for Agent QA release checklist. Verify that exact task is shown and unrelated seeded task titles are excluded.
+  - Reload this browser tab. Verify the newly created task remains available by that title, then open it and verify its status is To do.

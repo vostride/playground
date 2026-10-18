@@ -1,0 +1,93 @@
+workspace:
+  testMatch:
+    - tests/agent-qa/web/*.yaml
+    - tests/agent-qa/mobile/*.yaml
+  suiteMatch:
+    - tests/agent-qa/suites/*.suite.yaml
+  hooksFile: hooks.yaml
+  agentRules: agent-rules.md
+  envFile: .env
+  secretsFile: .env.secrets.local
+
+services:
+  dashboard:
+    port: 3470
+    dbPath: .agent-qa/dashboard.sqlite
+    artifactsDir: tests/agent-qa/reports/artifacts
+  mcp:
+    enabled: false
+  recording:
+    enabled: true
+  memory:
+    enabled: false
+  logging:
+    level: warn
+
+registry:
+  llms:
+    - name: playground-codex
+      provider: openai-subscription
+      model: gpt-6.1-sol
+      screenshotSize: 200kb
+      effectiveResolution: 1280
+  targets:
+    web-shop:
+      platform: web
+      url: https://playground.vostride.dev/shop/
+    web-flights:
+      platform: web
+      url: https://playground.vostride.dev/flights/
+    web-tasks:
+      platform: web
+      url: https://playground.vostride.dev/tasks/
+    web-observability:
+      platform: web
+      url: https://playground.vostride.dev/observability/
+    playground-mobile:
+      platform: android
+      appPackage: dev.vostride.playground
+      appActivity: .MainActivity
+    playground-ios:
+      platform: ios
+      bundleId: dev.vostride.playground
+  devices:
+    android-local:
+      platform: android
+      transport: local
+      match: {}
+    ios-local:
+      platform: ios
+      transport: local
+      match: {}
+
+plugins:
+  auth:
+    - package: '@vostride/agent-qa-subscription-auth'
+
+use:
+  llm: playground-codex
+  parallel: false
+  cache: false
+  browser:
+    name: chromium
+    headless: true
+    viewport:
+      width: 1440
+      height: 900
+  mobile:
+    appState: reset
+  timeout:
+    step: 2m
+    test: 20m
+    navigation: 1m
+  healing:
+    maxAttempts: 2
+  planner:
+    maxSubActions: 15
+    previousStepCount: 5
+  logCapture:
+    console: false
+    network: false
+
+analytics:
+  privacy: true

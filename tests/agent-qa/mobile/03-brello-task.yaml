@@ -1,0 +1,31 @@
+test-id: t_nul-kern-agua-flix-moor-meteor-bound-undo-match-boot
+name: Brello mobile task properties, movement, undo, and persistence
+target: playground-mobile
+context: >-
+  Exercise the installed Playground app through Brello's visible Board and List views.
+  Keep deliberate bugs off. The new task title is unique within the reset fixture.
+  Wait for the New task sheet and its autofocus keyboard to settle before entering its
+  title, and verify the exact entered value before submitting. Use Done typing when
+  necessary and scroll within the detail sheet for properties. Movement uses the product's
+  accessible status controls; separate deterministic native tests cover held-touch drag.
+use:
+  mobile:
+    appState: reset
+meta:
+  timeout: 20m
+steps:
+  - Open Test controls, select Reset playground session, and open Brello from Home. Verify the Board bottom tab is selected.
+  - Open New task. Enter Agent QA release review as the title, keep To do status, and choose High priority. Verify the title field contains exactly Agent QA release review.
+  - Create the task and verify the New task sheet closes.
+  - Open the List bottom tab, search for Agent QA release review, and verify the results contain the new task CKB-2401.
+  - Open CKB-2401 and verify its title is Agent QA release review, status is To do, and priority is High.
+  - Change its status to In progress and verify In progress is selected.
+  - Choose Undo last change and verify To do is selected again while the title and High priority remain unchanged.
+  - Assign Maya Chen and add the Design label. Verify both choices are selected.
+  - Set the due date to October 28, 2026 using the task calendar and verify Due Oct 28, 2026 is displayed.
+  - Add a checklist item named Verify mobile release and mark that exact item complete. Verify its checkbox is checked and checklist progress is 1 / 1.
+  - Close the task with Done, then reopen the exact CKB-2401 search result.
+  - Verify the saved title, To do status, High priority, Maya Chen assignment, Design label, Oct 28, 2026 due date, and checked Verify mobile release checklist item all persisted.
+  - Close the detail sheet and clear the search. Open Filters, select the Design label and Maya Chen assignee, then choose Show matching tasks. Verify CKB-2401 remains in the matching results.
+  - Search within those filtered results for a title that does not exist, release-review-no-such-task. Verify the empty results state is shown.
+  - Clear the search and filters, return to Board, then return to List and search for CKB-2401. Verify the task is still present with its saved title.

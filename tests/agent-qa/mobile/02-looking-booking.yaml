@@ -1,0 +1,33 @@
+test-id: t_ionic-baud-cover-near-dar-ase-hag-ido-bun-ijo
+name: Looking mobile dated search, seat selection, booking, and cancellation
+target: playground-mobile
+context: >-
+  Exercise Looking inside the installed Playground app using visible native controls.
+  Use the printed sample payment action; do not use real payment or passenger data.
+  Keep deliberate bugs off. Scroll within the current content area and use Done typing
+  to dismiss a covering keyboard. Choose controls in the currently open sheet or native
+  confirmation dialog rather than a same-named control behind it. Remember the chosen
+  flight and its displayed fare for the later review checks.
+use:
+  mobile:
+    appState: reset
+meta:
+  timeout: 25m
+steps:
+  - Open Test controls, select Reset playground session, and open Looking from Home.
+  - Select One way. Set the From airport to San Francisco (SFO) using the airport search and keep the To airport as London (LHR).
+  - Open Travel dates, replace the Departure date (YYYY-MM-DD) value with 2032-06-12, and choose Use date. Verify the search form now shows Jun 12 as its travel date.
+  - Reopen Travel dates and verify the exact date remains 2032-06-12 and the calendar month is June 2032. Close the date picker without changing the date.
+  - Keep one adult and search for flights. Verify the results are for San Francisco to London on Jun 12 for 1 traveler.
+  - Open Filters, enable the Nonstop only switch, and apply the filters. Verify the shown flight results are nonstop.
+  - Select a visible nonstop flight. Verify Choose your fare appears for the selected flight, without requesting a return flight.
+  - Choose Standard fare, note the displayed total, and continue to seats.
+  - Choose one seat that is available, not occupied. Verify the seat becomes selected and Your seats lists that exact seat.
+  - Continue to checkout and press Continue to payment with the passenger fields empty. Verify the passenger form stays open and asks for the passenger's first and last name.
+  - Enter first name Alex, last name Morgan, date of birth 1992-06-15, and email alex@example.com, then continue to payment.
+  - Choose Use sample to fill the printed test card. Verify the cardholder is Alex Morgan and the card number is 4242 4242 4242 4242.
+  - Review the booking. Verify Alex Morgan, the selected San Francisco to London flight, Jun 12 departure, the selected seat, and the same total shown for Standard fare.
+  - Accept the booking terms and confirm the booking. Verify Booking confirmed, a booking reference, and the same total are displayed.
+  - Open Manage your booking. Find the newly created booking by its reference and verify it contains Alex Morgan and the selected seat.
+  - Cancel that booking and confirm Cancel booking in the native confirmation alert. Verify its status changes to Cancelled and Standard fare travel credit equal to the booking total minus $40 is recorded.
+  - Open the Search bottom tab, then return to My trips. Verify the same booking remains Cancelled.

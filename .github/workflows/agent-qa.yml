@@ -1,0 +1,352 @@
+name: Advisory agent-qa journeys
+run-name: Advisory agent-qa · ${{ github.event.workflow_run.head_sha || inputs.source_run_id }}
+
+on:
+  workflow_run:
+    workflows: ['Web checks and Pages deployment', 'Mobile CI build and release']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Advisory platforms; all resolves web/mobile runs at the same source commit.'
+        type: choice
+        required: true
+        default: all
+        options: [web, android, ios, all]
+      source_run_id:
+        description: 'Explicit completed main-push Web or Mobile workflow run ID. No latest-build fallback.'
+        type: string
+        required: true
+
+# This workflow only reports. No release/deployment job depends on it.
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: advisory-agent-qa-${{ github.event.workflow_run.id || inputs.source_run_id }}-${{ inputs.platform || 'automatic' }}
+  cancel-in-progress: false
+
+env:
+  CI: 'true'
+
+jobs:
+  select:
+    name: Select trusted CI artifacts or report a skip
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.id == github.event.repository.id))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    continue-on-error: true
+    outputs:
+      ready: ${{ steps.select.outputs.ready }}
+      matrix: ${{ steps.select.outputs.matrix }}
+    steps:
+      - name: Verify source run identity and exact artifact selection
+        id: select
+        uses: actions/github-script@v7
+        env:
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id || inputs.source_run_id }}
+          REQUESTED_PLATFORM: ${{ inputs.platform || 'automatic' }}
+          AUTH_CONFIGURED: ${{ secrets.AGENT_QA_AUTH_JSON != '' }}
+        with:
+          script: |
+            const repositoryId = String(context.payload.repository.id);
+            const workflows = {
+              web: {file: 'web.yml', name: 'Web checks and Pages deployment'},
+              mobile: {file: 'mobile-release.yml', name: 'Mobile CI build and release'},
+            };
+            const artifactNames = {
+              web: 'web-dist',
+              android: 'diagnostic-android-apk-unverified',
+              ios: 'diagnostic-ios-simulator-unverified',
+            };
+            const validateRun = (run) => {
+              const kind = Object.keys(workflows).find((key) =>
+                run.path?.split('@')[0] === `.github/workflows/${workflows[key].file}` && run.name === workflows[key].name);
+              if (!kind || String(run.repository?.id) !== repositoryId || String(run.head_repository?.id) !== repositoryId ||
+                  run.event !== 'push' || run.head_branch !== 'main' || run.status !== 'completed' ||
+                  !/^[a-f0-9]{40}$/.test(run.head_sha)) {
+                throw new Error('Source must be a completed own-repository main-push Web or Mobile workflow run.');
+              }
+              return kind;
+            };
+            const id = process.env.SOURCE_RUN_ID;
+            if (!/^[1-9]\d*$/.test(id || '')) throw new Error('Choose an explicit numeric source_run_id.');
+            const {data: source} = await github.rest.actions.getWorkflowRun({...context.repo, run_id: id});
+            const sourceKind = validateRun(source);
+            if (context.eventName === 'workflow_run' &&
+                (String(source.id) !== String(context.payload.workflow_run.id) || source.head_sha !== context.payload.workflow_run.head_sha)) {
+              throw new Error('Trigger and source-run identity differ.');
+            }
+            const requested = process.env.REQUESTED_PLATFORM;
+            if (!['automatic', 'all', 'web', 'android', 'ios'].includes(requested)) throw new Error('Unsupported platform.');
+            const platforms = requested === 'automatic' ? (sourceKind === 'web' ? ['web'] : ['android', 'ios']) :
+              requested === 'all' ? ['web', 'android', 'ios'] : [requested];
+            const runs = {[sourceKind]: source};
+            const entries = [];
+            const skips = [];
+            for (const platform of platforms) {
+              if (process.env.AUTH_CONFIGURED !== 'true') {
+                skips.push({platform, reason: 'AGENT_QA_AUTH_JSON is not configured; no model or device session was started.'});
+                continue;
+              }
+              const kind = platform === 'web' ? 'web' : 'mobile';
+              if (!Object.hasOwn(runs, kind)) {
+                const candidates = await github.paginate(github.rest.actions.listWorkflowRuns, {
+                  ...context.repo, workflow_id: workflows[kind].file, event: 'push', branch: 'main',
+                  head_sha: source.head_sha, status: 'completed', per_page: 100,
+                });
+                runs[kind] = candidates.filter((run) => run.head_sha === source.head_sha)
+                  .sort((left, right) => right.id - left.id)[0] || null;
+              }
+              const run = runs[kind];
+              if (!run) {
+                skips.push({platform, reason: `No completed ${kind} main-push run exists for ${source.head_sha}.`});
+                continue;
+              }
+              if (validateRun(run) !== kind || run.head_sha !== source.head_sha) throw new Error('Counterpart workflow source differs.');
+              const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
+                ...context.repo, run_id: run.id, per_page: 100,
+              });
+              const matches = artifacts.filter((artifact) => artifact.name === artifactNames[platform]);
+              if (matches.length !== 1 || matches[0].expired || matches[0].size_in_bytes < 1) {
+                skips.push({platform, reason: `Expected one available ${artifactNames[platform]} artifact in run ${run.id}; it is missing, expired, or ambiguous.`});
+                continue;
+              }
+              const artifact = matches[0];
+              if (artifact.workflow_run?.head_sha && artifact.workflow_run.head_sha !== run.head_sha) throw new Error('Artifact source SHA differs.');
+              entries.push({platform, runner: platform === 'ios' ? 'macos-15' : 'ubuntu-24.04',
+                runId: String(run.id), sourceSha: run.head_sha, sourceConclusion: run.conclusion,
+                artifactId: String(artifact.id), artifactName: artifact.name, artifactDigest: artifact.digest || ''});
+            }
+            core.setOutput('ready', entries.length > 0 ? 'true' : 'false');
+            core.setOutput('matrix', JSON.stringify({include: entries}));
+            await core.summary.addHeading('Advisory agent-qa selection')
+              .addRaw(`Source commit: ${source.head_sha}. These results never gate publication. Native artifacts are CI candidates, not proof of a published release.\n\n`)
+              .addRaw(entries.map((entry) => `- ${entry.platform}: run ${entry.runId}, ${entry.artifactName}, artifact ${entry.artifactId}.\n`).join(''))
+              .addRaw(skips.map((skip) => `- ${skip.platform}: SKIPPED — ${skip.reason}\n`).join('')).write();
+  journeys:
+    name: Advisory ${{ matrix.platform }} journeys
+    needs: select
+    if: needs.select.outputs.ready == 'true'
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 110
+    continue-on-error: true
+    env:
+      PLAYGROUND_PLATFORM: ${{ matrix.platform }}
+      PLAYGROUND_SOURCE_SHA: ${{ matrix.sourceSha }}
+      PLAYGROUND_BASE_URL: http://127.0.0.1:4173
+      PLAYGROUND_DEVICE_ID: ${{ matrix.platform == 'android' && 'emulator-5554' || '' }}
+    steps:
+      - name: Isolate downloaded artifacts, authentication and Appium state
+        run: |
+          echo "PLAYGROUND_ARTIFACT_DIR=$RUNNER_TEMP/playground-agent-qa-artifact" >> "$GITHUB_ENV"
+          echo "XDG_DATA_HOME=$RUNNER_TEMP/playground-agent-qa-auth" >> "$GITHUB_ENV"
+          echo "APPIUM_HOME=$RUNNER_TEMP/playground-agent-qa-appium" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: npm
+      - name: Install pinned root dependencies
+        run: npm ci
+      - name: Download only the selected CI artifact
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ matrix.artifactId }}
+          repository: ${{ github.repository }}
+          run-id: ${{ matrix.runId }}
+          github-token: ${{ github.token }}
+          path: ${{ env.PLAYGROUND_ARTIFACT_DIR }}
+          merge-multiple: true
+      - name: Record source and binary identity
+        env:
+          SELECTION_JSON: ${{ toJSON(matrix) }}
+        run: |
+          node --input-type=module <<'NODE'
+          import {appendFileSync, cpSync, lstatSync, mkdirSync, readdirSync, readFileSync, writeFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          import {join} from 'node:path';
+          const source = JSON.parse(process.env.SELECTION_JSON);
+          const directory = process.env.PLAYGROUND_ARTIFACT_DIR;
+          const report = {...source, advisory: true, harnessSha: process.env.GITHUB_SHA,
+            artifactPurpose: source.platform === 'web' ? 'CI static build' : 'CI candidate; publication is not asserted'};
+          if (source.platform === 'web') {
+            for (const path of ['index.html', '_headers', '_redirects', 'shop/index.html', 'flights/index.html', 'tasks/index.html', 'observability/index.html']) {
+              if (!lstatSync(join(directory, path)).isFile()) throw new Error(`Missing static build file: ${path}`);
+            }
+            cpSync(directory, 'dist', {recursive: true});
+          } else {
+            const files = readdirSync(directory);
+            const pattern = source.platform === 'android' ? /^app-release\.apk$/ : /^playground-ios-simulator-\d+\.\d+\.\d+(?:-[a-f0-9]{7})?-unverified\.zip$/;
+            if (files.length !== 1 || !pattern.test(files[0]) || !lstatSync(join(directory, files[0])).isFile()) throw new Error('Unexpected native candidate artifact contents.');
+            report.binaryFile = files[0];
+            report.binarySha256 = createHash('sha256').update(readFileSync(join(directory, files[0]))).digest('hex');
+            appendFileSync(process.env.GITHUB_ENV, `PLAYGROUND_BINARY=${join(directory, files[0])}\n`);
+          }
+          mkdirSync('tests/agent-qa/reports', {recursive: true});
+          writeFileSync('tests/agent-qa/reports/provenance.json', JSON.stringify(report, null, 2));
+          NODE
+      - name: Install Chromium for the web journeys
+        if: matrix.platform == 'web'
+        # The repository's Playwright test runner can use a different Chromium revision.
+        run: |
+          node --input-type=module <<'NODE'
+          import {createRequire} from 'node:module';
+          import {dirname, join} from 'node:path';
+          import {spawnSync} from 'node:child_process';
+          const require = createRequire(import.meta.resolve('@vostride/agent-qa-web'));
+          const cli = join(dirname(require.resolve('playwright-core/package.json')), 'cli.js');
+          const result = spawnSync(process.execPath, [cli, 'install', '--with-deps', 'chromium'], {stdio: 'inherit'});
+          if (result.error) throw result.error;
+          process.exit(result.status ?? 1);
+          NODE
+      - name: Serve the downloaded static build
+        if: matrix.platform == 'web'
+        run: |
+          node scripts/serve.mjs > "$RUNNER_TEMP/playground-agent-qa-web.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/playground-agent-qa-web.pid"
+          node --input-type=module <<'NODE'
+          import {setTimeout} from 'node:timers/promises';
+          for (let attempt = 0; attempt < 30; attempt++) {
+            try { if ((await fetch(process.env.PLAYGROUND_BASE_URL)).ok) process.exit(0); } catch {}
+            await setTimeout(1000);
+          }
+          throw new Error('Downloaded web build did not become ready.');
+          NODE
+      - uses: actions/setup-java@v4
+        if: matrix.platform == 'android'
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        if: matrix.platform == 'android'
+        with:
+          packages: platform-tools
+      - name: Install pinned Android SDK tools without building the app
+        if: matrix.platform == 'android'
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Enable Android emulator hardware acceleration
+        if: matrix.platform == 'android'
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Select Xcode 16.4 and unpack the preserved simulator app
+        if: matrix.platform == 'ios'
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          mkdir -p "$RUNNER_TEMP/playground-agent-qa-app"
+          ditto -x -k "$PLAYGROUND_BINARY" "$RUNNER_TEMP/playground-agent-qa-app"
+          test -d "$RUNNER_TEMP/playground-agent-qa-app/Playground.app"
+      - name: Install the pinned Android Appium driver
+        if: matrix.platform == 'android'
+        # UiAutomator2 >=6 supports API >=26; this pin supports Appium 3 and Node 24.
+        run: npx --no-install appium driver install --source=npm appium-uiautomator2-driver@8.7.0
+      - name: Install the pinned iOS Appium driver
+        if: matrix.platform == 'ios'
+        # Last fully supported Xcode 16 / iOS 18 driver range; WDA is pinned to 16.12.8.
+        # https://github.com/appium/appium-xcuitest-driver/blob/master/docs/getting-started/system-requirements.md
+        run: npx --no-install appium driver install --source=npm appium-xcuitest-driver@12.12.4
+      - name: Boot an iOS 18.5 simulator and install the CI app
+        if: matrix.platform == 'ios'
+        id: simulator
+        run: |
+          PLAYGROUND_SIMULATOR_ID=$(xcrun simctl create 'Playground advisory agent-qa' 'com.apple.CoreSimulator.SimDeviceType.iPhone-16' 'com.apple.CoreSimulator.SimRuntime.iOS-18-5')
+          echo "id=$PLAYGROUND_SIMULATOR_ID" >> "$GITHUB_OUTPUT"
+          echo "PLAYGROUND_DEVICE_ID=$PLAYGROUND_SIMULATOR_ID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$PLAYGROUND_SIMULATOR_ID"
+          xcrun simctl bootstatus "$PLAYGROUND_SIMULATOR_ID" -b
+          xcrun simctl install "$PLAYGROUND_SIMULATOR_ID" "$RUNNER_TEMP/playground-agent-qa-app/Playground.app"
+      - name: Configure and validate the selected test target
+        run: |
+          node --test tests/agent-qa/auth.test.mjs
+          node tests/agent-qa/configure.mjs "$PLAYGROUND_PLATFORM"
+          npm run agent-qa:validate
+      - name: Prepare isolated Codex subscription authentication
+        # This static repository secret is never rewritten by CI. OAuth refreshes
+        # stay in the temporary auth store and are deleted; re-export/re-authenticate
+        # and update the secret when token rotation invalidates the saved credential.
+        id: auth
+        env:
+          AGENT_QA_AUTH_JSON: ${{ secrets.AGENT_QA_AUTH_JSON }}
+        run: node tests/agent-qa/auth.mjs prepare
+      - name: Run advisory web or iOS journeys
+        if: matrix.platform != 'android'
+        id: test
+        continue-on-error: true
+        run: npm run agent-qa:test
+      - name: Run advisory Android journeys on the downloaded APK
+        if: matrix.platform == 'android'
+        id: android-test
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7_pro
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            node tests/mobile/android-emulator.mjs emulator-5554
+            adb -s emulator-5554 install "$PLAYGROUND_BINARY"
+            npm run agent-qa:test
+      - name: Shut down the advisory iOS simulator
+        if: always() && steps.simulator.outputs.id != ''
+        env:
+          PLAYGROUND_SIMULATOR_ID: ${{ steps.simulator.outputs.id }}
+        run: xcrun simctl shutdown "$PLAYGROUND_SIMULATOR_ID"
+      - name: Stop the static preview server
+        if: always() && matrix.platform == 'web'
+        run: |
+          if test -f "$RUNNER_TEMP/playground-agent-qa-web.pid"; then
+            kill "$(cat "$RUNNER_TEMP/playground-agent-qa-web.pid")" || true
+          fi
+      - name: Record advisory execution outcome
+        if: always()
+        env:
+          TEST_OUTCOME: ${{ matrix.platform == 'android' && steps.android-test.outcome || steps.test.outcome }}
+          JOB_OUTCOME: ${{ job.status }}
+        run: |
+          node --input-type=module <<'NODE'
+          import {appendFileSync, copyFileSync, existsSync, mkdirSync, writeFileSync} from 'node:fs';
+          const directory = 'tests/agent-qa/reports';
+          mkdirSync(directory, {recursive: true});
+          const outcome = {advisory: true, platform: process.env.PLAYGROUND_PLATFORM,
+            testOutcome: process.env.TEST_OUTCOME || 'not-run', jobOutcome: process.env.JOB_OUTCOME};
+          writeFileSync(`${directory}/ci-outcome.json`, JSON.stringify(outcome, null, 2));
+          const preparation = 'maestro-reports/android/emulator-preparation.json';
+          if (process.env.PLAYGROUND_PLATFORM === 'android' && existsSync(preparation)) copyFileSync(preparation, `${directory}/emulator-preparation.json`);
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Advisory agent-qa ${outcome.platform}: test **${outcome.testOutcome}**, setup **${outcome.jobOutcome}**. Sanitized evidence is uploaded when report sanitation succeeds. Publication is independent of this result.\n`);
+          NODE
+      - name: Sanitize evidence before any upload
+        if: always()
+        id: sanitize
+        env:
+          AGENT_QA_AUTH_JSON: ${{ secrets.AGENT_QA_AUTH_JSON }}
+        run: node tests/agent-qa/auth.mjs sanitize-reports
+      - name: Remove subscription authentication
+        if: always()
+        run: node tests/agent-qa/auth.mjs cleanup
+      - name: Preserve only advisory reports and screenshots
+        if: always() && steps.sanitize.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-qa-${{ matrix.platform }}-${{ github.run_id }}
+          path: tests/agent-qa/reports/
+          retention-days: 14
+          if-no-files-found: ignore

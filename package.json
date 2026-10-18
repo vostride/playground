@@ -9,7 +9,7 @@
     "packages/*"
   ],
   "engines": {
-    "node": ">=22.13"
+    "node": ">=24.0.0"
   },
   "scripts": {
     "dev": "npm run dev -w @playground/shop",
@@ -26,7 +26,10 @@
     "check:releases": "node scripts/check-release-registry.mjs",
     "typecheck:mobile": "npm run typecheck -w @playground/mobile",
     "format": "prettier --write \"web/*/src/**/*.{ts,tsx,css}\" \"mobile/src/**/*.{ts,tsx,css}\" \"packages/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,yaml}\" \"scripts/*.{mjs,tsx}\" \"*.{json,ts,md}\" \".github/workflows/*.yml\"",
-    "test:mobile:flows": "node tests/mobile/validate.mjs"
+    "test:mobile:flows": "node tests/mobile/validate.mjs",
+    "agent-qa:configure": "node tests/agent-qa/configure.mjs",
+    "agent-qa:validate": "node tests/agent-qa/validate.mjs",
+    "agent-qa:test": "node tests/agent-qa/run.mjs"
   },
   "dependencies": {
     "lucide-react": "0.468.0",
@@ -45,6 +48,10 @@
     "tsx": "4.20.6",
     "typescript": "5.9.3",
     "vite": "7.3.5",
-    "yaml": "2.9.1"
+    "yaml": "2.9.1",
+    "agent-qa": "0.1.21",
+    "@vostride/agent-qa-core": "0.1.21",
+    "@vostride/agent-qa-subscription-auth": "0.1.21",
+    "appium": "3.8.0"
   }
 }

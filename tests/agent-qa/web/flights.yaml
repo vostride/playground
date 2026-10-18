@@ -1,0 +1,31 @@
+test-id: t_python-seeing-macro-retry-cow-adz-ski-sen-eyey-mac
+name: Looking date ranges, filtered flights, seats and validated booking
+target: web-flights
+context: >-
+  Use visible product controls only, without scripts, storage changes or internal
+  APIs. Keep this browser tab for the entire journey. Calendar day buttons have
+  full date names; the exact date input uses YYYY-MM-DD. A round trip needs an
+  explicit end date. Available seats are enabled; occupied seats are disabled.
+meta:
+  timeout: 25m
+  retries: 0
+steps:
+  - Reset playground session using the toolbar. Verify Flight search is shown with Round trip selected and one adult.
+  - Open Travel dates. Select November 20, 2026 and then November 27, 2026. Verify the closed date control shows Nov 20 – Nov 27.
+  - Select One way and reopen Travel dates. Verify November 20 is the only selected day, November 27 is not selected, and there is no highlighted range. Close the picker with Done.
+  - Select Round trip and reopen Travel dates. Use Calendar year and Calendar month to show February 2032, then choose February 29, 2032.
+  - Verify the return date is empty, Return Select date is displayed and Done is disabled until an end date is chosen.
+  - Enter 2032-02-28 in Return date and click Use date. Verify Your return date must be on or after your departure. appears and the range is not accepted.
+  - Enter 2032-03-04 in Return date and click Use date. Reopen the picker and verify departure is February 29, 2032 and return is March 4, 2032; both endpoints and the intervening days form the selected range when their months are displayed. Close with Done.
+  - Search flights. Verify the outbound results are New York to London for February 29, 2032, with one traveler and 12 flights.
+  - Enable Nonstop only. Verify five flights remain and each visible result is nonstop.
+  - Select the first outbound flight. Verify the return results are London to New York for March 4, 2032, then select the first return flight.
+  - Choose Flex on Choose your fare. Verify Flex is selected, then continue to seats.
+  - Verify at least one occupied seat is disabled. Select one available outbound seat, choose return seats, select one available return seat, and continue to checkout.
+  - Click Continue to payment with traveler fields blank. Verify a traveler validation error is visible and the traveler form remains open.
+  - Enter first name Alex, last name Morgan, date of birth 1992-06-15 and email alex@example.com. Continue to payment.
+  - Click Review booking without completing the payment fields. Verify a payment validation error appears and the payment step remains open.
+  - Click Use sample to fill the printed sample payment data, then Review booking. Verify the review shows Alex Morgan, both selected seats, Flex, and the February 29 to March 4, 2032 itinerary.
+  - Check I have reviewed the trip details and accept the fare conditions, then confirm the booking. Verify Booking confirmed and a booking reference are displayed.
+  - Open My trips. Verify the newly confirmed New York to London round trip appears alongside the existing booking, with Flex and the chosen dates.
+  - Cancel the newly created booking and confirm using Cancel booking inside the confirmation dialog. Verify that new booking is Cancelled while the pre-existing booking is unchanged.
