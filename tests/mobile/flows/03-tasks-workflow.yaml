@@ -1,5 +1,5 @@
 appId: dev.vostride.playground
-name: Corkboard create, edit, move, undo, checklist, and persistence
+name: Brello create, edit, move, undo, checklist, and persistence
 ---
 - runFlow: ../helpers/launch.yaml
 - runFlow:

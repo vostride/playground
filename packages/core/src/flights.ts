@@ -156,10 +156,47 @@ export const money = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 export const durationLabel = (minutes: number) => `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+/** Calendar dates use the complete four-digit ISO year range, without a booking window. */
+export function isValidFlightDate(date: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < '0001-01-01') return false;
+  const parsed = new Date(`${date}T00:00:00Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
+}
+export function addFlightDays(date: string, days: number) {
+  if (!isValidFlightDate(date)) throw new RangeError('Enter a valid calendar date.');
+  const parsed = new Date(`${date}T00:00:00Z`);
+  parsed.setUTCDate(parsed.getUTCDate() + days);
+  if (parsed.getUTCFullYear() < 1) return '0001-01-01';
+  if (parsed.getUTCFullYear() > 9999) return '9999-12-31';
+  return parsed.toISOString().slice(0, 10);
+}
+export function flightMonthDays(month: string) {
+  if (!isValidFlightDate(`${month}-01`)) throw new RangeError('Enter a valid calendar month.');
+  const parsed = new Date(`${month}-01T00:00:00Z`);
+  parsed.setUTCMonth(parsed.getUTCMonth() + 1, 0);
+  return parsed.getUTCDate();
+}
+/** A travel date is a calendar day, not an instant in the device's timezone. */
+export function formatFlightDate(
+  date: string,
+  options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' },
+) {
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString('en-US', {
+    ...options,
+    timeZone: 'UTC',
+  });
+}
+/** Keep seven distinct days visible, shifting the window at the ISO year boundaries. */
+export function flightDateWindow(date: string) {
+  const end = addFlightDays(addFlightDays(date, -3), 6);
+  const start = addFlightDays(end, -6);
+  return Array.from({ length: 7 }, (_, offset) => addFlightDays(start, offset));
+}
 export function datePrice(date: string) {
   return ((Number(date.slice(-2)) * 13) % 49) - 24;
 }
 export function searchFlights(from: string, to: string, date: string) {
+  if (!isValidFlightDate(date)) return [];
   return flights
     .filter((f) => f.from === from && f.to === to)
     .map((f) => ({ ...f, price: f.price + datePrice(date) }));

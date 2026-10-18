@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, type FormEvent } from 'react';
+import React, { useEffect, useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   ArrowLeft,
@@ -9,7 +9,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Heart,
-  Leaf,
   LogOut,
   Minus,
   Package,
@@ -22,7 +21,18 @@ import {
   User,
   X,
 } from 'lucide-react';
-import { PlaygroundBanner, useSessionState } from '@playground/ui';
+import {
+  BrandMark,
+  PlaygroundBanner,
+  useSessionState,
+  Button,
+  Input,
+  Badge,
+  Card,
+  Dialog as ShadcnDialog,
+  DialogContent,
+  DialogTitle,
+} from '@playground/ui';
 import { money } from '@playground/core';
 import {
   products,
@@ -84,26 +94,34 @@ function Dialog({
   onClose: () => void;
   title: string;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    ref.current?.showModal();
-  }, []);
   return (
-    <dialog
-      ref={ref}
-      onCancel={onClose}
-      aria-label={title}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+    <ShadcnDialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
       }}
     >
-      <button className="icon dialog-close" aria-label="Close dialog" onClick={onClose}>
-        <X size={20} />
-      </button>
-      {children}
-    </dialog>
+      <DialogContent
+        className={`shop-dialog gap-0 overflow-hidden p-0 ${title === 'Cancel order' ? 'sm:max-w-lg' : 'sm:max-w-4xl'}`}
+        showCloseButton={false}
+        aria-describedby={undefined}
+      >
+        <DialogTitle className="sr-only">{title}</DialogTitle>
+        <Button
+          variant="secondary"
+          size="icon"
+          className="dialog-close absolute right-4 top-4 z-10"
+          aria-label="Close dialog"
+          onClick={onClose}
+        >
+          <X size={18} />
+        </Button>
+        {children}
+      </DialogContent>
+    </ShadcnDialog>
   );
 }
+
 function App() {
   const [state, setState] = useSessionState<ShopState>('shop:v1', initialShopState);
   const route = useRoute();
@@ -147,7 +165,7 @@ function App() {
                 : route === 'success'
                   ? 'Order confirmed'
                   : 'Shop';
-    document.title = `${title} · Fernwood`;
+    document.title = `${title} · Komazon`;
     setError('');
   }, [route]);
   useEffect(() => {
@@ -209,7 +227,7 @@ function App() {
       name: s.name || credentials.name,
       email: s.email || credentials.email,
     }));
-    setNotice('Welcome back, Alex');
+    setNotice('Signed in as Alex');
     go(state.cart.length ? 'checkout' : 'catalog');
   }
   function nextStep(e: FormEvent) {
@@ -236,7 +254,7 @@ function App() {
     setSort('featured');
   }
   const summary = (
-    <div className="order-summary">
+    <Card className="order-summary gap-0">
       <h2>Order summary</h2>
       <div>
         <span>Subtotal</span>
@@ -254,15 +272,17 @@ function App() {
       {totals.subtotal < 10000 && totals.subtotal > 0 && (
         <small>Add {money(10000 - totals.subtotal)} for free standard shipping.</small>
       )}
-    </div>
+    </Card>
   );
   return (
     <>
-      <PlaygroundBanner app="Fernwood" bugs={bugs} />
+      <PlaygroundBanner app="Komazon" bugs={bugs} />
       <header className="site-header">
         <a href="#catalog" className="brand">
-          <Leaf size={27} strokeWidth={1.4} />
-          fernwood<span>Considered goods. Everyday living.</span>
+          <span className="brand-icon">
+            <BrandMark app="shop" size={24} className="size-6" />
+          </span>
+          Komazon
         </a>
         <nav aria-label="Main navigation">
           <a className={route === 'catalog' ? 'active' : ''} href="#catalog">
@@ -276,7 +296,9 @@ function App() {
           {state.signedIn ? (
             <>
               <span className="account-name">Hi, Alex</span>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 className="icon"
                 aria-label="Sign out"
                 title="Sign out"
@@ -287,114 +309,75 @@ function App() {
                 }}
               >
                 <LogOut size={19} />
-              </button>
+              </Button>
             </>
           ) : (
-            <button className="icon" aria-label="Sign in" onClick={() => go('signin')}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="icon"
+              aria-label="Sign in"
+              onClick={() => go('signin')}
+            >
               <User size={20} />
-            </button>
+            </Button>
           )}
-          <button
-            className="bag-button"
+          <Button
+            variant="ghost"
+            className="bag-button border border-[#355448] bg-[#1c352c] text-[#b2f5d9]"
             onClick={() => go('cart')}
             aria-label={`Shopping bag (${cartCount})`}
           >
             <ShoppingBag size={20} />
             <span>Bag</span>
             <b>{cartCount}</b>
-          </button>
+          </Button>
         </div>
       </header>
       {notice && (
         <div className="toast" role="status">
           <CheckCircle2 size={18} />
           {notice}
-          <button onClick={() => setNotice('')} aria-label="Dismiss notification">
+          <Button variant="ghost" onClick={() => setNotice('')} aria-label="Dismiss notification">
             <X size={16} />
-          </button>
+          </Button>
         </div>
       )}
       {error && (
         <div className="error global-error" role="alert">
           {error}
-          <button className="text-button" onClick={() => setError('')}>
+          <Button variant="ghost" className="text-button" onClick={() => setError('')}>
             Dismiss
-          </button>
+          </Button>
         </div>
       )}
       {route === 'catalog' && (
         <main className="catalog">
-          <section className="hero">
-            <div className="hero-copy">
-              <span className="eyebrow">THE EVERYDAY COLLECTION</span>
-              <h1>
-                Good things.
-                <br />
-                <em>For the everyday.</em>
-              </h1>
-              <p>
-                Thoughtful essentials for the spaces you live in
-                <br className="desktop" /> and the moments in between.
-              </p>
-              <button
-                onClick={() =>
-                  document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth' })
-                }
-              >
-                Find your everyday <ArrowRight size={17} />
-              </button>
-              <div className="hero-note">
-                <span />
-                Less, but better. Made to be kept.
-              </div>
-            </div>
-            <div className="hero-art">
-              <span className="hero-ring" />
-              <ProductArt art="lamp" color="Sand" className="hero-lamp" />
-              <ProductArt art="vase" color="Amber" className="hero-vase" />
-              <span className="hero-caption">A quieter kind of everyday.</span>
-              <span className="hero-edition">01 / THE HOME EDIT</span>
-            </div>
-          </section>
-          <div className="benefits">
-            <span>
-              <Truck size={17} /> Free shipping on orders $100+
-            </span>
-            <span>
-              <Leaf size={16} /> Thoughtfully made, thoughtfully chosen
-            </span>
-            <span>
-              <Package size={17} /> 30-day returns, no fuss
-            </span>
-          </div>
           <section id="collection" className="collection">
             <div className="collection-heading">
-              <div>
-                <span className="eyebrow">FIND YOUR FAVORITES</span>
-                <h2>The little things, well made.</h2>
-              </div>
-              <span className="collection-count">
-                {products.length.toLocaleString()} considered essentials
-              </span>
+              <h1>Products</h1>
             </div>
             <div className="catalog-layout">
               <aside className={`filters ${filters ? 'expanded' : ''}`}>
                 <div className="filter-title">
-                  Browse collection
-                  <button
-                    className="icon mobile"
+                  Categories
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="icon mobile min-[761px]:hidden"
                     aria-label="Close filters"
                     onClick={() => setFilters(false)}
                   >
                     <X size={16} />
-                  </button>
+                  </Button>
                 </div>
                 <div className="category-list">
                   {['All products', 'Living', 'Kitchen', 'Workspace', 'Everyday'].map((c) => (
-                    <button
+                    <Button
+                      variant="ghost"
                       key={c}
                       onClick={() => setCategory(c)}
-                      className={c === category ? 'selected' : ''}
+                      className={`w-full justify-between px-2.5 ${c === category ? 'selected' : ''}`}
                     >
                       {c}
                       <span>
@@ -402,7 +385,7 @@ function App() {
                           ? 1200
                           : products.filter((p) => p.category === c).length}
                       </span>
-                    </button>
+                    </Button>
                   ))}
                 </div>
                 <div className="filter-group">
@@ -434,42 +417,38 @@ function App() {
                     In stock only
                   </label>
                 </div>
-                <div className="sidebar-note">
-                  <Leaf size={22} strokeWidth={1.4} />
-                  <h3>A little more considered.</h3>
-                  <p>
-                    Objects with purpose.
-                    <br />
-                    Materials with character.
-                    <br />
-                    Things that feel like you.
-                  </p>
-                </div>
               </aside>
               <div className="product-area">
                 <div className="catalog-toolbar">
                   <label className="search">
                     <Search size={17} />
-                    <input
+                    <Input
+                      className="h-10 pl-10 pr-10"
                       aria-label="Search products"
-                      placeholder="Search the collection"
+                      placeholder="Search products"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                     />
                     {query && (
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="icon"
                         aria-label="Clear search"
                         onClick={() => setQuery('')}
                       >
                         <X size={14} />
-                      </button>
+                      </Button>
                     )}
                   </label>
-                  <button className="outline mobile" onClick={() => setFilters(!filters)}>
+                  <Button
+                    variant="outline"
+                    className="outline mobile min-[761px]:hidden"
+                    onClick={() => setFilters(!filters)}
+                  >
                     <SlidersHorizontal size={16} />
                     Filters
-                  </button>
+                  </Button>
                   <label className="sort">
                     Sort by{' '}
                     <select
@@ -490,9 +469,9 @@ function App() {
                     <span className="muted">/ {filtered.length.toLocaleString()} items</span>
                   </span>
                   {(query || category !== 'All products' || stockOnly || price !== 'all') && (
-                    <button className="text-button" onClick={resetFilters}>
+                    <Button variant="ghost" className="text-button" onClick={resetFilters}>
                       Clear filters
-                    </button>
+                    </Button>
                   )}
                 </div>
                 {loading ? (
@@ -504,50 +483,68 @@ function App() {
                 ) : visible.length ? (
                   <div className="product-grid">
                     {visible.map((product) => (
-                      <article className="product-card" key={product.id}>
-                        <button
-                          className={`product-image art-${product.art}`}
+                      <Card
+                        role="article"
+                        className="product-card gap-0 overflow-hidden py-0 shadow-none"
+                        key={product.id}
+                      >
+                        <Button
+                          variant="ghost"
+                          className={`product-image relative h-auto w-full rounded-none p-0 has-[>svg]:px-0 art-${product.art}`}
                           onClick={() => {
                             setSelected(product);
                             setQty(1);
                           }}
                           aria-label={`View ${product.name}`}
                         >
-                          <ProductArt art={product.art} color={product.color} />
+                          <ProductArt
+                            art={product.art}
+                            color={product.color}
+                            className="size-full"
+                          />
                           {product.tag && (
-                            <span className={`tag ${product.tag === 'New arrival' ? 'new' : ''}`}>
+                            <Badge
+                              variant="secondary"
+                              className={`tag ${product.tag === 'New arrival' ? 'new' : ''}`}
+                            >
                               {product.tag}
-                            </span>
+                            </Badge>
                           )}
-                          {!product.stock && <span className="tag">Sold out</span>}
-                        </button>
+                          {!product.stock && (
+                            <Badge variant="secondary" className="tag">
+                              Sold out
+                            </Badge>
+                          )}
+                        </Button>
                         <div className="product-info">
                           <div>
-                            <button
-                              className="product-name"
+                            <Button
+                              variant="ghost"
+                              className="product-name h-auto justify-start p-0 text-left whitespace-normal"
                               onClick={() => {
                                 setSelected(product);
                                 setQty(1);
                               }}
                             >
                               {product.name}
-                            </button>
+                            </Button>
                             <p>
                               {product.color} <span>·</span> {product.category}
                             </p>
                           </div>
                           <span className="product-price">{money(product.price)}</span>
                         </div>
-                        <button
-                          className="quick-add"
+                        <Button
+                          variant="outline"
+                          className="quick-add w-full"
                           onClick={() => add(product)}
                           disabled={!product.stock}
                           aria-label={`Add ${product.name} to bag`}
                         >
                           <Plus size={15} />
                           {product.stock ? 'Add to bag' : 'Out of stock'}
-                        </button>
-                      </article>
+                        </Button>
+                      </Card>
                     ))}
                   </div>
                 ) : (
@@ -555,9 +552,9 @@ function App() {
                     <Search size={32} />
                     <h2>No products found</h2>
                     <p>Try a different search or clear your filters.</p>
-                    <button className="primary" onClick={resetFilters}>
+                    <Button className="primary" onClick={resetFilters}>
                       Clear filters
-                    </button>
+                    </Button>
                   </div>
                 )}
                 <div className="pagination">
@@ -566,18 +563,22 @@ function App() {
                     {Math.min(page * 12, filtered.length)} of {filtered.length.toLocaleString()}
                   </span>
                   <div>
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="icon"
                       aria-label="Previous page"
                       disabled={page === 1}
                       onClick={() => setPage((p) => p - 1)}
                     >
                       <ChevronLeft size={18} />
-                    </button>
+                    </Button>
                     <span>
                       Page {page} of {pages}
                     </span>
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="icon"
                       aria-label="Next page"
                       disabled={page === pages}
@@ -587,7 +588,7 @@ function App() {
                       }}
                     >
                       <ChevronRight size={18} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -597,27 +598,13 @@ function App() {
       )}
       {route === 'signin' && (
         <main className="auth-layout">
-          <div className="auth-story">
-            <Leaf size={38} strokeWidth={1} />
-            <h1>
-              Make yourself
-              <br />
-              <em>at home.</em>
-            </h1>
-            <p>
-              A few good things.
-              <br />A place to keep track of them.
-            </p>
-            <ProductArt art="mug" color="Sage" />
-          </div>
           <section className="auth-form">
-            <span className="eyebrow">YOUR FERNWOOD</span>
-            <h1>Welcome back.</h1>
+            <h1>Sign in</h1>
             <p className="muted">Sign in to check out and keep track of your orders.</p>
             <form onSubmit={signIn}>
               <label>
                 Email address
-                <input
+                <Input
                   name="email"
                   type="email"
                   autoComplete="username"
@@ -627,7 +614,7 @@ function App() {
               </label>
               <label>
                 Password
-                <input
+                <Input
                   name="password"
                   type="password"
                   autoComplete="current-password"
@@ -635,12 +622,12 @@ function App() {
                   placeholder="Enter your password"
                 />
               </label>
-              <button className="primary" type="submit">
+              <Button className="primary" type="submit">
                 Sign in <ArrowRight size={17} />
-              </button>
+              </Button>
             </form>
             <div className="demo-credentials">
-              <b>This is a playground. Use the demo account.</b>
+              <b>Demo account</b>
               <span>
                 Email <code>{credentials.email}</code>
               </span>
@@ -649,7 +636,7 @@ function App() {
               </span>
             </div>
             <a className="back-link" href="#catalog">
-              <ArrowLeft size={15} /> Back to the collection
+              <ArrowLeft size={15} /> Back to products
             </a>
           </section>
         </main>
@@ -660,7 +647,6 @@ function App() {
             <ArrowLeft size={15} /> Continue shopping
           </a>
           <div className="page-heading">
-            <span className="eyebrow">YOUR EVERYDAY, UPGRADED</span>
             <h1>
               Your bag <span>({cartCount})</span>
             </h1>
@@ -668,11 +654,10 @@ function App() {
           {!state.cart.length ? (
             <div className="empty">
               <ShoppingBag size={36} strokeWidth={1} />
-              <h2>A little room for something good.</h2>
-              <p>Your bag is empty. Find your next everyday favorite.</p>
-              <button className="primary" onClick={() => go('catalog')}>
-                Explore the collection <ArrowRight size={17} />
-              </button>
+              <h2>Your bag is empty</h2>
+              <Button className="primary" onClick={() => go('catalog')}>
+                Browse products <ArrowRight size={17} />
+              </Button>
             </div>
           ) : (
             <div className="checkout-layout">
@@ -684,7 +669,7 @@ function App() {
                 {state.cart.map((item) => {
                   const p = products.find((p) => p.id === item.productId)!;
                   return (
-                    <article className="cart-item" key={p.id}>
+                    <Card role="article" className="cart-item grid gap-4 shadow-none" key={p.id}>
                       <div className="cart-art">
                         <ProductArt art={p.art} color={p.color} />
                       </div>
@@ -692,44 +677,43 @@ function App() {
                         <h3>{p.name}</h3>
                         <p>{p.color}</p>
                         <span>{money(p.price)}</span>
-                        <button
+                        <Button
+                          variant="ghost"
                           className="text-button"
                           onClick={() => changeQuantity(p.id, 0)}
                           aria-label={`Remove ${p.name}`}
                         >
                           Remove
-                        </button>
+                        </Button>
                       </div>
                       <div className="quantity">
-                        <button
+                        <Button
+                          variant="ghost"
                           aria-label={`Decrease ${p.name} quantity`}
                           onClick={() => changeQuantity(p.id, item.quantity - 1)}
                         >
                           <Minus size={14} />
-                        </button>
+                        </Button>
                         <span aria-label={`${p.name} quantity`}>{item.quantity}</span>
-                        <button
+                        <Button
+                          variant="ghost"
                           aria-label={`Increase ${p.name} quantity`}
                           disabled={item.quantity >= p.stock}
                           onClick={() => changeQuantity(p.id, item.quantity + 1)}
                         >
                           <Plus size={14} />
-                        </button>
+                        </Button>
                       </div>
                       <b className="line-total">{money(p.price * item.quantity)}</b>
-                    </article>
+                    </Card>
                   );
                 })}
-                <div className="shipping-note">
-                  <Truck size={19} />
-                  <span>Carefully packed. On its way in 2–3 business days.</span>
-                </div>
               </div>
               <aside>
                 {summary}
-                <button className="primary full" onClick={checkout}>
+                <Button className="primary full" onClick={checkout}>
                   Continue to checkout <ArrowRight size={17} />
-                </button>
+                </Button>
                 <p className="safe-note">A simulated checkout. No payment details needed.</p>
               </aside>
             </div>
@@ -742,22 +726,21 @@ function App() {
             <ArrowLeft size={15} /> Back to your bag
           </a>
           <div className="page-heading">
-            <span className="eyebrow">ALMOST YOURS</span>
             <h1>Checkout</h1>
           </div>
           {!state.signedIn ? (
             <div className="empty">
               <h2>Sign in to continue</h2>
-              <button className="primary" onClick={() => go('signin')}>
+              <Button className="primary" onClick={() => go('signin')}>
                 Sign in
-              </button>
+              </Button>
             </div>
           ) : !state.cart.length ? (
             <div className="empty">
               <h2>Your bag is empty</h2>
-              <button className="primary" onClick={() => go('catalog')}>
-                Explore the collection
-              </button>
+              <Button className="primary" onClick={() => go('catalog')}>
+                Browse products
+              </Button>
             </div>
           ) : (
             <>
@@ -773,7 +756,7 @@ function App() {
                 <section className="checkout-form">
                   {step === 1 && (
                     <form onSubmit={nextStep} noValidate>
-                      <h2>Where should we send it?</h2>
+                      <h2>Shipping address</h2>
                       <p className="muted">Use fictional details. Nothing will be shipped.</p>
                       <div className="form-grid">
                         {(
@@ -807,7 +790,7 @@ function App() {
                                 <option>Australia</option>
                               </select>
                             ) : (
-                              <input
+                              <Input
                                 aria-label={
                                   {
                                     name: 'Full name',
@@ -835,15 +818,14 @@ function App() {
                           </label>
                         ))}
                       </div>
-                      <button className="primary" type="submit">
+                      <Button className="primary" type="submit">
                         Continue to delivery <ArrowRight size={16} />
-                      </button>
+                      </Button>
                     </form>
                   )}
                   {step === 2 && (
                     <>
-                      <h2>A good thing is on its way.</h2>
-                      <p className="muted">Choose your delivery method.</p>
+                      <h2>Delivery method</h2>
                       {(['standard', 'express'] as const).map((d) => (
                         <label
                           className={`delivery-option ${delivery === d ? 'chosen' : ''}`}
@@ -871,25 +853,28 @@ function App() {
                         </label>
                       ))}
                       <div className="form-actions">
-                        <button className="outline" onClick={() => setStep(1)}>
+                        <Button variant="outline" className="outline" onClick={() => setStep(1)}>
                           Back
-                        </button>
-                        <button className="primary" onClick={() => setStep(3)}>
+                        </Button>
+                        <Button className="primary" onClick={() => setStep(3)}>
                           Review order <ArrowRight size={16} />
-                        </button>
+                        </Button>
                       </div>
                     </>
                   )}
                   {step === 3 && (
                     <>
-                      <h2>One last look.</h2>
-                      <p className="muted">Make sure everything is just right.</p>
+                      <h2>Review order</h2>
                       <div className="review-address">
                         <div>
                           <h3>Ship to</h3>
-                          <button className="text-button" onClick={() => setStep(1)}>
+                          <Button
+                            variant="ghost"
+                            className="text-button"
+                            onClick={() => setStep(1)}
+                          >
                             Edit shipping
-                          </button>
+                          </Button>
                         </div>
                         <p>
                           {shipping.name}
@@ -906,9 +891,13 @@ function App() {
                       <div className="review-address">
                         <div>
                           <h3>Delivery</h3>
-                          <button className="text-button" onClick={() => setStep(2)}>
+                          <Button
+                            variant="ghost"
+                            className="text-button"
+                            onClick={() => setStep(2)}
+                          >
                             Edit delivery
-                          </button>
+                          </Button>
                         </div>
                         <p>
                           {delivery === 'standard'
@@ -930,9 +919,9 @@ function App() {
                       <p className="simulation-note">
                         This order is simulated. You will not be charged.
                       </p>
-                      <button className="primary" onClick={submitOrder}>
+                      <Button className="primary" onClick={submitOrder}>
                         Place order · {money(totals.total)} <ArrowRight size={16} />
-                      </button>
+                      </Button>
                     </>
                   )}
                 </section>
@@ -945,50 +934,48 @@ function App() {
       {route === 'success' && (
         <main className="confirmation">
           <CheckCircle2 size={48} strokeWidth={1.1} />
-          <span className="eyebrow">A LITTLE SOMETHING TO LOOK FORWARD TO</span>
-          <h1>Good things are on their way.</h1>
+
+          <h1>Order confirmed</h1>
           <p>
             Your order <b>{orderId || state.orders[0]?.id || ''}</b> is confirmed.
           </p>
           <p className="muted">This is a simulated order. Nothing will be shipped or charged.</p>
           <div>
-            <button className="primary" onClick={() => go('orders')}>
+            <Button className="primary" onClick={() => go('orders')}>
               View orders <ArrowRight size={17} />
-            </button>
-            <button className="outline" onClick={() => go('catalog')}>
+            </Button>
+            <Button variant="outline" className="outline" onClick={() => go('catalog')}>
               Continue shopping
-            </button>
+            </Button>
           </div>
         </main>
       )}
       {route === 'orders' && (
         <main className="page-container">
           <div className="page-heading">
-            <span className="eyebrow">YOUR FERNWOOD</span>
             <h1>Your orders</h1>
-            <p className="muted">Good things, all in one place.</p>
           </div>
           {!state.signedIn ? (
             <div className="empty">
               <User size={32} />
               <h2>Sign in to see your orders</h2>
-              <button className="primary" onClick={() => go('signin')}>
+              <Button className="primary" onClick={() => go('signin')}>
                 Sign in
-              </button>
+              </Button>
             </div>
           ) : !state.orders.length ? (
             <div className="empty">
               <Package size={36} strokeWidth={1} />
-              <h2>Your story starts here.</h2>
+              <h2>No orders</h2>
               <p>When you place an order, you'll find it here.</p>
-              <button className="primary" onClick={() => go('catalog')}>
-                Explore the collection
-              </button>
+              <Button className="primary" onClick={() => go('catalog')}>
+                Browse products
+              </Button>
             </div>
           ) : (
             <div className="orders">
               {state.orders.map((order) => (
-                <article className="order" key={order.id}>
+                <Card role="article" className="order gap-0 py-0 shadow-none" key={order.id}>
                   <div className="order-header">
                     <div>
                       <h2>Order {order.id}</h2>
@@ -996,7 +983,9 @@ function App() {
                         November 1, 2026 · {order.items.reduce((n, i) => n + i.quantity, 0)} items
                       </span>
                     </div>
-                    <span className={`status ${order.status.toLowerCase()}`}>{order.status}</span>
+                    <Badge variant="secondary" className={`status ${order.status.toLowerCase()}`}>
+                      {order.status}
+                    </Badge>
                     <b>{money(order.total)}</b>
                   </div>
                   {order.items.map((i) => {
@@ -1024,12 +1013,16 @@ function App() {
                       </small>
                     </span>
                     {order.status === 'Confirmed' && (
-                      <button className="outline" onClick={() => setConfirmCancel(order.id)}>
+                      <Button
+                        variant="outline"
+                        className="outline"
+                        onClick={() => setConfirmCancel(order.id)}
+                      >
                         Cancel order
-                      </button>
+                      </Button>
                     )}
                   </div>
-                </article>
+                </Card>
               ))}
             </div>
           )}
@@ -1038,16 +1031,9 @@ function App() {
       {!['catalog', 'signin', 'cart', 'checkout', 'success', 'orders'].includes(route) && (
         <main className="empty">
           <h1>Page not found</h1>
-          <a href="#catalog">Back to the collection</a>
+          <a href="#catalog">Back to products</a>
         </main>
       )}
-      <footer>
-        <a className="footer-brand" href="#catalog">
-          <Leaf size={19} /> fernwood
-        </a>
-        <span>A little more considered. A little more everyday.</span>
-        <span>Part of the Playground collection</span>
-      </footer>
       {selected && (
         <Dialog title={selected.name} onClose={() => setSelected(null)}>
           <div className="product-detail">
@@ -1071,29 +1057,31 @@ function App() {
               </span>
               <div className="detail-actions">
                 <div className="quantity">
-                  <button
+                  <Button
+                    variant="ghost"
                     aria-label="Decrease quantity"
                     disabled={qty <= 1}
                     onClick={() => setQty((q) => q - 1)}
                   >
                     <Minus size={15} />
-                  </button>
+                  </Button>
                   <span>{qty}</span>
-                  <button
+                  <Button
+                    variant="ghost"
                     aria-label="Increase quantity"
                     disabled={qty >= selected.stock}
                     onClick={() => setQty((q) => q + 1)}
                   >
                     <Plus size={15} />
-                  </button>
+                  </Button>
                 </div>
-                <button
+                <Button
                   className="primary"
                   disabled={!selected.stock}
                   onClick={() => add(selected, qty)}
                 >
                   Add to bag <Plus size={16} />
-                </button>
+                </Button>
               </div>
               <div className="detail-shipping">
                 <Truck size={16} />
@@ -1109,10 +1097,10 @@ function App() {
             <h2>Cancel order {confirmCancel}?</h2>
             <p>This will mark your simulated order as cancelled.</p>
             <div className="form-actions">
-              <button className="outline" onClick={() => setConfirmCancel(null)}>
+              <Button variant="outline" className="outline" onClick={() => setConfirmCancel(null)}>
                 Keep order
-              </button>
-              <button
+              </Button>
+              <Button
                 className="primary"
                 onClick={() => {
                   setState((s) => cancelOrder(s, confirmCancel));
@@ -1121,7 +1109,7 @@ function App() {
                 }}
               >
                 Confirm cancellation
-              </button>
+              </Button>
             </div>
           </div>
         </Dialog>

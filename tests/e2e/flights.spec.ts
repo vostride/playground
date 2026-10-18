@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-test('Wayline: search, filters, fare, seats, validated checkout, manage booking', async ({
+test('Looking.com: search, filters, fare, seats, validated checkout, manage booking', async ({
   page,
 }) => {
   await page.goto('/flights/');
@@ -11,7 +11,7 @@ test('Wayline: search, filters, fare, seats, validated checkout, manage booking'
   await expect(page.locator('.flight-card')).toHaveCount(5);
   await page.getByRole('button', { name: 'Select flight', exact: true }).first().click();
   await page.getByRole('button', { name: 'Select flight', exact: true }).first().click();
-  await expect(page.getByRole('heading', { name: 'A fare that fits your plans' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Choose your fare' })).toBeVisible();
   await page.getByRole('button', { name: 'Choose Flex', exact: true }).click();
   await page.getByRole('button', { name: 'Continue to seats' }).click();
   await page.locator('button.seat:not([disabled])').first().click();
@@ -43,7 +43,7 @@ test('Wayline: search, filters, fare, seats, validated checkout, manage booking'
     .click();
   await expect(page.locator('.booking-card').first().locator('.status')).toHaveText('Cancelled');
 });
-test('Wayline occupied seats are disabled by default', async ({ page }) => {
+test('Looking.com occupied seats are disabled by default', async ({ page }) => {
   await page.goto('/flights/');
   await page.getByLabel('One way', { exact: true }).check();
   await page.getByRole('button', { name: 'Search flights', exact: true }).click();
@@ -51,7 +51,7 @@ test('Wayline occupied seats are disabled by default', async ({ page }) => {
   await page.getByRole('button', { name: 'Continue to seats' }).click();
   await expect(page.locator('.seat.occupied').first()).toBeDisabled();
 });
-test('Wayline date range, traveler picker, price calendar and sorting change results', async ({
+test('Looking.com date range, traveler picker, price calendar and sorting change results', async ({
   page,
 }) => {
   await page.goto('/flights/');

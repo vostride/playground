@@ -1,4 +1,4 @@
-/** Corkboard's deterministic, platform-independent board model. */
+/** Brello's deterministic, platform-independent board model. */
 export type TaskStatus = 'backlog' | 'todo' | 'progress' | 'review' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export interface TaskChecklistItem {

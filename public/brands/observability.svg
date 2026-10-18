@@ -1,0 +1,21 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  color="#b1a0ff"
+  role="img"
+  aria-labelledby="brand-title"
+>
+  <title id="brand-title">PepaPog</title>
+  <rect x="2" y="7" width="8" height="13" rx="4" stroke="currentColor" stroke-width="2.2" />
+  <rect x="14" y="3" width="8" height="13" rx="4" stroke="currentColor" stroke-width="2.2" />
+  <path
+    d="M6 13h4l2-4 2 8 2-4h2"
+    stroke="currentColor"
+    stroke-width="2.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

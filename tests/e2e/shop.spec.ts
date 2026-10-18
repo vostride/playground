@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 async function signIn(page: Page) {
   await page.getByRole('textbox', { name: 'Email address', exact: true }).fill('alex@example.com');
-  await page.getByLabel('Password', { exact: true }).fill('fernwood123');
+  await page.getByLabel('Password', { exact: true }).fill('komazon123');
   await page.locator('form').getByRole('button', { name: 'Sign in', exact: true }).click();
 }
 async function addMugs(page: Page) {
@@ -17,7 +17,7 @@ async function fillShipping(page: Page) {
   await page.getByRole('textbox', { name: 'City', exact: true }).fill('Portland');
   await page.getByRole('textbox', { name: 'Postal code' }).fill('97205');
 }
-test('Fernwood released shopping flow: sign in, quantity, validated checkout, order and cancellation', async ({
+test('Komazon released shopping flow: sign in, quantity, validated checkout, order and cancellation', async ({
   page,
 }) => {
   await addMugs(page);
@@ -32,7 +32,7 @@ test('Fernwood released shopping flow: sign in, quantity, validated checkout, or
   await page.getByRole('button', { name: 'Review order' }).click();
   await expect(page.locator('.order-summary .total')).toContainText('$60.00');
   await page.getByRole('button', { name: 'Place order · $60.00' }).click();
-  await expect(page.getByRole('heading', { name: 'Good things are on their way.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Order confirmed' })).toBeVisible();
   await page.getByRole('button', { name: 'View orders' }).click();
   await expect(page.getByRole('heading', { name: 'Order FW-1001' })).toBeVisible();
   await page.reload();
@@ -41,7 +41,7 @@ test('Fernwood released shopping flow: sign in, quantity, validated checkout, or
   await page.getByRole('button', { name: 'Confirm cancellation' }).click();
   await expect(page.locator('.status')).toHaveText('Cancelled');
 });
-test('Fernwood search, filters, pagination and product detail work', async ({ page }) => {
+test('Komazon search, filters, pagination and product detail work', async ({ page }) => {
   await page.goto('/shop/');
   await page.getByRole('textbox', { name: 'Search products' }).fill('impossiblexyz');
   await expect(page.getByRole('heading', { name: 'No products found' })).toBeVisible();
@@ -55,7 +55,7 @@ test('Fernwood search, filters, pagination and product detail work', async ({ pa
     page.getByRole('button', { name: 'View Arc Table Lamp · Edition 2', exact: true }),
   ).toBeVisible();
 });
-test('Fernwood deliberate cart bug is labelled and reproduces only when enabled', async ({
+test('Komazon deliberate cart bug is labelled and reproduces only when enabled', async ({
   page,
 }) => {
   await page.goto('/shop/?bug=cart-total');
@@ -69,11 +69,9 @@ test('Fernwood deliberate cart bug is labelled and reproduces only when enabled'
   await page.getByRole('button', { name: 'Disable', exact: true }).click();
   await expect(page.locator('.order-summary .total')).toContainText('$53.00');
 });
-test('Fernwood reset restores the fresh session', async ({ page }) => {
+test('Komazon reset restores the fresh session', async ({ page }) => {
   await addMugs(page);
   await page.getByRole('button', { name: 'Reset playground session' }).click();
   await page.getByRole('button', { name: 'Shopping bag (0)' }).click();
-  await expect(
-    page.getByRole('heading', { name: 'A little room for something good.' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your bag is empty' })).toBeVisible();
 });

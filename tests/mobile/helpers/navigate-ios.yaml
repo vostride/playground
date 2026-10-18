@@ -2,12 +2,12 @@ appId: dev.vostride.playground
 env:
   UI_ROUTE: '${LINK.split("?")[0]}'
   UI_TASK_ID: '${LINK.split("/").pop().split("?")[0]}'
-  # These exact grouped tab labels are recorded in the real iOS hierarchy.
+  # The native tab buttons expose their product names as explicit labels.
   UI_TAB: >-
-    ${({home:'^⌂, Home$',shop:'^f, Fernwood$',flights:'^↗, Wayline$',tasks:'^▥, Corkboard$',observability:'^v, Vigil$'})[LINK.replace('playground://','').split('/')[0].split('?')[0]]}
+    ${({home:'^Home$',shop:'^Komazon$',flights:'^Looking\\.com$',tasks:'^Brello$',observability:'^PepaPog$'})[LINK.replace('playground://','').split('/')[0].split('?')[0]]}
 ---
 # Tapping the current product's tab changes its route without unmounting the
-# screen, preserving Corkboard's component-local undo stack and task filters.
+# screen, preserving Brello's component-local undo stack and task filters.
 - tapOn: '${UI_TAB}'
 - runFlow:
     when:
@@ -25,7 +25,7 @@ env:
       true: '${LINK === "playground://shop?bug=cart-total"}'
     commands:
       - tapOn: '^Test controls$'
-      - tapOn: '^Fernwood: Quantity ignored in totals$'
+      - tapOn: '^Komazon: Quantity ignored in totals$'
       - scrollUntilVisible:
           element:
             id: button-close-controls

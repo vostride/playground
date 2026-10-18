@@ -1,5 +1,5 @@
 appId: dev.vostride.playground
-name: Vigil log query, event trace, monitor creation, pause, and delete
+name: PepaPog log query, event trace, monitor creation, pause, and delete
 ---
 - runFlow: ../helpers/launch.yaml
 - runFlow:

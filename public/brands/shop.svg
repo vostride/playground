@@ -1,0 +1,16 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  color="#9db4ff"
+  role="img"
+  aria-labelledby="brand-title"
+>
+  <title id="brand-title">Komazon</title>
+  <path
+    fill="currentColor"
+    d="M3 5.5 8 3v7.3L17.5 3 21 6.5 13.8 12l7.2 5.5-3.5 3.5L8 13.7V21l-5-2.5V5.5Z"
+  />
+</svg>

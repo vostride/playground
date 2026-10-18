@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-test('Vigil: live dashboard, log query validation, virtualization and trace waterfall', async ({
+test('PepaPog: live dashboard, log query validation, virtualization and trace waterfall', async ({
   page,
 }) => {
   await page.goto('/observability/');
@@ -29,7 +29,7 @@ test('Vigil: live dashboard, log query validation, virtualization and trace wate
   await page.locator('.waterfall-row').first().click();
   await expect(page.locator('.span-detail')).toBeVisible();
 });
-test('Vigil: alert builder validates, creates, persists, pauses and deletes a monitor', async ({
+test('PepaPog: alert builder validates, creates, persists, pauses and deletes a monitor', async ({
   page,
 }) => {
   await page.goto('/observability/#monitors');
@@ -60,7 +60,7 @@ test('Vigil: alert builder validates, creates, persists, pauses and deletes a mo
     page.getByRole('button', { name: 'Resume Checkout latency above budget', exact: true }),
   ).toHaveCount(0);
 });
-test('Vigil time range, simulated updates, facets and log scrolling respond', async ({ page }) => {
+test('PepaPog time range, simulated updates, facets and log scrolling respond', async ({ page }) => {
   await page.clock.install();
   await page.goto('/observability/');
   await page.clock.runFor(500);

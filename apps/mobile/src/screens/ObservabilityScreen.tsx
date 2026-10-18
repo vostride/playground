@@ -368,7 +368,7 @@ export default function ObservabilityScreen({ route, bug, navigate }: MobileScre
       <View style={s.brandRow}>
         <View>
           <Text style={s.brand}>
-            vigil<Text style={{ color: '#d1a35f' }}>.</Text>
+            PepaPog<Text style={{ color: '#d1a35f' }}>.</Text>
           </Text>
           <Text style={s.workspace}>ACME ENGINEERING</Text>
         </View>

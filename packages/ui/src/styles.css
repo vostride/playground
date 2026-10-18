@@ -1,0 +1,127 @@
+@layer theme, base, product, components, utilities;
+@import '@fontsource-variable/inter';
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import 'tw-animate-css';
+
+@source "./";
+@source "../../../apps/shop/src";
+@source "../../../apps/flights/src";
+@source "../../../apps/tasks/src";
+@source "../../../apps/observability/src";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: 'Inter Variable', Inter, ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --background: #0b1019;
+    --foreground: #edf2f7;
+    --card: #141c29;
+    --card-foreground: #edf2f7;
+    --popover: #182231;
+    --popover-foreground: #edf2f7;
+    --primary: #7c9dff;
+    --primary-foreground: #081122;
+    --secondary: #233045;
+    --secondary-foreground: #e6edf7;
+    --muted: #1c2738;
+    --muted-foreground: #a7b4c7;
+    --accent: #233248;
+    --accent-foreground: #f1f5fc;
+    --destructive: #f87171;
+    --border: #2a3648;
+    --input: #344258;
+    --ring: #7c9dff;
+    --radius: 0.625rem;
+    color: var(--foreground);
+    background: var(--background);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 450;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
+  * {
+    border-color: var(--border);
+  }
+  body {
+    margin: 0;
+    min-width: 320px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #92a2b9;
+    opacity: 1;
+  }
+  ::selection {
+    background: #c7dcff;
+    color: #14264a;
+  }
+}
+
+@layer components {
+  [data-slot='button'] {
+    font-weight: 600;
+  }
+  [data-slot='input'],
+  [data-slot='textarea'] {
+    font-weight: 450;
+    background-color: var(--card);
+  }
+  [data-slot='dialog-overlay'] {
+    z-index: 140;
+  }
+  [data-slot='dialog-content'] {
+    z-index: 150;
+  }
+  [data-slot='select-content'] {
+    z-index: 160;
+  }
+}

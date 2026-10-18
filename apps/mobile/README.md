@@ -1,6 +1,6 @@
 # Playground mobile
 
-A bare React Native 0.83.1 application with four bundled products: Fernwood, Wayline, Corkboard, and Vigil. The native projects are based on the MIT-licensed [official React Native Community Template](https://github.com/react-native-community/template/tree/0.83-stable); its license is retained in `TEMPLATE-LICENSE`. There is no Expo runtime.
+A bare React Native 0.83.1 application with four bundled products: Komazon, Looking.com, Brello, and PepaPog. The native projects are based on the MIT-licensed [official React Native Community Template](https://github.com/react-native-community/template/tree/0.83-stable); its license is retained in `TEMPLATE-LICENSE`. There is no Expo runtime.
 
 ## Development
 
@@ -30,10 +30,10 @@ Bundles are written to the ignored `.bundle/` directory. Native release artifact
 
 The application ID and iOS bundle ID are `dev.vostride.playground`. The registered URL scheme is `playground`.
 
-- `playground://shop` opens Fernwood. `playground://shop/cart` opens the cart.
-- `playground://flights` opens Wayline. `playground://flights/bookings` opens My trips.
-- `playground://tasks` opens Corkboard.
-- `playground://observability` opens Vigil; `/logs`, `/traces`, and `/monitors` select their views.
+- `playground://shop` opens Komazon. `playground://shop/cart` opens the cart.
+- `playground://flights` opens Looking.com. `playground://flights/bookings` opens My trips.
+- `playground://tasks` opens Brello.
+- `playground://observability` opens PepaPog; `/logs`, `/traces`, and `/monitors` select their views.
 
 Append `?bug=<id>` to opt into an individually labelled bug. The same IDs are available through Test controls, and an active bug is always shown in the app banner. With no bug enabled, all normal flows use their passing behavior.
 

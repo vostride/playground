@@ -148,7 +148,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
   const header = (
     <>
       <Row>
-        <Text style={s.brand}>fernwood</Text>
+        <Text style={s.brand}>Komazon</Text>
         {state.signedIn ? (
           <Button
             title="Sign out"

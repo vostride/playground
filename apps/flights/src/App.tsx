@@ -20,8 +20,26 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { PlaygroundBanner, useSessionState } from '@playground/ui';
 import {
+  PlaygroundBanner,
+  BrandMark,
+  useSessionState,
+  Button,
+  Input,
+  Card,
+  Badge,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@playground/ui';
+import {
+  addFlightDays as addDays,
+  flightDateWindow,
+  flightMonthDays,
+  formatFlightDate as formatDate,
+  isValidFlightDate,
   airport,
   airports,
   airlines,
@@ -51,15 +69,6 @@ const bugs = [
     description: 'Already occupied seats can deliberately be selected.',
   },
 ];
-const formatDate = (
-  value: string,
-  options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' },
-) => new Date(`${value}T12:00:00`).toLocaleDateString('en-US', options);
-const addDays = (date: string, days: number) => {
-  const d = new Date(`${date}T12:00:00`);
-  d.setDate(d.getDate() + days);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
 type SearchData = {
   from: string;
   to: string;
@@ -106,7 +115,8 @@ function AirportPicker({
       <label htmlFor={`airport-${label}`}>{label}</label>
       <div className="airport-input">
         <MapPin size={17} />
-        <input
+        <Input
+          className="airport-control h-10 rounded-none border-0 bg-transparent dark:bg-transparent px-0 text-[14px] shadow-none focus-visible:ring-0"
           id={`airport-${label}`}
           role="combobox"
           aria-expanded={open}
@@ -200,10 +210,50 @@ function DateRangePicker({
 }) {
   const [open, setOpen] = useState(false),
     [month, setMonth] = useState(value.departure.slice(0, 7)),
-    [selecting, setSelecting] = useState<'departure' | 'returnDate'>('departure');
-  const first = new Date(`${month}-01T12:00:00`),
-    days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate(),
-    start = (first.getDay() + 6) % 7;
+    [selecting, setSelecting] = useState<'departure' | 'returnDate'>('departure'),
+    [year, setYear] = useState(value.departure.slice(0, 4)),
+    [exactDate, setExactDate] = useState(value.departure),
+    [dateError, setDateError] = useState('');
+  const showMonth = (next: string) => {
+    setMonth(next);
+    setYear(next.slice(0, 4));
+  };
+  const selectPart = (part: 'departure' | 'returnDate') => {
+    setSelecting(part);
+    setExactDate(value[part]);
+    setDateError('');
+    showMonth(value[part].slice(0, 7));
+  };
+  const chooseDate = (date: string) => {
+    if (!isValidFlightDate(date)) {
+      setDateError('Enter a valid date in YYYY-MM-DD format.');
+      return;
+    }
+    if (selecting === 'returnDate' && date < value.departure) {
+      setDateError('Your return date must be on or after your departure.');
+      return;
+    }
+    const next = {
+      ...value,
+      [selecting]: date,
+      ...(selecting === 'departure' && date > value.returnDate
+        ? { returnDate: addDays(date, 7) }
+        : {}),
+    };
+    onChange(next);
+    setDateError('');
+    showMonth(date.slice(0, 7));
+    if (selecting === 'departure' && value.roundTrip) {
+      setSelecting('returnDate');
+      setExactDate(next.returnDate);
+    } else {
+      setExactDate(date);
+      setOpen(false);
+    }
+  };
+  const first = new Date(`${month}-01T00:00:00Z`),
+    days = flightMonthDays(month),
+    start = (first.getUTCDay() + 6) % 7;
   return (
     <div className="date-field">
       <span className="field-label">Travel dates</span>
@@ -213,7 +263,7 @@ function DateRangePicker({
         aria-expanded={open}
         onClick={() => {
           setOpen(!open);
-          setSelecting('departure');
+          selectPart('departure');
         }}
       >
         <CalendarDays size={17} />
@@ -228,16 +278,46 @@ function DateRangePicker({
               type="button"
               className="icon-button"
               aria-label="Previous month"
-              onClick={() => setMonth(addDays(`${month}-01`, -1).slice(0, 7))}
+              disabled={month === '0001-01'}
+              onClick={() => showMonth(addDays(`${month}-01`, -1).slice(0, 7))}
             >
               <ChevronLeft size={18} />
             </button>
-            <strong>{first.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</strong>
+            <div className="calendar-jump">
+              <select
+                aria-label="Calendar month"
+                value={month.slice(5, 7)}
+                onChange={(event) => showMonth(`${month.slice(0, 4)}-${event.target.value}`)}
+              >
+                {Array.from({ length: 12 }, (_, index) => (
+                  <option key={index} value={String(index + 1).padStart(2, '0')}>
+                    {formatDate(`2024-${String(index + 1).padStart(2, '0')}-01`, { month: 'long' })}
+                  </option>
+                ))}
+              </select>
+              <Input
+                type="number"
+                aria-label="Calendar year"
+                className="h-9 w-[76px] px-2 text-[14px]"
+                min={1}
+                max={9999}
+                value={year}
+                onChange={(event) => {
+                  const text = event.target.value;
+                  setYear(text);
+                  if (/^\d{1,4}$/.test(text) && Number(text) >= 1) {
+                    setMonth(`${text.padStart(4, '0')}-${month.slice(5, 7)}`);
+                  }
+                }}
+                onBlur={() => setYear(month.slice(0, 4))}
+              />
+            </div>
             <button
               type="button"
               className="icon-button"
               aria-label="Next month"
-              onClick={() => setMonth(addDays(`${month}-${days}`, 1).slice(0, 7))}
+              disabled={month === '9999-12'}
+              onClick={() => showMonth(addDays(`${month}-${days}`, 1).slice(0, 7))}
             >
               <ChevronRight size={18} />
             </button>
@@ -246,7 +326,7 @@ function DateRangePicker({
             <button
               type="button"
               className={selecting === 'departure' ? 'selected' : ''}
-              onClick={() => setSelecting('departure')}
+              onClick={() => selectPart('departure')}
             >
               Departure <b>{formatDate(value.departure)}</b>
             </button>
@@ -254,7 +334,7 @@ function DateRangePicker({
               <button
                 type="button"
                 className={selecting === 'returnDate' ? 'selected' : ''}
-                onClick={() => setSelecting('returnDate')}
+                onClick={() => selectPart('returnDate')}
               >
                 Return <b>{formatDate(value.returnDate)}</b>
               </button>
@@ -285,26 +365,55 @@ function DateRangePicker({
                         ? 'date-in-range'
                         : ''
                   }
-                  onClick={() => {
-                    onChange({
-                      ...value,
-                      [selecting]: date,
-                      ...(selecting === 'departure' && date > value.returnDate
-                        ? { returnDate: addDays(date, 7) }
-                        : {}),
-                    });
-                    if (selecting === 'departure' && value.roundTrip) setSelecting('returnDate');
-                    else setOpen(false);
-                  }}
+                  onClick={() => chooseDate(date)}
                 >
                   {i + 1}
                 </button>
               );
             })}
           </div>
-          <button className="button small full" type="button" onClick={() => setOpen(false)}>
+          <div className="calendar-exact-date">
+            <label htmlFor="exact-travel-date">
+              {selecting === 'departure' ? 'Departure date' : 'Return date'}
+            </label>
+            <div>
+              <Input
+                id="exact-travel-date"
+                type="date"
+                className="h-10 min-w-0 flex-1 text-[14px]"
+                min={selecting === 'returnDate' ? value.departure : '0001-01-01'}
+                max="9999-12-31"
+                value={exactDate}
+                aria-invalid={Boolean(dateError)}
+                aria-describedby={dateError ? 'calendar-date-error' : undefined}
+                onChange={(event) => {
+                  setExactDate(event.target.value);
+                  setDateError('');
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10"
+                onClick={() => chooseDate(exactDate)}
+              >
+                Use date
+              </Button>
+            </div>
+            {dateError && (
+              <p id="calendar-date-error" role="alert">
+                {dateError}
+              </p>
+            )}
+          </div>
+          <Button
+            variant="default"
+            className="button small full h-[42px] text-[14px] font-semibold"
+            type="button"
+            onClick={() => setOpen(false)}
+          >
             Done
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -360,7 +469,7 @@ function PassengerPicker({ count, onChange }: { count: number; onChange: (n: num
 }
 function FlightCard({ flight, choose }: { flight: Flight; choose: () => void }) {
   return (
-    <article className="flight-card">
+    <Card className="flight-card grid gap-0 p-0">
       <div className={`airline-logo airline-${airlines.indexOf(flight.airline)}`}>
         <Plane size={20} />
       </div>
@@ -401,11 +510,15 @@ function FlightCard({ flight, choose }: { flight: Flight; choose: () => void }) 
       <div className="flight-price">
         <strong>{money(flight.price)}</strong>
         <span>per traveler, one way</span>
-        <button className="button" onClick={choose}>
+        <Button
+          variant="default"
+          className="button h-[42px] text-[14px] font-semibold"
+          onClick={choose}
+        >
           Select flight <ArrowRight size={15} />
-        </button>
+        </Button>
       </div>
-    </article>
+    </Card>
   );
 }
 
@@ -443,7 +556,7 @@ export default function App() {
   const activeBug = new URLSearchParams(location.search).get('bug');
   useEffect(() => {
     const titles: Record<View, string> = {
-      home: 'Find your next somewhere',
+      home: 'Flight search',
       results: leg === 'outbound' ? 'Choose your flight' : 'Choose your return',
       fare: 'Choose your fare',
       seats: 'Choose your seats',
@@ -451,7 +564,7 @@ export default function App() {
       confirmation: 'Booking confirmed',
       bookings: 'My trips',
     };
-    document.title = `${titles[view]} · Wayline`;
+    document.title = `${titles[view]} · Looking.com`;
     window.scrollTo(0, 0);
   }, [view, leg]);
   useEffect(() => {
@@ -466,6 +579,13 @@ export default function App() {
   const runSearch = () => {
     if (search.from === search.to) {
       setError('Choose different departure and arrival airports.');
+      return;
+    }
+    if (
+      !isValidFlightDate(search.departure) ||
+      (search.roundTrip && !isValidFlightDate(search.returnDate))
+    ) {
+      setError('Choose valid travel dates.');
       return;
     }
     if (search.roundTrip && search.returnDate < search.departure) {
@@ -603,69 +723,73 @@ export default function App() {
     }, 700);
   };
   const searchForm = (
-    <form
-      className="search-box"
-      onSubmit={(e) => {
-        e.preventDefault();
-        runSearch();
-      }}
-    >
-      <div className="search-options">
-        <label>
-          <input
-            type="radio"
-            name="trip"
-            checked={search.roundTrip}
-            onChange={() => setSearch({ ...search, roundTrip: true })}
-          />{' '}
-          Round trip
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="trip"
-            checked={!search.roundTrip}
-            onChange={() => setSearch({ ...search, roundTrip: false })}
-          />{' '}
-          One way
-        </label>
-        <span>
-          Economy <ChevronDown size={13} />
-        </span>
-      </div>
-      <div className="search-fields">
-        <AirportPicker
-          label="From"
-          value={search.from}
-          onChange={(from) => setSearch({ ...search, from })}
-        />
-        <button
-          className="swap-button"
-          type="button"
-          aria-label="Swap departure and arrival"
-          onClick={() => setSearch({ ...search, from: search.to, to: search.from })}
-        >
-          <ArrowRightLeft size={17} />
-        </button>
-        <AirportPicker
-          label="To"
-          value={search.to}
-          onChange={(to) => setSearch({ ...search, to })}
-        />
-        <DateRangePicker value={search} onChange={setSearch} />
-        <PassengerPicker
-          count={search.passengers}
-          onChange={(passengers) => setSearch({ ...search, passengers })}
-        />
-        <button className="button search-submit" type="submit">
-          <Search size={19} /> Search flights
-        </button>
-      </div>
-    </form>
+    <Card className="search-panel gap-0 p-0">
+      <form
+        className="search-box"
+        onSubmit={(e) => {
+          e.preventDefault();
+          runSearch();
+        }}
+      >
+        <div className="search-options">
+          <label>
+            <input
+              type="radio"
+              name="trip"
+              checked={search.roundTrip}
+              onChange={() => setSearch({ ...search, roundTrip: true })}
+            />{' '}
+            Round trip
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="trip"
+              checked={!search.roundTrip}
+              onChange={() => setSearch({ ...search, roundTrip: false })}
+            />{' '}
+            One way
+          </label>
+          <span>Economy</span>
+        </div>
+        <div className="search-fields">
+          <AirportPicker
+            label="From"
+            value={search.from}
+            onChange={(from) => setSearch({ ...search, from })}
+          />
+          <button
+            className="swap-button"
+            type="button"
+            aria-label="Swap departure and arrival"
+            onClick={() => setSearch({ ...search, from: search.to, to: search.from })}
+          >
+            <ArrowRightLeft size={17} />
+          </button>
+          <AirportPicker
+            label="To"
+            value={search.to}
+            onChange={(to) => setSearch({ ...search, to })}
+          />
+          <DateRangePicker value={search} onChange={setSearch} />
+          <PassengerPicker
+            count={search.passengers}
+            onChange={(passengers) => setSearch({ ...search, passengers })}
+          />
+          <Button
+            variant="default"
+            className="button search-submit h-full self-stretch px-6 text-[14px] font-semibold"
+            type="submit"
+          >
+            <Search size={19} /> Search flights
+          </Button>
+        </div>
+      </form>
+    </Card>
   );
   const summary = outbound && (
-    <aside className="trip-summary">
-      <span className="eyebrow">YOUR TRIP</span>
+    <Card className="trip-summary block gap-0 p-6">
+      <span className="section-label">Trip summary</span>
       <h3>
         {airport(search.from).city} <ArrowRight size={18} /> {airport(search.to).city}
       </h3>
@@ -710,7 +834,7 @@ export default function App() {
       <p>
         <ShieldCheck size={15} /> All taxes and fees included
       </p>
-    </aside>
+    </Card>
   );
   const currentSeatFlight = editingSeat
     ? seatLeg === 'outbound'
@@ -724,18 +848,18 @@ export default function App() {
   const seatCount = editingSeat ? editingSeat.passengers.length : search.passengers;
   return (
     <>
-      <PlaygroundBanner app="Wayline" bugs={bugs} />
+      <PlaygroundBanner app="Looking.com" bugs={bugs} />
       <header className="site-header">
         <div className="header-inner">
-          <button className="wordmark" aria-label="Wayline home" onClick={() => go('home')}>
+          <button className="wordmark" aria-label="Looking.com home" onClick={() => go('home')}>
             <span className="brand-mark">
-              <Plane size={23} />
+              <BrandMark app="flights" size={24} className="size-6" />
             </span>
-            wayline<span className="brand-dot">.</span>
+            Looking<span className="brand-dot">.com</span>
           </button>
           <nav aria-label="Main navigation">
             <button className={view !== 'bookings' ? 'nav-active' : ''} onClick={() => go('home')}>
-              Explore flights
+              Flights
             </button>
             <button
               className={view === 'bookings' ? 'nav-active' : ''}
@@ -757,113 +881,15 @@ export default function App() {
       )}
       <main>
         {view === 'home' && (
-          <>
-            <section className="hero">
-              <div className="hero-copy">
-                <span className="eyebrow">
-                  <span /> A LITTLE FURTHER. A LITTLE FREER.
-                </span>
-                <h1>
-                  Find your next
-                  <br />
-                  <em>somewhere.</em>
-                </h1>
-                <p>
-                  Good journeys begin with a little possibility.
-                  <br />
-                  Find a flight, make a plan, and go.
-                </p>
-              </div>
-              <div className="hero-art" aria-hidden="true">
-                <div className="sun" />
-                <div className="art-cloud cloud-one" />
-                <div className="art-cloud cloud-two" />
-                <div className="mountain mountain-back" />
-                <div className="mountain mountain-front" />
-                <div className="flight-trail" />
-                <Plane className="hero-plane" size={76} />
-                <div className="art-ticket">
-                  <span>YOUR NEXT CHAPTER</span>
-                  <strong>
-                    JFK <ArrowRight size={17} /> LHR
-                  </strong>
-                  <small>Just a flight away.</small>
-                </div>
-              </div>
-            </section>
-            <section className="home-search">
-              {searchForm}
-              {error && (
-                <p className="error-message" role="alert">
-                  {error}
-                </p>
-              )}
-            </section>
-            <section className="trust-row">
-              <span>
-                <ShieldCheck size={18} /> Clear prices. No surprises.
-              </span>
-              <span>
-                <ArrowRightLeft size={18} /> A fare that fits your plans.
-              </span>
-              <span>
-                <Globe2 size={18} /> A world worth exploring.
-              </span>
-            </section>
-            <section className="destinations">
-              <div className="section-heading">
-                <div>
-                  <span className="eyebrow">LET CURIOSITY LEAD</span>
-                  <h2>A change of scenery</h2>
-                </div>
-                <p>A few places we keep coming back to.</p>
-              </div>
-              <div className="destination-grid">
-                {[
-                  {
-                    code: 'LHR',
-                    city: 'London',
-                    tag: 'Old streets. New stories.',
-                    style: 'london',
-                  },
-                  { code: 'LIS', city: 'Lisbon', tag: 'Follow the golden light.', style: 'lisbon' },
-                  { code: 'HND', city: 'Tokyo', tag: 'Every turn, something new.', style: 'tokyo' },
-                ].map((d, i) => (
-                  <button
-                    className={`destination ${d.style}`}
-                    key={d.code}
-                    onClick={() => {
-                      setSearch({ ...search, to: d.code });
-                      setToast(`${d.city} selected. Choose your dates and search flights.`);
-                      document.getElementById('airport-From')?.focus();
-                    }}
-                  >
-                    <div className="destination-art" aria-hidden="true">
-                      <div className="destination-sun" />
-                      <div className="buildings">
-                        {Array.from({ length: 7 }, (_, j) => (
-                          <i
-                            key={j}
-                            style={{
-                              height: `${30 + ((j * 29 + i * 13) % 65)}%`,
-                              width: `${12 + (j % 2) * 3}%`,
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <div className="destination-info">
-                      <div>
-                        <h3>{d.city}</h3>
-                        <p>{d.tag}</p>
-                      </div>
-                      <ArrowRight size={20} />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </section>
-          </>
+          <section className="home-search" aria-labelledby="flight-search-heading">
+            <h1 id="flight-search-heading">Flight search</h1>
+            {searchForm}
+            {error && (
+              <p className="error-message" role="alert">
+                {error}
+              </p>
+            )}
+          </section>
         )}
         {view === 'results' && (
           <>
@@ -871,15 +897,17 @@ export default function App() {
             <section className="results-page">
               <div className="results-heading">
                 <div>
-                  <span className="eyebrow">
-                    {leg === 'outbound' ? 'YOUR JOURNEY STARTS HERE' : 'LET’S GET YOU HOME'}
-                  </span>
                   <h1>
                     {airport(routeFrom).city} <ArrowRight size={28} /> {airport(routeTo).city}
                   </h1>
                   <p>
-                    {formatDate(routeDate, { weekday: 'long', month: 'long', day: 'numeric' })} ·{' '}
-                    {search.passengers} traveler{search.passengers > 1 ? 's' : ''} ·{' '}
+                    {formatDate(routeDate, {
+                      weekday: 'long',
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}{' '}
+                    · {search.passengers} traveler{search.passengers > 1 ? 's' : ''} ·{' '}
                     {leg === 'outbound' ? 'Outbound flight' : 'Return flight'}
                   </p>
                 </div>
@@ -977,21 +1005,19 @@ export default function App() {
                   </fieldset>
                   <div className="filter-note">
                     <ShieldCheck size={19} />
-                    <strong>The price you see is the price you pay.</strong>
-                    <p>Taxes and fees are always included.</p>
+                    <p>Prices include taxes and fees.</p>
                   </div>
                 </aside>
                 <div className="flight-results">
                   <div className="price-calendar" aria-label="Price calendar">
-                    {[-3, -2, -1, 0, 1, 2, 3].map((offset) => {
-                      const date = addDays(routeDate, offset),
-                        price = Math.min(
-                          ...searchFlights(routeFrom, routeTo, date).map((f) => f.price),
-                        );
+                    {flightDateWindow(routeDate).map((date) => {
+                      const price = Math.min(
+                        ...searchFlights(routeFrom, routeTo, date).map((f) => f.price),
+                      );
                       return (
                         <button
                           key={date}
-                          className={offset === 0 ? 'selected' : ''}
+                          className={date === routeDate ? 'selected' : ''}
                           onClick={() => {
                             setSearch({
                               ...search,
@@ -1035,8 +1061,9 @@ export default function App() {
                       <SlidersHorizontal size={32} />
                       <h3>No flights match your filters</h3>
                       <p>Try a higher budget or include connecting flights.</p>
-                      <button
-                        className="button"
+                      <Button
+                        variant="default"
+                        className="button h-[42px] text-[14px] font-semibold"
                         onClick={() =>
                           setFilter({
                             nonstop: false,
@@ -1047,7 +1074,7 @@ export default function App() {
                         }
                       >
                         Clear filters
-                      </button>
+                      </Button>
                     </div>
                   )}
                   <p className="results-footnote">
@@ -1063,24 +1090,16 @@ export default function App() {
             <button className="text-button back" onClick={() => go('results')}>
               <ArrowLeft size={16} /> Back to flights
             </button>
-            <span className="eyebrow">A LITTLE FLEXIBILITY GOES A LONG WAY</span>
-            <h1>A fare that fits your plans</h1>
-            <p className="page-subtitle">
-              Choose what matters for your journey. Your fare applies to all travelers and flights.
-            </p>
+            <h1>Choose your fare</h1>
+            <p className="page-subtitle">Your fare applies to all travelers and flights.</p>
             <div className="fare-layout">
               <div className="fare-cards">
                 {fares.map((f) => (
-                  <article className={`fare-card ${fare === f.id ? 'selected' : ''}`} key={f.id}>
-                    {f.id === 'standard' && <span className="recommended">OUR MOST POPULAR</span>}
+                  <Card
+                    className={`fare-card block gap-0 p-6 ${fare === f.id ? 'selected' : ''}`}
+                    key={f.id}
+                  >
                     <h2>{f.name}</h2>
-                    <p>
-                      {f.id === 'light'
-                        ? 'Travel light, keep it simple.'
-                        : f.id === 'standard'
-                          ? 'A little more room to roam.'
-                          : 'Room for a change of plans.'}
-                    </p>
                     <strong className="fare-price">
                       {f.extra ? `+${money(f.extra)}` : 'Included'}
                       <small>{f.extra ? 'per traveler, per flight' : 'in your flight price'}</small>
@@ -1093,8 +1112,9 @@ export default function App() {
                         </li>
                       ))}
                     </ul>
-                    <button
-                      className={`button ${fare !== f.id ? 'secondary' : ''}`}
+                    <Button
+                      variant={fare === f.id ? 'default' : 'outline'}
+                      className={`button h-[42px] text-[14px] font-semibold ${fare !== f.id ? 'secondary' : ''}`}
                       aria-pressed={fare === f.id}
                       onClick={() => setFare(f.id)}
                     >
@@ -1105,17 +1125,20 @@ export default function App() {
                       ) : (
                         `Choose ${f.name}`
                       )}
-                    </button>
-                  </article>
+                    </Button>
+                  </Card>
                 ))}
               </div>
               {summary}
             </div>
             <div className="flow-actions">
-              <span>Make the journey yours.</span>
-              <button className="button" onClick={beginSeats}>
+              <Button
+                variant="default"
+                className="button h-[42px] text-[14px] font-semibold"
+                onClick={beginSeats}
+              >
                 Continue to seats <ArrowRight size={16} />
-              </button>
+              </Button>
             </div>
           </section>
         )}
@@ -1127,8 +1150,7 @@ export default function App() {
             >
               <ArrowLeft size={16} /> {editingSeat ? 'Back to my trips' : 'Back to fares'}
             </button>
-            <span className="eyebrow">YOUR OWN LITTLE WINDOW ON THE WORLD</span>
-            <h1>Find your favorite seat</h1>
+            <h1>Choose your seats</h1>
             <p className="page-subtitle">
               {seatLeg === 'outbound' ? 'Outbound' : 'Return'} · {currentSeatFlight.from} to{' '}
               {currentSeatFlight.to} · {currentSeatFlight.aircraft}. Select {seatCount} seat
@@ -1213,8 +1235,9 @@ export default function App() {
                 <p>
                   Seat selection is included. Window seats are A and F; aisle seats are C and D.
                 </p>
-                <button
-                  className="button full"
+                <Button
+                  variant="default"
+                  className="button full h-[42px] text-[14px] font-semibold"
                   disabled={currentSeats.length !== seatCount}
                   onClick={() => {
                     if (editingSeat) {
@@ -1241,7 +1264,7 @@ export default function App() {
                       ? 'Choose return seats'
                       : 'Continue to checkout'}
                   <ArrowRight size={16} />
-                </button>
+                </Button>
                 {!editingSeat && summary}
               </aside>
             </div>
@@ -1264,11 +1287,7 @@ export default function App() {
               ))}
             </ol>
             <h1>
-              {step === 0
-                ? 'Who’s coming along?'
-                : step === 1
-                  ? 'One step closer to takeoff.'
-                  : 'Ready for your next chapter?'}
+              {step === 0 ? 'Traveler details' : step === 1 ? 'Payment details' : 'Review booking'}
             </h1>
             <p className="page-subtitle">
               {step === 0
@@ -1282,14 +1301,15 @@ export default function App() {
                 {step === 0 && (
                   <>
                     {travelers.map((p, i) => (
-                      <section className="form-section" key={i}>
+                      <Card className="form-section block gap-0 p-6" key={i}>
                         <h3>
                           Traveler {i + 1} <span>Adult</span>
                         </h3>
                         <div className="form-grid">
                           <label>
                             First name
-                            <input
+                            <Input
+                              className="h-11 text-[14px]"
                               autoComplete="given-name"
                               value={p.firstName}
                               onChange={(e) =>
@@ -1303,7 +1323,8 @@ export default function App() {
                           </label>
                           <label>
                             Last name
-                            <input
+                            <Input
+                              className="h-11 text-[14px]"
                               autoComplete="family-name"
                               value={p.lastName}
                               onChange={(e) =>
@@ -1317,7 +1338,8 @@ export default function App() {
                           </label>
                           <label>
                             Date of birth
-                            <input
+                            <Input
+                              className="h-11 text-[14px]"
                               type="date"
                               min="1900-01-01"
                               max="2014-10-18"
@@ -1332,13 +1354,14 @@ export default function App() {
                             />
                           </label>
                         </div>
-                      </section>
+                      </Card>
                     ))}
-                    <section className="form-section">
+                    <Card className="form-section block gap-0 p-6">
                       <h3>Where should we send your confirmation?</h3>
                       <label>
                         Email address
-                        <input
+                        <Input
+                          className="h-11 text-[14px]"
                           type="email"
                           autoComplete="email"
                           placeholder="alex@example.com"
@@ -1347,11 +1370,11 @@ export default function App() {
                         />
                       </label>
                       <p className="muted">Use sample details. No email will be sent.</p>
-                    </section>
+                    </Card>
                   </>
                 )}
                 {step === 1 && (
-                  <section className="form-section">
+                  <Card className="form-section block gap-0 p-6">
                     <h3>Payment details</h3>
                     <div className="sample-card">
                       <ShieldCheck size={20} />
@@ -1376,7 +1399,8 @@ export default function App() {
                     <div className="form-grid">
                       <label className="span-two">
                         Name on card
-                        <input
+                        <Input
+                          className="h-11 text-[14px]"
                           value={card.name}
                           autoComplete="off"
                           onChange={(e) => setCard({ ...card, name: e.target.value })}
@@ -1384,7 +1408,8 @@ export default function App() {
                       </label>
                       <label className="span-two">
                         Card number
-                        <input
+                        <Input
+                          className="h-11 text-[14px]"
                           inputMode="numeric"
                           autoComplete="off"
                           placeholder="4242 4242 4242 4242"
@@ -1394,7 +1419,8 @@ export default function App() {
                       </label>
                       <label>
                         Expiry date
-                        <input
+                        <Input
+                          className="h-11 text-[14px]"
                           placeholder="MM/YY"
                           value={card.expiry}
                           maxLength={5}
@@ -1403,7 +1429,8 @@ export default function App() {
                       </label>
                       <label>
                         Security code
-                        <input
+                        <Input
+                          className="h-11 text-[14px]"
                           inputMode="numeric"
                           value={card.cvc}
                           maxLength={3}
@@ -1411,11 +1438,11 @@ export default function App() {
                         />
                       </label>
                     </div>
-                  </section>
+                  </Card>
                 )}
                 {step === 2 && (
                   <>
-                    <section className="form-section">
+                    <Card className="form-section block gap-0 p-6">
                       <div className="section-line">
                         <h3>Travelers & seats</h3>
                         <button className="text-button" onClick={() => setStep(0)}>
@@ -1436,8 +1463,8 @@ export default function App() {
                       <p>
                         Confirmation for <strong>{email}</strong>
                       </p>
-                    </section>
-                    <section className="form-section">
+                    </Card>
+                    <Card className="form-section block gap-0 p-6">
                       <h3>Payment</h3>
                       <p>Sample Visa ending in 4242 · {card.name}</p>
                       <h3>Fare conditions</h3>
@@ -1456,7 +1483,7 @@ export default function App() {
                         />{' '}
                         I have reviewed the trip details and accept the fare conditions.
                       </label>
-                    </section>
+                    </Card>
                   </>
                 )}
                 {error && (
@@ -1465,8 +1492,9 @@ export default function App() {
                   </p>
                 )}
                 <div className="checkout-action">
-                  <button
-                    className="button"
+                  <Button
+                    variant="default"
+                    className="button h-[42px] text-[14px] font-semibold"
                     disabled={loading}
                     onClick={step === 2 ? confirmBooking : nextCheckout}
                   >
@@ -1478,7 +1506,7 @@ export default function App() {
                           ? 'Review booking'
                           : `Confirm booking · ${money(total)}`}
                     <ArrowRight size={16} />
-                  </button>
+                  </Button>
                   <span>
                     <ShieldCheck size={14} /> Practice booking. No charge.
                   </span>
@@ -1493,11 +1521,9 @@ export default function App() {
             <div className="confirmation-icon">
               <Check size={35} />
             </div>
-            <span className="eyebrow">IT’S HAPPENING</span>
-            <h1>You’re going to {airport(confirmed.outbound.to).city}.</h1>
-            <p>Your booking is confirmed. Let the looking-forward begin.</p>
-            <div className="confirmation-card">
-              <span className="eyebrow">BOOKING REFERENCE</span>
+            <h1>Booking confirmed</h1>
+            <Card className="confirmation-card block gap-0 p-6">
+              <span className="section-label">Booking reference</span>
               <strong className="booking-reference">{confirmed.reference}</strong>
               <div className="confirmation-route">
                 <div>
@@ -1536,24 +1562,26 @@ export default function App() {
                 <strong>Total</strong>
                 <strong>{money(confirmed.total)}</strong>
               </div>
-            </div>
-            <button className="button" onClick={() => go('bookings')}>
+            </Card>
+            <Button
+              variant="default"
+              className="button h-[42px] text-[14px] font-semibold"
+              onClick={() => go('bookings')}
+            >
               Manage your booking <ArrowRight size={16} />
-            </button>
+            </Button>
             <p className="muted">This booking exists only in your current browser session.</p>
           </section>
         )}
         {view === 'bookings' && (
           <section className="flow-page bookings-page">
-            <span className="eyebrow">MORE THAN A BOOKING. SOMETHING TO LOOK FORWARD TO.</span>
             <h1>My trips</h1>
-            <p className="page-subtitle">
-              All your plans, in one place. View a trip, choose a seat, or change direction.
-            </p>
+            <p className="page-subtitle">View bookings, change seats, or cancel a trip.</p>
             <div className="booking-controls">
               <label>
                 <Search size={17} />
-                <input
+                <Input
+                  className="h-11 pl-10 text-[14px]"
                   placeholder="Search by reference or destination"
                   aria-label="Find a booking"
                   value={lookup}
@@ -1569,9 +1597,13 @@ export default function App() {
                 <option value="confirmed">Confirmed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
-              <button className="button" onClick={() => go('home')}>
+              <Button
+                variant="default"
+                className="button h-[42px] text-[14px] font-semibold"
+                onClick={() => go('home')}
+              >
                 Plan another trip <Plus size={16} />
-              </button>
+              </Button>
             </div>
             <div className="booking-list">
               {bookings
@@ -1583,11 +1615,11 @@ export default function App() {
                       .includes(lookup.toLowerCase()),
                 )
                 .map((b) => (
-                  <article className="booking-card" key={b.reference}>
+                  <Card className="booking-card block gap-0 p-0" key={b.reference}>
                     <div className="booking-card-top">
-                      <span className={`status ${b.status}`}>
+                      <Badge variant="outline" className={`status ${b.status}`}>
                         {b.status === 'confirmed' ? 'Confirmed' : 'Cancelled'}
-                      </span>
+                      </Badge>
                       <span>
                         Booking <strong>{b.reference}</strong>
                       </span>
@@ -1662,7 +1694,7 @@ export default function App() {
                             : 'Cancelled under Light fare conditions. No refund.'}
                       </p>
                     )}
-                  </article>
+                  </Card>
                 ))}
               {!bookings.some(
                 (b) =>
@@ -1675,15 +1707,16 @@ export default function App() {
                   <Luggage size={32} />
                   <h3>No trips found</h3>
                   <p>Try another reference or destination, or plan a new trip.</p>
-                  <button
-                    className="button secondary"
+                  <Button
+                    variant="outline"
+                    className="button secondary h-[42px] text-[14px] font-semibold"
                     onClick={() => {
                       setLookup('');
                       setBookingFilter('all');
                     }}
                   >
                     Clear search
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -1695,58 +1728,57 @@ export default function App() {
           </p>
         )}
       </main>
-      <footer className="site-footer">
-        <span className="footer-wordmark">wayline.</span>
-        <span>Good journeys start here.</span>
-        <span>A self-contained travel playground · USD</span>
-      </footer>
-      {cancelRef && (
-        <div className="modal-backdrop" role="presentation" onClick={() => setCancelRef('')}>
-          <section
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="cancel-title"
-            onClick={(e) => e.stopPropagation()}
+      <Dialog open={!!cancelRef} onOpenChange={(open) => !open && setCancelRef('')}>
+        <DialogContent className="wayline-dialog sm:max-w-[480px]" showCloseButton={false}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="modal-close"
+            aria-label="Close cancellation dialog"
+            onClick={() => setCancelRef('')}
           >
-            <button
-              className="icon-button modal-close"
-              aria-label="Close cancellation dialog"
+            <X size={20} />
+          </Button>
+          <DialogHeader>
+            <DialogTitle id="cancel-title" className="text-2xl font-bold">
+              Cancel this trip?
+            </DialogTitle>
+            <DialogDescription className="text-[14px] leading-relaxed">
+              Booking {cancelRef} will be cancelled for every traveler.
+            </DialogDescription>
+          </DialogHeader>
+          <p>
+            {bookings.find((b) => b.reference === cancelRef)?.fare === 'flex'
+              ? 'Your Flex fare is fully refundable. A simulated refund will be recorded.'
+              : bookings.find((b) => b.reference === cancelRef)?.fare === 'standard'
+                ? 'Your Standard fare receives a simulated travel credit less a $40 cancellation fee.'
+                : 'Your Light fare is non-refundable. You won’t receive a refund.'}
+          </p>
+          <div className="modal-actions">
+            <Button
+              variant="outline"
+              className="button secondary h-[42px] text-[14px] font-semibold"
+              autoFocus
               onClick={() => setCancelRef('')}
             >
-              <X size={20} />
-            </button>
-            <h2 id="cancel-title">Cancel this trip?</h2>
-            <p>Booking {cancelRef} will be cancelled for every traveler.</p>
-            <p>
-              {bookings.find((b) => b.reference === cancelRef)?.fare === 'flex'
-                ? 'Your Flex fare is fully refundable. A simulated refund will be recorded.'
-                : bookings.find((b) => b.reference === cancelRef)?.fare === 'standard'
-                  ? 'Your Standard fare receives a simulated travel credit less a $40 cancellation fee.'
-                  : 'Your Light fare is non-refundable. You won’t receive a refund.'}
-            </p>
-            <div className="modal-actions">
-              <button className="button secondary" autoFocus onClick={() => setCancelRef('')}>
-                Keep my trip
-              </button>
-              <button
-                className="button destructive"
-                onClick={() => {
-                  setBookings((prev) =>
-                    prev.map((b) =>
-                      b.reference === cancelRef ? { ...b, status: 'cancelled' } : b,
-                    ),
-                  );
-                  setCancelRef('');
-                  setToast('Your booking has been cancelled.');
-                }}
-              >
-                Cancel booking
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
+              Keep my trip
+            </Button>
+            <Button
+              variant="destructive"
+              className="button destructive h-[42px] text-[14px] font-semibold"
+              onClick={() => {
+                setBookings((prev) =>
+                  prev.map((b) => (b.reference === cancelRef ? { ...b, status: 'cancelled' } : b)),
+                );
+                setCancelRef('');
+                setToast('Your booking has been cancelled.');
+              }}
+            >
+              Cancel booking
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

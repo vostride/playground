@@ -144,7 +144,7 @@ export function createProducts(): Product[] {
 export const products = createProducts();
 export const credentials = {
   email: 'alex@example.com',
-  password: 'fernwood123',
+  password: 'komazon123',
   name: 'Alex Morgan',
 };
 export type CartItem = { productId: string; quantity: number };

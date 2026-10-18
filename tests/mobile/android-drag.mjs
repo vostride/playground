@@ -76,7 +76,7 @@ export async function runAndroidDrag({
 } = {}) {
   mkdirSync(output, { recursive: true });
   const report = {
-    name: 'Corkboard continuous touch drag',
+    name: 'Brello continuous touch drag',
     device,
     startedAt: new Date().toISOString(),
     passed: false,

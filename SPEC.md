@@ -15,20 +15,26 @@ demo of agent-qa, and not part of agent-qa's evaluations.
 ### Web apps
 
 Static sites under `playground.vostride.dev`, one path per app. Each app has its own made-up name,
-shown on its pages and in its page titles (`<page> · <name>`, for example `Cart · Fernwood`). Paths
+shown on its pages and in its page titles (`<page> · <name>`, for example `Cart · Komazon`). Paths
 stay plain words.
+
+Use a dark shadcn/ui interface with readable text and an original simple logo for each product.
+Open directly on the catalog, flight search, metrics dashboard, or task board. The directory is
+an app launcher with names and logos. Omit marketing heroes, slogans, welcome copy, and decorative
+introductory sections. Looking.com's calendar supports any valid past or future date, with direct
+date entry and month/year navigation.
 
 | App | Path | Inspired by | What it exercises |
 |---|---|---|---|
-| Wayline, flight booking | `/flights` | booking.com | Search with airport autocomplete and date-range and passenger pickers; results with filters, sorting and a price calendar; fare choice; a seat map; a multi-step checkout with validation; managing a booking |
-| Vigil, observability | `/observability` | Datadog | Dashboards of time-series charts with a time-range picker and live-updating widgets; a log explorer with a query bar, facets and a virtualized table; trace waterfalls; an alert builder with complex forms |
-| Corkboard, task boards | `/tasks` | Trello, Jira | Boards with drag and drop between and within columns, by mouse and keyboard; inline editing; a card panel with labels, assignees, checklists and due dates; filters and undo |
-| Fernwood, a shop | `/shop` | a small store | The starter app: sign-in, catalog, cart, checkout and orders. agent-qa v2's `init` samples use it |
+| Looking.com, flight booking | `/flights` | booking.com | Search with airport autocomplete and date-range and passenger pickers; results with filters, sorting and a price calendar; fare choice; a seat map; a multi-step checkout with validation; managing a booking |
+| PepaPog, observability | `/observability` | Datadog | Dashboards of time-series charts with a time-range picker and live-updating widgets; a log explorer with a query bar, facets and a virtualized table; trace waterfalls; an alert builder with complex forms |
+| Brello, task boards | `/tasks` | Trello, Jira | Boards with drag and drop between and within columns, by mouse and keyboard; inline editing; a card panel with labels, assignees, checklists and due dates; filters and undo |
+| Komazon, a shop | `/shop` | a small store | The starter app: sign-in, catalog, cart, checkout and orders. agent-qa v2's `init` samples use it |
 
 ### Mobile app
 
 One bare React Native app called Playground: a super app whose home screen opens mobile versions of
-Wayline, Corkboard, Vigil and Fernwood. Together they cover tab and stack navigation, forms with the
+Looking.com, Brello, PepaPog and Komazon. Together they cover tab and stack navigation, forms with the
 keyboard, date and option pickers, switches, bottom sheets and modals, long lists, pull to refresh,
 drag and drop by touch, gestures, a WebView screen, and a deep link into each flow.
 
@@ -47,7 +53,7 @@ drag and drop by touch, gestures, a WebView screen, and a deep link into each fl
 ## Stack
 
 - **Web:** React and TypeScript, built with Vite into static files and served by Cloudflare Pages.
-  Every app, Fernwood included, is its own build under its own path, so changing one app never
+  Every app, Komazon included, is its own build under its own path, so changing one app never
   touches another's files. No server framework is needed, because the apps have no server by design.
 - **Mobile:** bare React Native (the React Native CLI, no Expo).
 - **Shared:** one repo with workspaces for the web apps, the mobile app and shared TypeScript packages
@@ -92,9 +98,9 @@ drag and drop by touch, gestures, a WebView screen, and a deep link into each fl
 
 ## Starting point
 
-- **Built fresh.** Every app, Fernwood included, is built here from scratch. Nothing is copied from
+- **Built fresh.** Every app, Komazon included, is built here from scratch. Nothing is copied from
   agent-qa's private evaluation repo, which keeps its own simple shop for its own checks.
-- **Fernwood comes first.** It's the smallest app and the one agent-qa v2's `init` samples use:
+- **Komazon comes first.** It's the smallest app and the one agent-qa v2's `init` samples use:
   sign-in, catalog, cart, checkout and orders, with at least one labelled bug for the failing sample
   test.
 - **Afterwards,** agent-qa's spec points to the playground for the hosted site, and the evaluation
@@ -104,10 +110,10 @@ drag and drop by touch, gestures, a WebView screen, and a deep link into each fl
 
 ## Timeline
 
-- **Now, for agent-qa v2:** Fernwood, built in React and TypeScript and live at
+- **Now, for agent-qa v2:** Komazon, built in React and TypeScript and live at
   `playground.vostride.dev/shop`. agent-qa's `init` points its web sample tests at it. The v2 release
   waits on it, so it comes before the bigger apps.
-- **Next:** Wayline, Vigil and Corkboard on the web, released one at a time. They don't block
+- **Next:** Looking.com, PepaPog and Brello on the web, released one at a time. They don't block
   agent-qa.
 - **For agent-qa v3:** the Playground mobile app, built in CI and released from this repo for Android
   and the iOS simulator. `agent-qa init` downloads the pinned release and adds mobile sample tests,

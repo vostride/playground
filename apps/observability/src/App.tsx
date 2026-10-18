@@ -35,7 +35,19 @@ import {
   TriangleAlert,
   X,
 } from 'lucide-react';
-import { PlaygroundBanner, useSessionState } from '@playground/ui';
+import {
+  BrandMark,
+  PlaygroundBanner,
+  useSessionState,
+  Button as ShadcnButton,
+  Input,
+  Textarea,
+  Badge,
+  Card,
+  Dialog as ShadcnDialog,
+  DialogContent,
+  DialogTitle,
+} from '@playground/ui';
 import {
   DEFAULT_MONITORS,
   METRICS,
@@ -103,24 +115,38 @@ function Button({
   className = '',
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const variant = className.includes('primary')
+    ? 'default'
+    : className.includes('danger')
+      ? 'destructive'
+      : 'outline';
   return (
-    <button className={`button ${className}`} {...props}>
+    <ShadcnButton variant={variant} className={`button ${className}`} {...props}>
       {children}
-    </button>
+    </ShadcnButton>
   );
 }
 function Status({ value }: { value: string }) {
+  const tone =
+    value === 'warning'
+      ? 'border-amber-400/25 bg-amber-400/10 text-amber-300'
+      : value === 'alert' || value === 'error'
+        ? 'border-rose-400/25 bg-rose-400/10 text-rose-300'
+        : value === 'paused'
+          ? 'border-slate-400/25 bg-slate-400/10 text-slate-300'
+          : 'border-emerald-400/25 bg-emerald-400/10 text-emerald-300';
   return (
-    <span className={`status status-${value}`}>
+    <Badge variant="outline" className={`status status-${value} ${tone} text-xs font-semibold`}>
       <span />
       {value === 'ok'
         ? 'Healthy'
         : value === 'paused'
           ? 'Paused'
           : value.charAt(0).toUpperCase() + value.slice(1)}
-    </span>
+    </Badge>
   );
 }
+
 function Empty({ title, detail, action }: { title: string; detail: string; action?: ReactNode }) {
   return (
     <div className="empty-state">
@@ -144,72 +170,33 @@ function Dialog({
   onClose: () => void;
   wide?: boolean;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const closeRef = useRef(onClose);
-  closeRef.current = onClose;
-  useEffect(() => {
-    const original = document.activeElement as HTMLElement;
-    const priorOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    (ref.current?.querySelector<HTMLElement>('input,select,textarea') ?? ref.current)?.focus();
-    const key = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeRef.current();
-      if (event.key === 'Tab') {
-        const focusable = ref.current?.querySelectorAll<HTMLElement>(
-          'button, input, select, textarea, a[href], [tabindex="0"]',
-        );
-        if (!focusable?.length) return;
-        const first = focusable[0],
-          last = focusable[focusable.length - 1];
-        if (
-          event.shiftKey &&
-          (document.activeElement === first || document.activeElement === ref.current)
-        ) {
-          event.preventDefault();
-          last?.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first?.focus();
-        }
-      }
-    };
-    document.addEventListener('keydown', key);
-    return () => {
-      document.removeEventListener('keydown', key);
-      document.body.style.overflow = priorOverflow;
-      original?.focus();
-    };
-  }, []);
   return (
-    <div
-      className="modal-backdrop"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+    <ShadcnDialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
       }}
     >
-      <div
-        className={`dialog ${wide ? 'wide' : ''}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        tabIndex={-1}
-        ref={ref}
+      <DialogContent
+        className={`dialog ${wide ? 'wide sm:max-w-[1000px]' : 'sm:max-w-[640px]'} top-[calc(50%+20px)] max-h-[calc(100dvh-80px)] block gap-0 p-0`}
+        aria-describedby={undefined}
+        showCloseButton={false}
       >
         <header>
-          <h2>{title}</h2>
-          <button className="icon-button" aria-label="Close dialog" onClick={onClose}>
+          <DialogTitle>{title}</DialogTitle>
+          <ShadcnButton variant="ghost" size="icon-sm" aria-label="Close dialog" onClick={onClose}>
             <X size={19} />
-          </button>
+          </ShadcnButton>
         </header>
         {children}
-      </div>
-    </div>
+      </DialogContent>
+    </ShadcnDialog>
   );
 }
 
 function Chart({
   values,
-  color = '#d58c39',
+  color = '#6c9cff',
   height = 160,
   label,
   compact = false,
@@ -235,7 +222,7 @@ function Chart({
       const context = canvas.getContext('2d');
       if (!context) return;
       context.scale(dpr, dpr);
-      const left = compact ? 0 : 42,
+      const left = compact ? 0 : 48,
         top = 10,
         bottom = compact ? 0 : 24;
       const usableWidth = width - left - 10,
@@ -243,9 +230,9 @@ function Chart({
         maximum = Math.max(...values) * 1.2;
       context.clearRect(0, 0, width, height);
       if (!compact) {
-        context.font = '10px ui-monospace, monospace';
-        context.fillStyle = '#8b939d';
-        context.strokeStyle = '#edf0f2';
+        context.font = '500 12px Inter, sans-serif';
+        context.fillStyle = '#a7b4c7';
+        context.strokeStyle = '#283548';
         context.lineWidth = 1;
         for (let i = 0; i < 4; i++) {
           const y = top + (usableHeight * i) / 3;
@@ -282,7 +269,7 @@ function Chart({
       if (hover !== null) {
         const point = points[hover];
         if (point) {
-          context.strokeStyle = '#b4bbc4';
+          context.strokeStyle = '#9db5d8';
           context.setLineDash([3, 3]);
           context.beginPath();
           context.moveTo(point[0], top);
@@ -316,8 +303,8 @@ function Chart({
               Math.max(
                 0,
                 Math.round(
-                  ((event.clientX - rect.left - (compact ? 0 : 42)) /
-                    (rect.width - (compact ? 10 : 52))) *
+                  ((event.clientX - rect.left - (compact ? 0 : 48)) /
+                    (rect.width - (compact ? 10 : 58))) *
                     (values.length - 1),
                 ),
               ),
@@ -414,7 +401,7 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handler);
   }, []);
   useEffect(() => {
-    document.title = `${navigation.find((item) => item.id === page)?.label ?? 'Overview'} · Vigil`;
+    document.title = `${navigation.find((item) => item.id === page)?.label ?? 'Overview'} · PepaPog`;
   }, [page]);
   useEffect(() => {
     if (!live) return;
@@ -442,30 +429,22 @@ export default function App() {
   }
   return (
     <div className="vigil-app">
-      <PlaygroundBanner app="Vigil" bugs={bugDefinitions} />
+      <PlaygroundBanner app="PepaPog" bugs={bugDefinitions} />
       <div className="app-shell">
         <aside className="sidebar">
           <a
             className="brand"
             href="#overview"
             onClick={() => navigate('overview')}
-            aria-label="Vigil home"
+            aria-label="PepaPog home"
           >
             <div className="brand-mark">
-              <Activity size={24} strokeWidth={2.5} />
+              <BrandMark app="observability" size={24} className="size-6" />
             </div>
             <span>
-              vigil<span className="brand-dot">.</span>
+              PepaPog<span className="brand-dot">.</span>
             </span>
           </a>
-          <div className="workspace">
-            <span className="workspace-icon">A</span>
-            <span>
-              Acme engineering<small>Demo workspace</small>
-            </span>
-            <ChevronDown size={14} />
-          </div>
-          <div className="nav-label">WORKSPACE</div>
           <nav aria-label="Main navigation">
             {navigation.map((item) => (
               <a
@@ -482,56 +461,33 @@ export default function App() {
             ))}
           </nav>
           <div className="sidebar-bottom">
-            <div className="system-status">
-              <span className="live-dot" />
-              <span>All systems operational</span>
-            </div>
             <button onClick={() => setHelp(true)}>
               <CircleHelp size={17} />
-              Help & documentation
+              Help
               <ArrowUpRight size={14} />
             </button>
-            <div className="user">
-              <span className="avatar">JD</span>
-              <span>
-                Jordan Davis<small>Platform engineer</small>
-              </span>
-              <span className="user-dot" />
-            </div>
           </div>
         </aside>
         <div className="main-shell">
           <header className="topbar">
             <div className="breadcrumb">
-              <span>Workspace</span>
-              <ChevronRight size={13} />
               <strong>{navigation.find((item) => item.id === page)?.label}</strong>
             </div>
             <div className="topbar-actions">
-              <button className="command-trigger" onClick={() => setCommand(true)}>
+              <ShadcnButton
+                variant="ghost"
+                className="command-trigger"
+                onClick={() => setCommand(true)}
+              >
                 <Search size={15} />
-                <span>Search anything…</span>
+                <span>Find a page</span>
                 <kbd>⌘ K</kbd>
-              </button>
-              <span className="topbar-divider" />
-              <span className="region">
-                <span className="live-dot" />
-                US East
-              </span>
+              </ShadcnButton>
             </div>
           </header>
           <main>
             <div className="page-heading">
               <div>
-                <div className="eyebrow">
-                  {page === 'overview'
-                    ? 'YOUR SYSTEMS, AT A GLANCE'
-                    : page === 'logs'
-                      ? 'EXPLORE EVERY EVENT'
-                      : page === 'traces'
-                        ? 'FOLLOW EVERY REQUEST'
-                        : 'STAY AHEAD OF INCIDENTS'}
-                </div>
                 <h1>
                   {page === 'overview'
                     ? 'Production overview'
@@ -541,15 +497,6 @@ export default function App() {
                         ? 'Distributed traces'
                         : 'Monitors'}
                 </h1>
-                <p>
-                  {page === 'overview'
-                    ? 'A clear view of application health, from requests to resources.'
-                    : page === 'logs'
-                      ? 'Search, filter, and understand what’s happening across your services.'
-                      : page === 'traces'
-                        ? 'Connect the dots across services and find the source of slow requests.'
-                        : 'Keep the right people informed when your systems need attention.'}
-                </p>
               </div>
               {page !== 'monitors' && (
                 <div className="page-tools">
@@ -569,7 +516,7 @@ export default function App() {
             {loading ? (
               <div className="loading-state" role="status">
                 <LoaderCircle size={24} className="spin" />
-                Loading workspace telemetry…
+                Loading telemetry…
               </div>
             ) : (
               <>
@@ -603,46 +550,36 @@ export default function App() {
               </>
             )}
           </main>
-          <footer className="footer">
-            <span>Vigil · Acme engineering</span>
-            <span>Simulated telemetry · October 18, 2026 · UTC</span>
-          </footer>
         </div>
       </div>
       {toast && (
         <div className="toast" role="status">
           <CheckCircle2 size={18} />
           {toast}
-          <button
+          <ShadcnButton
+            variant="ghost"
+            size="icon-sm"
             className="icon-button"
             onClick={() => setToast('')}
             aria-label="Dismiss notification"
           >
             <X size={15} />
-          </button>
+          </ShadcnButton>
         </div>
       )}
       {help && (
-        <Dialog title="Welcome to Vigil" onClose={() => setHelp(false)}>
+        <Dialog title="Help" onClose={() => setHelp(false)}>
           <div className="dialog-body help-content">
-            <div className="help-mark">
-              <Activity size={28} />
-            </div>
-            <p>
-              Vigil is a self-contained observability playground. Explore 6,000 seeded log events,
-              240 distributed traces, and customizable monitors.
-            </p>
             <h3>Search syntax</h3>
             <code>service:checkout status:error</code>
             <code>env:production -status:debug</code>
             <code>"payment provider"</code>
             <p>
-              Data is deterministic. Live metrics update every 5 seconds using a simulation. Your
-              monitors and filters stay in this browser session; use the playground banner to reset.
+              Live metrics update every 5 seconds. Monitors and filters persist for this browser
+              session. Use Test controls to reset them.
             </p>
             <Button className="primary" onClick={() => setHelp(false)}>
-              Start exploring
-              <ArrowRight size={15} />
+              Close
             </Button>
           </div>
         </Dialog>
@@ -652,7 +589,7 @@ export default function App() {
           <div className="dialog-body">
             <label className="command-input">
               <Search size={18} />
-              <input
+              <Input
                 autoFocus
                 placeholder="Search pages"
                 value={commandQuery}
@@ -738,7 +675,7 @@ function Overview({
             change: '+12.8%',
             good: true,
             values: scaledRequests,
-            color: '#d19344',
+            color: '#6c9cff',
             note: 'vs. previous period',
           },
           {
@@ -748,7 +685,7 @@ function Overview({
             change: '−8.2%',
             good: true,
             values: latency,
-            color: '#657db0',
+            color: '#a294ff',
             note: 'vs. previous period',
           },
           {
@@ -758,7 +695,7 @@ function Overview({
             change: '−0.12%',
             good: true,
             values: errors,
-            color: '#b67f98',
+            color: '#f48cab',
             note: 'vs. previous period',
           },
           {
@@ -768,11 +705,11 @@ function Overview({
             change: '100%',
             good: true,
             values: cpu.map(() => 100),
-            color: '#63a190',
+            color: '#58cda5',
             note: 'services reporting',
           },
         ].map((metric) => (
-          <article className="stat-card" key={metric.name}>
+          <Card className="stat-card block gap-0 p-5" key={metric.name}>
             <div className="stat-label">
               {metric.name}
               <Activity size={14} />
@@ -803,18 +740,17 @@ function Overview({
                 height={42}
               />
             </div>
-          </article>
+          </Card>
         ))}
       </section>
       <section className="charts-grid">
-        <article className="panel">
+        <Card className="panel block gap-0 py-0">
           <div className="panel-heading">
             <div>
               <h2>Request volume</h2>
-              <p>Traffic across all services</p>
             </div>
             <span className="chart-legend">
-              <i style={{ background: '#d19344' }} />
+              <i style={{ background: '#6c9cff' }} />
               Requests / second
             </span>
           </div>
@@ -842,21 +778,20 @@ function Overview({
               Peak <strong>{number(Math.max(...scaledRequests))} req/s</strong>
             </span>
           </div>
-        </article>
-        <article className="panel">
+        </Card>
+        <Card className="panel block gap-0 py-0">
           <div className="panel-heading">
             <div>
               <h2>Response time</h2>
-              <p>95th percentile latency</p>
             </div>
             <span className="chart-legend">
-              <i style={{ background: '#657db0' }} />
+              <i style={{ background: '#a294ff' }} />
               P95 latency
             </span>
           </div>
           <Chart
             values={latency}
-            color="#657db0"
+            color="#a294ff"
             label="P95 response time over selected time range"
             height={195}
             unit=" ms"
@@ -871,19 +806,18 @@ function Overview({
               Within 300 ms budget
             </span>
           </div>
-        </article>
+        </Card>
       </section>
       <div className="section-heading">
         <div>
           <h2>Service health</h2>
-          <span>How your services are doing right now</span>
         </div>
-        <button className="text-button" onClick={() => navigate('traces')}>
-          Explore traces
+        <ShadcnButton variant="ghost" className="text-button" onClick={() => navigate('traces')}>
+          View traces
           <ArrowRight size={14} />
-        </button>
+        </ShadcnButton>
       </div>
-      <div className="panel service-table table-scroll">
+      <Card className="panel service-table table-scroll block gap-0 py-0">
         <table>
           <thead>
             <tr>
@@ -925,14 +859,16 @@ function Overview({
                 <td className="table-chart">
                   <Chart
                     values={metricSeries('1h', tick + i * 4, 'requests')}
-                    color={i === 2 ? '#d19344' : '#77a293'}
+                    color={i === 2 ? '#6c9cff' : '#77a293'}
                     compact
                     height={31}
                     label={`${service} request history`}
                   />
                 </td>
                 <td>
-                  <button
+                  <ShadcnButton
+                    variant="ghost"
+                    size="icon-sm"
                     className="icon-button"
                     aria-label={`View ${service} logs`}
                     onClick={() => {
@@ -941,24 +877,28 @@ function Overview({
                     }}
                   >
                     <ChevronRight size={16} />
-                  </button>
+                  </ShadcnButton>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
+      </Card>
       <div className="bottom-panels">
-        <article className="panel compact-panel">
+        <Card className="panel compact-panel block gap-0 py-0">
           <div className="panel-heading">
             <h2>
               <Bell size={15} />
               Monitor activity
             </h2>
-            <button className="text-button" onClick={() => navigate('monitors')}>
+            <ShadcnButton
+              variant="ghost"
+              className="text-button"
+              onClick={() => navigate('monitors')}
+            >
               View monitors
               <ArrowRight size={13} />
-            </button>
+            </ShadcnButton>
           </div>
           <div className="activity-item">
             <span className="activity-dot amber" />
@@ -976,8 +916,8 @@ function Overview({
             </div>
             <time>24 min ago</time>
           </div>
-        </article>
-        <article className="panel compact-panel">
+        </Card>
+        <Card className="panel compact-panel block gap-0 py-0">
           <div className="panel-heading">
             <h2>
               <Activity size={15} />
@@ -999,7 +939,7 @@ function Overview({
               <i style={{ width: '62%', background: '#8295bc' }} />
             </div>
           </div>
-        </article>
+        </Card>
       </div>
     </>
   );
@@ -1110,7 +1050,7 @@ function Logs({
     <>
       <form className="query-bar" onSubmit={search}>
         <Search size={18} />
-        <input
+        <Input
           aria-label="Log search query"
           placeholder="Search logs…  service:checkout status:error"
           value={draft}
@@ -1120,7 +1060,9 @@ function Logs({
           aria-describedby={error ? 'query-error' : 'query-hint'}
         />
         {draft && (
-          <button
+          <ShadcnButton
+            variant="ghost"
+            size="icon-sm"
             type="button"
             className="icon-button"
             aria-label="Clear query"
@@ -1131,7 +1073,7 @@ function Logs({
             }}
           >
             <X size={16} />
-          </button>
+          </ShadcnButton>
         )}
         <Button type="submit" className="primary">
           {busy ? <LoaderCircle size={15} className="spin" /> : <Search size={15} />}Search
@@ -1164,7 +1106,7 @@ function Logs({
           <span>Use quotes for exact phrases and − to exclude a term.</span>
         </div>
       )}
-      <div className="panel log-volume">
+      <Card className="panel log-volume block gap-0 py-0">
         <div className="panel-heading">
           <h2>
             Log volume<span className="count-badge">{number(filtered.length)}</span>
@@ -1208,7 +1150,7 @@ function Logs({
           })}
         </div>
         <ChartTimes range={range} />
-      </div>
+      </Card>
       <div className="log-layout">
         <aside className="facets">
           <div className="facet-heading">
@@ -1279,17 +1221,23 @@ function Logs({
             Combine facets and queries to narrow your results.
           </div>
         </aside>
-        <section className="panel logs-panel">
+        <Card className="panel logs-panel block gap-0 py-0">
           <div className="log-toolbar">
             <span>
               <strong>{number(filtered.length)}</strong> logs found
             </span>
             <div>
-              <button className="text-button" onClick={() => setSortNewest(!sortNewest)}>
+              <ShadcnButton
+                variant="ghost"
+                className="text-button"
+                onClick={() => setSortNewest(!sortNewest)}
+              >
                 <ArrowDown size={13} />
                 {sortNewest ? 'Newest first' : 'Oldest first'}
-              </button>
-              <button
+              </ShadcnButton>
+              <ShadcnButton
+                variant="ghost"
+                size="icon-sm"
                 className="icon-button"
                 aria-label="Refresh logs"
                 onClick={() => {
@@ -1301,7 +1249,7 @@ function Logs({
                 }}
               >
                 <RefreshCw size={15} className={busy ? 'spin' : ''} />
-              </button>
+              </ShadcnButton>
             </div>
           </div>
           {filtered.length === 0 ? (
@@ -1371,7 +1319,7 @@ function Logs({
               </div>
             </>
           )}
-        </section>
+        </Card>
       </div>
       {selected && (
         <Dialog title="Log event" wide onClose={() => setSelected(null)}>
@@ -1500,7 +1448,7 @@ function Traces({
       <div className="trace-filters">
         <label className="search-field">
           <Search size={16} />
-          <input
+          <Input
             aria-label="Search traces"
             placeholder="Search by resource, service, or trace ID…"
             value={query}
@@ -1525,7 +1473,7 @@ function Traces({
           <option value="slowest">Slowest first</option>
         </select>
       </div>
-      <div className="panel table-scroll trace-table">
+      <Card className="panel table-scroll trace-table block gap-0 py-0">
         <table>
           <thead>
             <tr>
@@ -1570,13 +1518,15 @@ function Traces({
                 <td className="muted">{trace.spans.length}</td>
                 <td className="mono muted">{time(trace.timestamp)}</td>
                 <td>
-                  <button
+                  <ShadcnButton
+                    variant="ghost"
+                    size="icon-sm"
                     className="icon-button"
                     aria-label={`Inspect ${trace.id}`}
                     onClick={() => setSelected(trace)}
                   >
                     <ChevronRight size={15} />
-                  </button>
+                  </ShadcnButton>
                 </td>
               </tr>
             ))}
@@ -1609,7 +1559,7 @@ function Traces({
             </span>
           </div>
         )}
-      </div>
+      </Card>
       {selected && (
         <Dialog title="Trace details" wide onClose={() => setSelected(null)}>
           <div className="dialog-body">
@@ -1634,55 +1584,57 @@ function Traces({
               <h3>Flame graph</h3>
               <span>Click a span to inspect</span>
             </div>
-            <div className="waterfall-ticks">
-              <span>Service / operation</span>
-              <div>
-                {[0, 0.25, 0.5, 0.75, 1].map((value) => (
-                  <span key={value}>{Math.round(selected.duration * value)} ms</span>
-                ))}
+            <div className="waterfall-scroll">
+              <div className="waterfall-ticks">
+                <span>Service / operation</span>
+                <div>
+                  {[0, 0.25, 0.5, 0.75, 1].map((value) => (
+                    <span key={value}>{Math.round(selected.duration * value)} ms</span>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="waterfall" role="list" aria-label="Trace waterfall">
-              {selected.spans.map((item) => (
-                <button
-                  key={item.id}
-                  className={`waterfall-row ${span?.id === item.id ? 'selected' : ''}`}
-                  onClick={() => setSpan(item)}
-                  aria-label={`Inspect ${item.name}, ${item.duration} milliseconds`}
-                >
-                  <span
-                    className="span-name"
-                    style={{
-                      paddingLeft:
-                        item.parentId === null
-                          ? 0
-                          : item.parentId === selected.spans[0]?.id
-                            ? 12
-                            : 24,
-                    }}
+              <div className="waterfall" role="list" aria-label="Trace waterfall">
+                {selected.spans.map((item) => (
+                  <button
+                    key={item.id}
+                    className={`waterfall-row ${span?.id === item.id ? 'selected' : ''}`}
+                    onClick={() => setSpan(item)}
+                    aria-label={`Inspect ${item.name}, ${item.duration} milliseconds`}
                   >
-                    <i className={`service-color-${SERVICES.indexOf(item.service)}`} />
-                    <strong>{item.name}</strong>
-                    <small>{item.service}</small>
-                  </span>
-                  <div className="span-track">
                     <span
-                      className={`span-bar service-color-${SERVICES.indexOf(item.service)} ${item.status === 'error' ? 'span-error' : ''}`}
+                      className="span-name"
                       style={{
-                        left: `${(item.start / selected.duration) * 100}%`,
-                        width: `${Math.max(1, (item.duration / selected.duration) * 100)}%`,
-                      }}
-                    />
-                    <em
-                      style={{
-                        left: `${Math.min(75, ((item.start + item.duration) / selected.duration) * 100 + 1)}%`,
+                        paddingLeft:
+                          item.parentId === null
+                            ? 0
+                            : item.parentId === selected.spans[0]?.id
+                              ? 12
+                              : 24,
                       }}
                     >
-                      {item.duration} ms
-                    </em>
-                  </div>
-                </button>
-              ))}
+                      <i className={`service-color-${SERVICES.indexOf(item.service)}`} />
+                      <strong>{item.name}</strong>
+                      <small>{item.service}</small>
+                    </span>
+                    <div className="span-track">
+                      <span
+                        className={`span-bar service-color-${SERVICES.indexOf(item.service)} ${item.status === 'error' ? 'span-error' : ''}`}
+                        style={{
+                          left: `${(item.start / selected.duration) * 100}%`,
+                          width: `${Math.max(1, (item.duration / selected.duration) * 100)}%`,
+                        }}
+                      />
+                      <em
+                        style={{
+                          left: `${Math.min(75, ((item.start + item.duration) / selected.duration) * 100 + 1)}%`,
+                        }}
+                      >
+                        {item.duration} ms
+                      </em>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
             {span ? (
               <div className="span-detail">
@@ -1811,20 +1763,25 @@ function Monitors({
     return (
       <form onSubmit={save} noValidate>
         <div className="builder-toolbar">
-          <button type="button" className="text-button" onClick={() => setEditing(null)}>
+          <ShadcnButton
+            variant="ghost"
+            type="button"
+            className="text-button"
+            onClick={() => setEditing(null)}
+          >
             <ArrowDownLeft size={15} />
             Back to monitors
-          </button>
+          </ShadcnButton>
           <span>{editing.id ? 'Edit monitor' : 'New metric monitor'}</span>
         </div>
         <div className="builder-layout">
           <div className="builder-sections">
-            <section className="panel builder-section">
+            <Card className="panel builder-section block gap-0 p-5">
               <div className="step-heading">
                 <span>1</span>
                 <div>
                   <h2>Define your metric</h2>
-                  <p>Choose what to watch and which services to include.</p>
+                  <p>Select a metric and service scope.</p>
                 </div>
               </div>
               <div className="metric-options">
@@ -1879,8 +1836,8 @@ function Monitors({
                 </select>
                 {field('service')}
               </label>
-            </section>
-            <section className="panel builder-section">
+            </Card>
+            <Card className="panel builder-section block gap-0 p-5">
               <div className="step-heading">
                 <span>2</span>
                 <div>
@@ -1906,7 +1863,7 @@ function Monitors({
                     Alert threshold <b>*</b>
                   </span>
                   <div className="input-with-unit">
-                    <input
+                    <Input
                       id="monitor-threshold"
                       type="number"
                       step="any"
@@ -1959,7 +1916,7 @@ function Monitors({
                 <label className="form-field warning-field">
                   <span>Warning threshold</span>
                   <div className="input-with-unit">
-                    <input
+                    <Input
                       id="monitor-warningThreshold"
                       type="number"
                       step="any"
@@ -1985,20 +1942,20 @@ function Monitors({
                   <small>Notify before the alert threshold is reached.</small>
                 </label>
               )}
-            </section>
-            <section className="panel builder-section">
+            </Card>
+            <Card className="panel builder-section block gap-0 p-5">
               <div className="step-heading">
                 <span>3</span>
                 <div>
                   <h2>Name and notify</h2>
-                  <p>Give your team the context they need to act.</p>
+                  <p>Enter a monitor name and email recipients.</p>
                 </div>
               </div>
               <label className="form-field">
                 <span>
                   Monitor name <b>*</b>
                 </span>
-                <input
+                <Input
                   id="monitor-name"
                   placeholder="e.g. Checkout error rate is elevated"
                   value={editing.name}
@@ -2012,7 +1969,7 @@ function Monitors({
                 <span>
                   Notify <b>*</b>
                 </span>
-                <input
+                <Input
                   id="monitor-recipients"
                   type="text"
                   placeholder="oncall@example.test, platform@example.test"
@@ -2028,7 +1985,7 @@ function Monitors({
                 <span>
                   Message <em>optional</em>
                 </span>
-                <textarea
+                <Textarea
                   rows={4}
                   placeholder="What should someone check when this monitor alerts?"
                   value={editing.message}
@@ -2043,7 +2000,7 @@ function Monitors({
                 />
                 Enable this monitor immediately
               </label>
-            </section>
+            </Card>
             <div className="builder-actions">
               <Button type="button" onClick={() => setEditing(null)}>
                 Cancel
@@ -2054,7 +2011,7 @@ function Monitors({
               </Button>
             </div>
           </div>
-          <aside className="builder-preview panel">
+          <Card className="builder-preview panel block gap-0 py-0">
             <div className="panel-heading">
               <h2>
                 <Activity size={16} />
@@ -2105,7 +2062,7 @@ function Monitors({
                 </span>
               </div>
             </div>
-          </aside>
+          </Card>
         </div>
       </form>
     );
@@ -2145,7 +2102,7 @@ function Monitors({
       <div className="monitor-toolbar">
         <label className="search-field">
           <Search size={16} />
-          <input
+          <Input
             placeholder="Search monitors…"
             aria-label="Search monitors"
             value={search}
@@ -2157,7 +2114,7 @@ function Monitors({
           New monitor
         </Button>
       </div>
-      <div className="panel table-scroll monitors-table">
+      <Card className="panel table-scroll monitors-table block gap-0 py-0">
         <table>
           <thead>
             <tr>
@@ -2193,7 +2150,9 @@ function Monitors({
                 </td>
                 <td>
                   <div className="row-actions">
-                    <button
+                    <ShadcnButton
+                      variant="ghost"
+                      size="icon-sm"
                       className="icon-button"
                       aria-label={`${rule.enabled ? 'Pause' : 'Resume'} ${rule.name}`}
                       onClick={() => {
@@ -2206,21 +2165,24 @@ function Monitors({
                       }}
                     >
                       {rule.enabled ? <Pause size={15} /> : <Play size={15} />}
-                    </button>
-                    <button
+                    </ShadcnButton>
+                    <ShadcnButton
+                      variant="ghost"
+                      size="icon-sm"
                       className="icon-button"
                       aria-label={`Edit ${rule.name}`}
                       onClick={() => start(rule)}
                     >
                       <Settings2 size={15} />
-                    </button>
-                    <button
+                    </ShadcnButton>
+                    <ShadcnButton
+                      variant="ghost"
                       className="icon-button danger-icon"
                       aria-label={`Delete ${rule.name}`}
                       onClick={() => setDeleteId(rule.id)}
                     >
                       <Trash2 size={15} />
-                    </button>
+                    </ShadcnButton>
                   </div>
                 </td>
               </tr>
@@ -2242,7 +2204,7 @@ function Monitors({
             }
           />
         )}
-      </div>
+      </Card>
       <div className="monitor-explainer">
         <Bell size={18} />
         <div>

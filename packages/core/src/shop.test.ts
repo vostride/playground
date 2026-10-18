@@ -25,7 +25,7 @@ test('catalog is deterministic and has realistic volume', () => {
   assert.equal(new Set(products.map((p) => p.id)).size, 1200);
 });
 test('credentials and quantity validation', () => {
-  assert.ok(authenticate('alex@example.com', 'fernwood123'));
+  assert.ok(authenticate('alex@example.com', 'komazon123'));
   assert.ok(!authenticate('alex@example.com', 'wrong'));
   assert.throws(() => setQuantity([], 'FW-0001', 25));
   assert.throws(() => setQuantity([], 'FW-0001', 1.5));

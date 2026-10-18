@@ -5,11 +5,11 @@
       "id": "fernwood-v1",
       "app": "shop",
       "path": "/shop/",
-      "name": "Fernwood",
+      "name": "Komazon",
       "status": "candidate",
       "testFile": "tests/e2e/shop.spec.ts",
       "flows": [
-        "Sign in with alex@example.com / fernwood123",
+        "Sign in with alex@example.com / komazon123",
         "Search and filter the collection",
         "Add Everyday Ceramic Mug to bag and increase quantity",
         "Validate shipping, choose delivery, review and place order",
@@ -21,7 +21,7 @@
       "id": "wayline-v1",
       "app": "flights",
       "path": "/flights/",
-      "name": "Wayline",
+      "name": "Looking.com",
       "status": "candidate",
       "testFile": "tests/e2e/flights.spec.ts",
       "flows": [
@@ -35,7 +35,7 @@
       "id": "vigil-v1",
       "app": "observability",
       "path": "/observability/",
-      "name": "Vigil",
+      "name": "PepaPog",
       "status": "candidate",
       "testFile": "tests/e2e/observability.spec.ts",
       "flows": [
@@ -49,7 +49,7 @@
       "id": "corkboard-v1",
       "app": "tasks",
       "path": "/tasks/",
-      "name": "Corkboard",
+      "name": "Brello",
       "status": "candidate",
       "testFile": "tests/e2e/tasks.spec.ts",
       "flows": [

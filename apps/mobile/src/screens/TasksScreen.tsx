@@ -605,7 +605,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
             <View style={styles.brandMark}>
               <Text style={styles.brandMarkText}>▦</Text>
             </View>
-            <Text style={styles.brandText}>Corkboard</Text>
+            <Text style={styles.brandText}>Brello</Text>
           </View>
           <Pressable
             accessibilityRole="button"

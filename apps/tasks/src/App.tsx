@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from 'react';
 import {
-  ArrowUpRight,
   CalendarDays,
   Check,
   CheckCheck,
@@ -35,7 +34,23 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { PlaygroundBanner, useSessionState } from '@playground/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Input,
+  BrandMark,
+  PlaygroundBanner,
+  Separator,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  Textarea,
+  useSessionState,
+} from '@playground/ui';
 import {
   createTask,
   createTasksState,
@@ -134,22 +149,27 @@ function Modal({
   label: string;
   panel?: boolean;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    ref.current?.showModal();
-  }, []);
   return (
-    <dialog
-      ref={ref}
-      className={panel ? 'task-panel' : 'modal'}
-      aria-label={label}
-      onCancel={onClose}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
       }}
     >
-      {children}
-    </dialog>
+      <DialogContent
+        className={
+          panel
+            ? 'task-panel top-[42px] bottom-0 left-auto right-0 flex h-[calc(100dvh-42px)] w-full max-w-[560px] translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-y-0 border-r-0 p-0 sm:max-w-[560px]'
+            : 'modal block max-h-[calc(100dvh-48px)] overflow-y-auto p-0 sm:max-w-[560px]'
+        }
+        aria-label={label}
+        aria-describedby={undefined}
+        showCloseButton={false}
+      >
+        <DialogTitle className="sr-only">{label}</DialogTitle>
+        {children}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -201,7 +221,7 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, []);
   useEffect(() => {
-    document.title = `${selected ? selected.title : board.name} · Corkboard`;
+    document.title = `${selected ? selected.title : board.name} · Brello`;
   }, [board.name, selected?.title]);
   useEffect(() => {
     try {
@@ -351,7 +371,7 @@ export default function App() {
         (event.target as HTMLElement)?.closest('input, textarea, select, [contenteditable="true"]')
       )
         return;
-      if (keyboardMove || document.querySelector('dialog[open]')) return;
+      if (keyboardMove || document.querySelector('[role="dialog"][data-state="open"]')) return;
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {
         event.preventDefault();
         undo();
@@ -377,10 +397,11 @@ export default function App() {
   function renderCard(task: Task) {
     const doneCount = task.checklist.filter((item) => item.done).length;
     return (
-      <article
+      <Card
+        role="article"
         key={task.id}
         data-task-id={task.id}
-        className={`task-card ${draggingId === task.id ? 'is-dragging' : ''} ${keyboardMove?.id === task.id ? 'is-lifted' : ''} ${dropTarget === task.id ? 'drop-before' : ''}`}
+        className={`task-card gap-0 rounded-lg p-4 shadow-sm ${draggingId === task.id ? 'is-dragging' : ''} ${keyboardMove?.id === task.id ? 'is-lifted' : ''} ${dropTarget === task.id ? 'drop-before' : ''}`}
         tabIndex={0}
         aria-label={`${task.id}: ${task.title}. ${task.status === 'done' ? 'Completed. ' : ''}Press Enter to open or Space to move.`}
         aria-describedby="drag-instructions"
@@ -413,7 +434,9 @@ export default function App() {
         <div className="card-top">
           <span className="task-id">{task.id}</span>
           <div className="card-controls">
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               className="icon-button tiny"
               aria-label={`Rename ${task.id}`}
               onClick={(event) => {
@@ -423,14 +446,14 @@ export default function App() {
               }}
             >
               <Pencil size={12} />
-            </button>
+            </Button>
             <span data-drag-handle className="drag-handle" aria-hidden="true">
               <GripVertical size={14} />
             </span>
           </div>
         </div>
         {editingId === task.id ? (
-          <input
+          <Input
             autoFocus
             aria-label={`Title for ${task.id}`}
             className="inline-title"
@@ -459,14 +482,15 @@ export default function App() {
           {task.labels.map((id) => {
             const label = TASK_LABELS.find((item) => item.id === id);
             return label ? (
-              <span
+              <Badge
+                variant="outline"
                 key={id}
-                className="task-label"
+                className="task-label rounded-md px-2 py-0.5 text-xs font-semibold"
                 style={{ '--label-color': label.color } as CSSProperties}
               >
                 <span />
                 {label.name}
-              </span>
+              </Badge>
             ) : null;
           })}
         </div>
@@ -498,17 +522,18 @@ export default function App() {
             ))}
           </div>
         </div>
-      </article>
+      </Card>
     );
   }
 
   return (
     <div className="corkboard-app">
-      <PlaygroundBanner app="Corkboard" bugs={BUGS} />
+      <PlaygroundBanner app="Brello" bugs={BUGS} />
       <div className="app-shell">
         {sidebarOpen && (
-          <button
-            className="sidebar-scrim"
+          <Button
+            variant="ghost"
+            className="sidebar-scrim fixed inset-0 h-full w-full rounded-none"
             aria-label="Close navigation"
             onClick={() => setSidebarOpen(false)}
           />
@@ -519,29 +544,29 @@ export default function App() {
         >
           <a className="brand" href="/tasks/">
             <span className="brand-mark">
-              <i />
-              <i />
-              <i />
-              <i />
+              <BrandMark app="tasks" size={24} className="size-6" />
             </span>
-            Corkboard<span className="brand-dot">.</span>
+            Brello<span className="brand-dot">.</span>
           </a>
           <div className="workspace-label">
             <span className="workspace-icon">S</span>
             <div>
               <strong>Studio workspace</strong>
-              <span>Free workspace</span>
             </div>
-            <button
-              className="icon-button sidebar-close"
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="icon-button sidebar-close hidden max-[800px]:inline-flex"
               aria-label="Close navigation"
               onClick={() => setSidebarOpen(false)}
             >
               <PanelLeftClose size={16} />
-            </button>
+            </Button>
           </div>
           <nav className="primary-nav">
-            <button
+            <Button
+              variant="ghost"
+              className="justify-start"
               onClick={() => {
                 setShowBoards(true);
                 setBoardQuery('');
@@ -549,20 +574,23 @@ export default function App() {
             >
               <LayoutGrid size={17} />
               All boards<span className="nav-number">80</span>
-            </button>
-            <button
-              className={filters.assignee === 'maya' ? 'active' : ''}
+            </Button>
+            <Button
+              variant="ghost"
+              className={`justify-start ${filters.assignee === 'maya' ? 'active' : ''}`}
               onClick={() =>
                 setFilters({ ...filters, assignee: filters.assignee === 'maya' ? '' : 'maya' })
               }
             >
               <CheckCheck size={17} />
               My tasks
-            </button>
+            </Button>
           </nav>
           <div className="nav-section-label">
             WORKSPACE BOARDS
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               className="icon-button tiny"
               aria-label="Browse all boards"
               onClick={() => {
@@ -571,23 +599,25 @@ export default function App() {
               }}
             >
               <MoreHorizontal size={16} />
-            </button>
+            </Button>
           </div>
           <nav className="board-navigation">
             {state.boards.slice(0, 6).map((item) => (
-              <button
+              <Button
+                variant="ghost"
                 key={item.id}
-                className={item.id === board.id ? 'active' : ''}
+                className={`justify-start ${item.id === board.id ? 'active' : ''}`}
                 aria-current={item.id === board.id ? 'page' : undefined}
                 onClick={() => chooseBoard(item.id)}
               >
                 <span className="board-dot" style={{ background: item.color }} />
                 <span>{item.name}</span>
                 {favoriteIds.includes(item.id) && <Star size={12} fill="currentColor" />}
-              </button>
+              </Button>
             ))}
-            <button
-              className="browse-boards"
+            <Button
+              variant="ghost"
+              className="browse-boards justify-start"
               onClick={() => {
                 setShowBoards(true);
                 setBoardQuery('');
@@ -595,19 +625,20 @@ export default function App() {
             >
               <Plus size={15} />
               Browse all boards
-            </button>
+            </Button>
           </nav>
           <div className="sidebar-bottom">
-            <div className="workspace-note">
-              <span className="note-symbol">↗</span>
-              <strong>A little more clarity.</strong>
-              <p>Make room for your team’s best work.</p>
-              <button onClick={() => setShowHelp(true)}>
-                Get to know Corkboard <ArrowUpRight size={14} />
-              </button>
-            </div>
-            <button
-              className="profile-button"
+            <Button
+              variant="ghost"
+              className="sidebar-help w-full justify-start"
+              onClick={() => setShowHelp(true)}
+            >
+              <CircleHelp size={16} />
+              Keyboard shortcuts
+            </Button>
+            <Button
+              variant="ghost"
+              className="profile-button rounded-none"
               onClick={() => {
                 setFilters({ ...filters, assignee: 'maya' });
                 setMessage('Showing tasks assigned to Maya Chen');
@@ -616,41 +647,45 @@ export default function App() {
               <Avatar memberId="maya" />
               <span>
                 <strong>Maya Chen</strong>
-                <small>Personal workspace</small>
               </span>
               <ChevronDown size={14} />
-            </button>
+            </Button>
           </div>
         </aside>
         <main className="main-content">
           <header className="topbar">
             <div className="breadcrumb">
-              <button
-                className="icon-button mobile-menu"
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="icon-button mobile-menu hidden max-[800px]:inline-flex"
                 aria-label="Open navigation"
                 onClick={() => setSidebarOpen(true)}
               >
                 <LayoutGrid size={18} />
-              </button>
+              </Button>
               <Folder size={15} />
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => {
                   setShowBoards(true);
                   setBoardQuery('');
                 }}
               >
                 Workspace
-              </button>
+              </Button>
               <ChevronRight size={13} />
               <span>{board.name}</span>
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               className="icon-button"
               aria-label="Keyboard shortcuts and help"
               onClick={() => setShowHelp(true)}
             >
               <CircleHelp size={18} />
-            </button>
+            </Button>
           </header>
           <section className="board-header">
             <div className="board-title-row">
@@ -662,8 +697,10 @@ export default function App() {
                   <Columns3 size={23} />
                 </span>
                 <h1>{board.name}</h1>
-                <button
-                  className={`icon-button favorite-button ${favoriteIds.includes(board.id) ? 'is-favorite' : ''}`}
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className={`icon-button favorite-button max-[550px]:hidden ${favoriteIds.includes(board.id) ? 'is-favorite' : ''}`}
                   aria-label={
                     favoriteIds.includes(board.id)
                       ? 'Remove board from favorites'
@@ -679,7 +716,7 @@ export default function App() {
                   }
                 >
                   <Star size={18} fill={favoriteIds.includes(board.id) ? 'currentColor' : 'none'} />
-                </button>
+                </Button>
               </div>
               <div className="board-actions">
                 <div className="avatar-stack" aria-label="5 workspace members">
@@ -688,34 +725,29 @@ export default function App() {
                   ))}
                   <span>+2</span>
                 </div>
-                <button className="primary-button" onClick={() => setNewTaskStatus('todo')}>
+                <Button
+                  variant="default"
+                  className="primary-button"
+                  onClick={() => setNewTaskStatus('todo')}
+                >
                   <Plus size={16} />
                   New task
-                </button>
+                </Button>
               </div>
             </div>
-            <p>{board.description}</p>
             <div className="board-tabs">
-              <div role="tablist" aria-label="Board view">
-                <button
-                  role="tab"
-                  aria-selected={view === 'board'}
-                  className={view === 'board' ? 'selected' : ''}
-                  onClick={() => setView('board')}
-                >
-                  <Columns3 size={15} />
-                  Board
-                </button>
-                <button
-                  role="tab"
-                  aria-selected={view === 'list'}
-                  className={view === 'list' ? 'selected' : ''}
-                  onClick={() => setView('list')}
-                >
-                  <List size={16} />
-                  List
-                </button>
-              </div>
+              <Tabs value={view} onValueChange={(value) => setView(value as 'board' | 'list')}>
+                <TabsList aria-label="Board view" className="board-view-tabs">
+                  <TabsTrigger value="board" className="px-4 font-semibold">
+                    <Columns3 size={16} />
+                    Board
+                  </TabsTrigger>
+                  <TabsTrigger value="list" className="px-4 font-semibold">
+                    <List size={16} />
+                    List
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
               <span className="board-progress">
                 <span>
                   <i
@@ -732,8 +764,9 @@ export default function App() {
             <div className="toolbar-left">
               <div className="search-field">
                 <Search size={15} />
-                <input
+                <Input
                   ref={searchRef}
+                  className="h-9 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
                   aria-label="Search tasks"
                   placeholder="Search tasks…"
                   value={filters.query ?? ''}
@@ -741,23 +774,26 @@ export default function App() {
                 />
                 <kbd>/</kbd>
                 {filters.query && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     className="icon-button tiny"
                     aria-label="Clear search"
                     onClick={() => setFilters({ ...filters, query: '' })}
                   >
                     <X size={13} />
-                  </button>
+                  </Button>
                 )}
               </div>
-              <button
+              <Button
+                variant="ghost"
                 className={`secondary-button filter-button ${showFilters || filterCount ? 'filter-active' : ''}`}
                 aria-expanded={showFilters}
                 onClick={() => setShowFilters(!showFilters)}
               >
                 <SlidersHorizontal size={14} />
                 Filter{filterCount > 0 && <span>{filterCount}</span>}
-              </button>
+              </Button>
             </div>
             <div className="toolbar-right">
               <label className="completed-toggle">
@@ -768,8 +804,13 @@ export default function App() {
                 />
                 Show completed
               </label>
-              <span className="toolbar-divider" />
-              <button
+              <Separator
+                orientation="vertical"
+                className="toolbar-divider h-5 max-[550px]:hidden"
+              />
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 className="icon-button"
                 aria-label="Undo last change"
                 title="Undo last change (⌘/Ctrl Z)"
@@ -777,7 +818,7 @@ export default function App() {
                 onClick={undo}
               >
                 <Undo2 size={17} />
-              </button>
+              </Button>
             </div>
           </div>
           {showFilters && (
@@ -825,9 +866,9 @@ export default function App() {
                   ))}
                 </select>
               </label>
-              <button className="text-button" onClick={() => setFilters({})}>
+              <Button variant="ghost" className="text-button" onClick={() => setFilters({})}>
                 Clear filters
-              </button>
+              </Button>
               <span>{visibleTasks.length} matching tasks</span>
             </div>
           )}
@@ -864,7 +905,8 @@ export default function App() {
               <CircleHelp size={32} />
               <h2>This board couldn’t load</h2>
               <p>Your work is still here. Try loading the board again.</p>
-              <button
+              <Button
+                variant="default"
                 className="primary-button"
                 onClick={() => {
                   setLoading(true);
@@ -873,16 +915,16 @@ export default function App() {
                 }}
               >
                 Try again
-              </button>
+              </Button>
             </div>
           ) : visibleTasks.length === 0 && (filters.query || filterCount) ? (
             <div className="board-state">
               <Search size={32} />
               <h2>No tasks match your filters</h2>
               <p>Try another search or clear your filters to see the whole board.</p>
-              <button className="secondary-button" onClick={() => setFilters({})}>
+              <Button variant="outline" className="secondary-button" onClick={() => setFilters({})}>
                 Clear filters
-              </button>
+              </Button>
             </div>
           ) : view === 'board' ? (
             <div className="kanban" aria-label={`${board.name} board`}>
@@ -912,13 +954,15 @@ export default function App() {
                       </span>
                       <h2>{column.name}</h2>
                       <span className="column-count">{tasks.length}</span>
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
                         className="icon-button tiny"
                         aria-label={`Add task to ${column.name}`}
                         onClick={() => setNewTaskStatus(column.id)}
                       >
                         <Plus size={16} />
-                      </button>
+                      </Button>
                     </div>
                     <div className="column-cards">
                       {tasks.map(renderCard)}
@@ -929,10 +973,14 @@ export default function App() {
                           <span>Drop a task here or add a new one.</span>
                         </div>
                       )}
-                      <button className="add-task" onClick={() => setNewTaskStatus(column.id)}>
+                      <Button
+                        variant="ghost"
+                        className="add-task"
+                        onClick={() => setNewTaskStatus(column.id)}
+                      >
                         <Plus size={15} />
                         Add task
-                      </button>
+                      </Button>
                     </div>
                   </section>
                 );
@@ -954,10 +1002,14 @@ export default function App() {
                   {visibleTasks.map((task) => (
                     <tr key={task.id}>
                       <td>
-                        <button onClick={() => setSelectedId(task.id)}>
+                        <Button
+                          variant="ghost"
+                          className="h-auto justify-start gap-4 whitespace-normal text-left"
+                          onClick={() => setSelectedId(task.id)}
+                        >
                           <span className="task-id">{task.id}</span>
                           <strong>{task.title}</strong>
-                        </button>
+                        </Button>
                       </td>
                       <td>
                         <select
@@ -1013,26 +1065,20 @@ export default function App() {
               </table>
               {!visibleTasks.length && (
                 <div className="board-state">
-                  <h2>A fresh start</h2>
-                  <p>Add a task to give your next idea a place to grow.</p>
-                  <button className="primary-button" onClick={() => setNewTaskStatus('todo')}>
+                  <h2>No tasks in this board</h2>
+                  <p>Create a task to get started.</p>
+                  <Button
+                    variant="default"
+                    className="primary-button"
+                    onClick={() => setNewTaskStatus('todo')}
+                  >
                     <Plus size={16} />
                     New task
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
           )}
-          <footer className="board-footer">
-            <span>
-              <span className="online-dot" />
-              All changes saved {saveError ? 'in memory' : 'this session'}
-            </span>
-            <span>
-              {state.tasks.length.toLocaleString()} tasks across {state.boards.length} boards
-              <span className="footer-separator">·</span>Made for focused teams
-            </span>
-          </footer>
         </main>
       </div>
       <div className="sr-only" role="status" aria-live="polite">
@@ -1042,14 +1088,20 @@ export default function App() {
         <div className="toast">
           <Check size={16} />
           <span>{message}</span>
-          {past.length > 0 && <button onClick={undo}>Undo</button>}
-          <button
+          {past.length > 0 && (
+            <Button variant="ghost" onClick={undo}>
+              Undo
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon-sm"
             className="icon-button tiny"
             aria-label="Dismiss notification"
             onClick={() => setMessage('')}
           >
             <X size={14} />
-          </button>
+          </Button>
         </div>
       )}
       {selected && (
@@ -1088,21 +1140,23 @@ export default function App() {
         <Modal label="Browse boards" onClose={() => setShowBoards(false)}>
           <div className="modal-header">
             <div>
-              <span className="eyebrow">YOUR WORKSPACE</span>
-              <h2>Find your next focus</h2>
+              <h2>Workspace boards</h2>
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               className="icon-button"
               aria-label="Close board browser"
               onClick={() => setShowBoards(false)}
             >
               <X size={20} />
-            </button>
+            </Button>
           </div>
           <div className="boards-search search-field">
             <Search size={16} />
-            <input
+            <Input
               autoFocus
+              className="h-10 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
               aria-label="Search boards"
               placeholder="Search 80 boards…"
               value={boardQuery}
@@ -1113,7 +1167,7 @@ export default function App() {
             {state.boards
               .filter((item) => item.name.toLowerCase().includes(boardQuery.toLowerCase()))
               .map((item) => (
-                <button key={item.id} onClick={() => chooseBoard(item.id)}>
+                <Button variant="ghost" key={item.id} onClick={() => chooseBoard(item.id)}>
                   <span
                     className="browse-board-icon"
                     style={{ background: `${item.color}20`, color: item.color }}
@@ -1127,7 +1181,7 @@ export default function App() {
                     </small>
                   </span>
                   {board.id === item.id ? <Check size={16} /> : <ChevronRight size={16} />}
-                </button>
+                </Button>
               ))}
             {!state.boards.some((item) =>
               item.name.toLowerCase().includes(boardQuery.toLowerCase()),
@@ -1136,25 +1190,25 @@ export default function App() {
         </Modal>
       )}
       {showHelp && (
-        <Modal label="Corkboard help" onClose={() => setShowHelp(false)}>
+        <Modal label="Brello help" onClose={() => setShowHelp(false)}>
           <div className="modal-header">
             <div>
-              <span className="eyebrow">A PLACE FOR YOUR WORK</span>
-              <h2>Make yourself at home.</h2>
+              <h2>Keyboard shortcuts</h2>
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               className="icon-button"
               aria-label="Close help"
               onClick={() => setShowHelp(false)}
             >
               <X size={20} />
-            </button>
+            </Button>
           </div>
           <p className="help-intro">
-            Corkboard brings your team’s tasks into one clear view. Open a task to add details, drag
-            it to move forward, and undo whenever you need.
+            Open a task to edit it. Drag tasks between columns to change their status or within a
+            column to reorder them.
           </p>
-          <h3 className="help-heading">Keyboard shortcuts</h3>
           <dl className="shortcut-list">
             <div>
               <dt>Create a task</dt>
@@ -1203,10 +1257,6 @@ export default function App() {
               </dd>
             </div>
           </dl>
-          <div className="help-note">
-            This is a playground. Tasks are fictional, changes stay in this browser session, and no
-            accounts or network services are used.
-          </div>
         </Modal>
       )}
     </div>
@@ -1242,18 +1292,23 @@ function TaskPanel({
           <Columns3 size={16} />
           <span>{task.id}</span>
         </div>
-        <button className="icon-button" aria-label="Close task details" onClick={onClose}>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="icon-button"
+          aria-label="Close task details"
+          onClick={onClose}
+        >
           <X size={20} />
-        </button>
+        </Button>
       </div>
       <div className="panel-body">
-        <span className="eyebrow">TASK DETAILS</span>
         <label className="sr-only" htmlFor="task-title">
           Task title
         </label>
-        <textarea
+        <Textarea
           id="task-title"
-          className="panel-title"
+          className="panel-title min-h-0 border-transparent bg-transparent px-0 text-2xl font-bold leading-snug shadow-none md:text-2xl"
           rows={2}
           value={title}
           onChange={(event) => setTitle(event.target.value)}
@@ -1356,7 +1411,7 @@ function TaskPanel({
               <CalendarDays size={15} />
               Due date
             </span>
-            <input
+            <Input
               type="date"
               aria-label="Due date"
               value={task.dueDate}
@@ -1375,14 +1430,15 @@ function TaskPanel({
                     ? task.labels.map((id) => {
                         const label = TASK_LABELS.find((item) => item.id === id);
                         return label ? (
-                          <span
+                          <Badge
+                            variant="outline"
                             key={id}
-                            className="task-label"
+                            className="task-label rounded-md px-2 py-0.5 text-xs font-semibold"
                             style={{ '--label-color': label.color } as CSSProperties}
                           >
                             <span />
                             {label.name}
-                          </span>
+                          </Badge>
                         ) : null;
                       })
                     : 'Add labels'}
@@ -1417,10 +1473,10 @@ function TaskPanel({
           <label className="sr-only" htmlFor="task-description">
             Description
           </label>
-          <textarea
+          <Textarea
             id="task-description"
-            className="description-input"
-            placeholder="Add a little context…"
+            className="description-input leading-7"
+            placeholder="Add a description…"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             onBlur={() => patch({ description })}
@@ -1458,7 +1514,9 @@ function TaskPanel({
                   />
                   <span>{item.title}</span>
                 </label>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   className="icon-button tiny"
                   aria-label={`Delete checklist item ${item.title}`}
                   onClick={() =>
@@ -1466,7 +1524,7 @@ function TaskPanel({
                   }
                 >
                   <X size={13} />
-                </button>
+                </Button>
               </div>
             ))}
           </div>
@@ -1489,15 +1547,15 @@ function TaskPanel({
             }}
           >
             <Plus size={15} />
-            <input
+            <Input
               aria-label="New checklist item"
               placeholder="Add a checklist item…"
               value={itemTitle}
               onChange={(event) => setItemTitle(event.target.value)}
             />
-            <button type="submit" disabled={!itemTitle.trim()}>
+            <Button variant="ghost" type="submit" disabled={!itemTitle.trim()}>
               Add
-            </button>
+            </Button>
           </form>
         </section>
         <div className="detail-note">
@@ -1509,22 +1567,26 @@ function TaskPanel({
         {confirmDelete ? (
           <div className="delete-confirm">
             <span>Delete this task?</span>
-            <button className="text-button" onClick={() => setConfirmDelete(false)}>
+            <Button variant="ghost" className="text-button" onClick={() => setConfirmDelete(false)}>
               Cancel
-            </button>
-            <button className="danger-button" onClick={onDelete}>
+            </Button>
+            <Button variant="destructive" className="danger-button" onClick={onDelete}>
               Delete task
-            </button>
+            </Button>
           </div>
         ) : (
           <>
-            <button className="text-button delete-button" onClick={() => setConfirmDelete(true)}>
+            <Button
+              variant="ghost"
+              className="text-button delete-button"
+              onClick={() => setConfirmDelete(true)}
+            >
               <Trash2 size={14} />
               Delete task
-            </button>
-            <button className="secondary-button" onClick={onClose}>
+            </Button>
+            <Button variant="outline" className="secondary-button" onClick={onClose}>
               Done
-            </button>
+            </Button>
           </>
         )}
       </div>
@@ -1564,24 +1626,25 @@ function NewTaskModal({
       <form onSubmit={submit}>
         <div className="modal-header">
           <div>
-            <span className="eyebrow">MAKE SOMETHING HAPPEN</span>
             <h2>New task</h2>
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="icon-sm"
             type="button"
             className="icon-button"
             aria-label="Close new task"
             onClick={onClose}
           >
             <X size={20} />
-          </button>
+          </Button>
         </div>
         <div className="new-task-fields">
           <label>
             Title
-            <input
+            <Input
               autoFocus
-              placeholder="What needs to be done?"
+              placeholder="Task title"
               value={title}
               onChange={(event) => {
                 setTitle(event.target.value);
@@ -1598,9 +1661,9 @@ function NewTaskModal({
           )}
           <label>
             Description <span className="optional">optional</span>
-            <textarea
+            <Textarea
               rows={4}
-              placeholder="Add details, context, or an idea…"
+              placeholder="Describe the work and acceptance criteria…"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
             />
@@ -1635,14 +1698,13 @@ function NewTaskModal({
           </div>
         </div>
         <div className="modal-footer">
-          <span>Small steps. Good progress.</span>
-          <button type="button" className="secondary-button" onClick={onClose}>
+          <Button variant="outline" type="button" className="secondary-button" onClick={onClose}>
             Cancel
-          </button>
-          <button className="primary-button" type="submit">
+          </Button>
+          <Button variant="default" className="primary-button" type="submit">
             <Plus size={15} />
             Create task
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>

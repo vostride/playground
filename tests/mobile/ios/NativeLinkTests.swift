@@ -32,35 +32,35 @@ final class NativeLinkTests: XCTestCase {
     func testNativeURLsReachEveryProductAndPreserveWarmBugState() {
         visit("playground://home", named: "Home") {
             self.requireText("Make yourself at home.")
-            self.requireElement(self.app.buttons["Open Fernwood"], "Home product launcher")
+            self.requireElement(self.app.buttons["Open Komazon"], "Home product launcher")
         }
 
-        visit("playground://flights", named: "Wayline search") {
+        visit("playground://flights", named: "Looking.com search") {
             self.requireText("A LITTLE FURTHER. A LITTLE FREER.")
-            self.requireElement(self.app.buttons["Explore flights"], "Wayline navigation")
+            self.requireElement(self.app.buttons["Explore flights"], "Looking.com navigation")
         }
 
-        visit("playground://flights/bookings", named: "Wayline bookings") {
+        visit("playground://flights/bookings", named: "Looking.com bookings") {
             self.requireElement(self.element("field-find-a-booking"), "Booking search field")
             self.requireText("Booking WL6P2K")
         }
 
-        visit("playground://observability/logs", named: "Vigil logs") {
+        visit("playground://observability/logs", named: "PepaPog logs") {
             self.requireText("Log explorer")
             self.requireElement(self.element("vigil-field-log-search-query"), "Log query field")
         }
 
-        visit("playground://observability/monitors", named: "Vigil monitors") {
+        visit("playground://observability/monitors", named: "PepaPog monitors") {
             self.requireElement(self.app.buttons["New monitor"], "New monitor action")
             self.requireElement(self.element("vigil-field-search-monitors"), "Monitor search field")
         }
 
-        visit("playground://tasks", named: "Corkboard board") {
-            self.requireElement(self.app.buttons["task-card-CKB-001"], "Seeded Corkboard card")
+        visit("playground://tasks", named: "Brello board") {
+            self.requireElement(self.app.buttons["task-card-CKB-001"], "Seeded Brello card")
             self.requireText("Product launch")
         }
 
-        visit("playground://tasks/task/CKB-001", named: "Corkboard task detail") {
+        visit("playground://tasks/task/CKB-001", named: "Brello task detail") {
             let title = self.element("task-detail-title")
             self.requireElement(title, "Task detail title")
             XCTAssertEqual(title.value as? String, "Explore a more useful empty state")
@@ -73,18 +73,18 @@ final class NativeLinkTests: XCTestCase {
             !self.app.buttons["Close CKB-001"].exists
         }
 
-        visit("playground://shop?bug=cart-total", named: "Fernwood opt-in catalog") {
+        visit("playground://shop?bug=cart-total", named: "Komazon opt-in catalog") {
             self.requireText("THE EVERYDAY COLLECTION")
             self.requireElement(self.element("field-search-products"), "Catalog search field")
             self.requireText(self.bugLabel)
         }
 
-        visit("playground://shop/cart", named: "Fernwood cart") {
+        visit("playground://shop/cart", named: "Komazon cart") {
             self.requireEmptyCart()
             self.requireText(self.bugLabel)
         }
 
-        visit("playground://home", named: "Leave Fernwood without restarting") {
+        visit("playground://home", named: "Leave Komazon without restarting") {
             self.requireText("Make yourself at home.")
             XCTAssertFalse(self.app.staticTexts[self.bugLabel].exists)
         }

@@ -1,5 +1,5 @@
 appId: dev.vostride.playground
-name: Fernwood sign-in, quantity, validated checkout, and cancellation
+name: Komazon sign-in, quantity, validated checkout, and cancellation
 ---
 - runFlow: ../helpers/launch.yaml
 - runFlow:
@@ -30,7 +30,7 @@ name: Fernwood sign-in, quantity, validated checkout, and cancellation
     file: ../helpers/fill.yaml
     env:
       FIELD: field-password
-      VALUE: fernwood123
+      VALUE: komazon123
 - scrollUntilVisible:
     centerElement: true
     element:

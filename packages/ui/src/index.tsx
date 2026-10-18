@@ -1,6 +1,18 @@
 import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
 import { Bug, RotateCcw, ChevronDown } from 'lucide-react';
+import './styles.css';
 import './playground.css';
+import { Button } from './components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from './components/ui/dialog';
+
+if (typeof document !== 'undefined') document.documentElement.classList.add('dark');
 export type BugDefinition = { id: string; label: string; description: string };
 export function useSessionState<T>(
   key: string,
@@ -42,30 +54,38 @@ export function PlaygroundBanner({ app, bugs = [] }: { app: string; bugs?: BugDe
     location.assign(url.toString());
   }
   return (
-    <div className="pg-banner">
-      <div>
-        <span className="pg-dot" /> Playground{' '}
-        <span className="pg-muted">· Simulated data. No real transactions.</span>
-      </div>
-      <div className="pg-tools">
-        <a href="/">All apps</a>
-        <button onClick={() => setOpen(!open)} aria-expanded={open}>
-          <Bug size={13} /> {active ? 'Bug enabled' : 'Test controls'}
-          <ChevronDown size={12} />
-        </button>
-        <button
-          onClick={reset}
-          aria-label="Reset playground session"
-          title="Reset playground session"
-        >
-          <RotateCcw size={13} />
-        </button>
-      </div>
-      {open && (
-        <div className="pg-menu">
-          <strong>{app} test controls</strong>
-          <p>Deliberate bugs are off by default. Enable one to test a failure.</p>
-          <label>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <div className="pg-banner">
+        <div>
+          <span className="pg-dot" /> Playground{' '}
+          <span className="pg-muted">· Simulated data. No real transactions.</span>
+        </div>
+        <div className="pg-tools">
+          <a href="/">All apps</a>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <Bug size={13} /> {active ? 'Bug enabled' : 'Test controls'}
+              <ChevronDown size={12} />
+            </Button>
+          </DialogTrigger>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={reset}
+            aria-label="Reset playground session"
+            title="Reset playground session"
+          >
+            <RotateCcw size={13} />
+          </Button>
+        </div>
+        <DialogContent className="pg-menu max-w-lg" aria-describedby="pg-controls-description">
+          <DialogHeader>
+            <DialogTitle>{app} test controls</DialogTitle>
+            <DialogDescription id="pg-controls-description">
+              Deliberate bugs are off by default. Enable one to test a failure.
+            </DialogDescription>
+          </DialogHeader>
+          <label className="pg-control-label">
             Active bug
             <select
               aria-label="Active bug"
@@ -80,23 +100,40 @@ export function PlaygroundBanner({ app, bugs = [] }: { app: string; bugs?: BugDe
               ))}
             </select>
           </label>
-          {bugs.map((b) => (
-            <div key={b.id}>
-              <b>{b.label}</b>
-              <p>
-                {b.description} <code>?bug={b.id}</code>
-              </p>
-            </div>
-          ))}
-          <button onClick={() => setOpen(false)}>Close controls</button>
-        </div>
-      )}
-      {active && (
-        <div className="pg-bug" role="status">
-          Deliberate bug enabled: {bugs.find((b) => b.id === active)?.label || active}{' '}
-          <button onClick={() => toggleBug('')}>Disable</button>
-        </div>
-      )}
-    </div>
+          <div className="pg-bug-options">
+            {bugs.map((b) => (
+              <div key={b.id}>
+                <b>{b.label}</b>
+                <p>{b.description}</p>
+                <code>?bug={b.id}</code>
+              </div>
+            ))}
+          </div>
+          <Button variant="secondary" onClick={() => setOpen(false)}>
+            Close controls
+          </Button>
+        </DialogContent>
+        {active && (
+          <div className="pg-bug" role="status">
+            Deliberate bug enabled: {bugs.find((b) => b.id === active)?.label || active}{' '}
+            <Button variant="ghost" size="sm" onClick={() => toggleBug('')}>
+              Disable
+            </Button>
+          </div>
+        )}
+      </div>
+    </Dialog>
   );
 }
+
+export * from './components/ui/button';
+export * from './components/ui/input';
+export * from './components/ui/textarea';
+export * from './components/ui/badge';
+export * from './components/ui/card';
+export * from './components/ui/separator';
+export * from './components/ui/dialog';
+export * from './components/ui/tabs';
+export * from './components/ui/select';
+export * from './components/ui/label';
+export * from './brand-mark';

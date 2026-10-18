@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   BackHandler,
+  Image,
   Linking,
   Modal,
   StatusBar,
@@ -36,7 +37,8 @@ import {
 const apps = [
   {
     id: 'shop' as const,
-    name: 'Fernwood',
+    logo: require('./assets/brands/shop.png'),
+    name: 'Komazon',
     category: 'THE EVERYDAY, CONSIDERED',
     symbol: 'f',
     description: 'Thoughtful things for living well.',
@@ -45,7 +47,8 @@ const apps = [
   },
   {
     id: 'flights' as const,
-    name: 'Wayline',
+    logo: require('./assets/brands/flights.png'),
+    name: 'Looking.com',
     category: 'YOUR NEXT SOMEWHERE',
     symbol: '↗',
     description: 'Good journeys start here.',
@@ -54,7 +57,8 @@ const apps = [
   },
   {
     id: 'tasks' as const,
-    name: 'Corkboard',
+    logo: require('./assets/brands/tasks.png'),
+    name: 'Brello',
     category: 'A LITTLE MORE IN SYNC',
     symbol: '▥',
     description: 'Make room for your next idea.',
@@ -63,7 +67,8 @@ const apps = [
   },
   {
     id: 'observability' as const,
-    name: 'Vigil',
+    logo: require('./assets/brands/observability.png'),
+    name: 'PepaPog',
     category: 'SEE THE WHOLE PICTURE',
     symbol: 'v',
     description: 'A clear view of your systems.',
@@ -201,9 +206,7 @@ export default function App() {
                   style={styles.appCard}
                 >
                   <View style={[styles.appIcon, { backgroundColor: app.tint }]}>
-                    <Text style={{ fontSize: 31, color: app.color, fontWeight: '600' }}>
-                      {app.symbol}
-                    </Text>
+                    <Image source={app.logo} style={{ width: 31, height: 31 }} accessible={false} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.appCategory}>{app.category}</Text>
@@ -240,6 +243,7 @@ export default function App() {
           {[{ id: 'home' as const, name: 'Home', symbol: '⌂' }, ...apps].map((app) => (
             <TouchableOpacity
               accessibilityRole="tab"
+              accessibilityLabel={app.name}
               accessibilityState={{ selected: current.app === app.id }}
               key={app.id}
               onPress={() =>
@@ -254,9 +258,22 @@ export default function App() {
               }
               style={styles.tab}
             >
-              <Text style={[styles.tabSymbol, current.app === app.id && styles.tabSelected]}>
-                {app.symbol}
-              </Text>
+              {'logo' in app ? (
+                <Image
+                  source={app.logo}
+                  style={{
+                    width: 21,
+                    height: 21,
+                    marginBottom: 3,
+                    opacity: current.app === app.id ? 1 : 0.65,
+                  }}
+                  accessible={false}
+                />
+              ) : (
+                <Text style={[styles.tabSymbol, current.app === app.id && styles.tabSelected]}>
+                  {app.symbol}
+                </Text>
+              )}
               <Text style={[styles.tabLabel, current.app === app.id && styles.tabSelected]}>
                 {app.name}
               </Text>

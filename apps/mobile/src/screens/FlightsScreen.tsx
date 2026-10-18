@@ -13,6 +13,11 @@ import {
   View,
 } from 'react-native';
 import {
+  addFlightDays as addDays,
+  flightDateWindow,
+  flightMonthDays,
+  formatFlightDate as shortDate,
+  isValidFlightDate,
   airport,
   airports,
   airlines,
@@ -61,13 +66,6 @@ const initialSearch: SearchState = {
   roundTrip: true,
   passengers: 1,
 };
-const shortDate = (date: string) =>
-  new Date(`${date}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-const addDays = (date: string, days: number) => {
-  const d = new Date(`${date}T12:00:00`);
-  d.setDate(d.getDate() + days);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
 export default function FlightsScreen({ route, bug }: MobileScreenProps) {
   const [search, setSearch] = useSessionState<SearchState>('wayline-search', initialSearch),
     [bookings, setBookings] = useSessionState<Booking[]>('wayline-bookings', [sampleBooking]);
@@ -75,7 +73,9 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
     [picker, setPicker] = useState<'' | 'from' | 'to' | 'dates' | 'passengers'>(''),
     [query, setQuery] = useState(''),
     [month, setMonth] = useState('2026-11'),
-    [datePart, setDatePart] = useState<'departure' | 'returnDate'>('departure');
+    [datePart, setDatePart] = useState<'departure' | 'returnDate'>('departure'),
+    [exactDate, setExactDate] = useState(initialSearch.departure),
+    [dateError, setDateError] = useState('');
   const [outbound, setOutbound] = useState<Flight>(),
     [inbound, setInbound] = useState<Flight>(),
     [leg, setLeg] = useState<'outbound' | 'return'>('outbound'),
@@ -110,6 +110,13 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
   const runSearch = () => {
     if (search.from === search.to) {
       setError('Choose different departure and arrival airports.');
+      return;
+    }
+    if (
+      !isValidFlightDate(search.departure) ||
+      (search.roundTrip && !isValidFlightDate(search.returnDate))
+    ) {
+      setError('Choose valid travel dates.');
       return;
     }
     if (search.roundTrip && search.returnDate < search.departure) {
@@ -252,9 +259,42 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
       go('confirmation');
     }, 500);
   };
-  const first = new Date(`${month}-01T12:00:00`),
-    days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate(),
-    start = (first.getDay() + 6) % 7;
+  const selectDatePart = (part: 'departure' | 'returnDate') => {
+    setDatePart(part);
+    setMonth(search[part].slice(0, 7));
+    setExactDate(search[part]);
+    setDateError('');
+  };
+  const chooseDate = (date: string) => {
+    if (!isValidFlightDate(date)) {
+      setDateError('Enter a valid date in YYYY-MM-DD format.');
+      return;
+    }
+    if (datePart === 'returnDate' && date < search.departure) {
+      setDateError('Your return date must be on or after your departure.');
+      return;
+    }
+    const next = {
+      ...search,
+      [datePart]: date,
+      ...(datePart === 'departure' && date > search.returnDate
+        ? { returnDate: addDays(date, 7) }
+        : {}),
+    };
+    setSearch(next);
+    setMonth(date.slice(0, 7));
+    setDateError('');
+    if (datePart === 'departure' && search.roundTrip) {
+      setDatePart('returnDate');
+      setExactDate(next.returnDate);
+    } else {
+      setExactDate(date);
+      setPicker('');
+    }
+  };
+  const first = new Date(`${month}-01T00:00:00Z`),
+    days = flightMonthDays(month),
+    start = (first.getUTCDay() + 6) % 7;
   const cancel = (booking: Booking) =>
     Alert.alert(
       'Cancel this trip?',
@@ -354,8 +394,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                 style={styles.searchField}
                 onPress={() => {
                   setPicker('dates');
-                  setDatePart('departure');
-                  setMonth(search.departure.slice(0, 7));
+                  selectDatePart('departure');
                 }}
               >
                 <Text style={styles.label}>Travel dates</Text>
@@ -430,15 +469,14 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
             )}
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <Row>
-                {[-3, -2, -1, 0, 1, 2, 3].map((offset) => {
-                  const next = addDays(date, offset);
+                {flightDateWindow(date).map((next) => {
                   return (
                     <TouchableOpacity
                       key={next}
                       accessibilityRole="button"
                       disabled={leg === 'return' && next < search.departure}
                       accessibilityLabel={`${shortDate(next)}, from ${money(Math.min(...searchFlights(from, to, next).map((f) => f.price)))}`}
-                      style={[styles.datePrice, offset === 0 && styles.datePriceSelected]}
+                      style={[styles.datePrice, next === date && styles.datePriceSelected]}
                       onPress={() =>
                         setSearch({
                           ...search,
@@ -1144,27 +1182,54 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                 <Chip
                   label={`Departure ${shortDate(search.departure)}`}
                   selected={datePart === 'departure'}
-                  onPress={() => setDatePart('departure')}
+                  onPress={() => selectDatePart('departure')}
                 />
                 {search.roundTrip && (
                   <Chip
                     label={`Return ${shortDate(search.returnDate)}`}
                     selected={datePart === 'returnDate'}
-                    onPress={() => setDatePart('returnDate')}
+                    onPress={() => selectDatePart('returnDate')}
                   />
                 )}
               </Row>
+              <Field
+                label={
+                  datePart === 'departure'
+                    ? 'Departure date (YYYY-MM-DD)'
+                    : 'Return date (YYYY-MM-DD)'
+                }
+                testID="flight-exact-travel-date"
+                placeholder="YYYY-MM-DD"
+                value={exactDate}
+                autoCapitalize="none"
+                autoCorrect={false}
+                maxLength={10}
+                onChangeText={(text) => {
+                  setExactDate(text);
+                  setDateError('');
+                }}
+              />
+              {dateError ? (
+                <Text accessibilityRole="alert" style={{ color: colors.danger }}>
+                  {dateError}
+                </Text>
+              ) : null}
+              <Button title="Use date" variant="secondary" onPress={() => chooseDate(exactDate)} />
               <Row style={{ justifyContent: 'space-between' }}>
                 <Button
                   title="‹"
+                  testID="flight-previous-month"
+                  disabled={month === '0001-01'}
                   variant="secondary"
                   onPress={() => setMonth(addDays(`${month}-01`, -1).slice(0, 7))}
                 />
                 <Text style={styles.medium}>
-                  {first.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  {shortDate(`${month}-01`, { month: 'long', year: 'numeric' })}
                 </Text>
                 <Button
                   title="›"
+                  testID="flight-next-month"
+                  disabled={month === '9999-12'}
                   variant="secondary"
                   onPress={() => setMonth(addDays(`${month}-${days}`, 1).slice(0, 7))}
                 />
@@ -1198,17 +1263,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                           value < search.returnDate &&
                           styles.calendarRange,
                       ]}
-                      onPress={() => {
-                        setSearch({
-                          ...search,
-                          [datePart]: value,
-                          ...(datePart === 'departure' && value > search.returnDate
-                            ? { returnDate: addDays(value, 7) }
-                            : {}),
-                        });
-                        if (datePart === 'departure' && search.roundTrip) setDatePart('returnDate');
-                        else setPicker('');
-                      }}
+                      onPress={() => chooseDate(value)}
                     >
                       <Text style={[styles.body, selected && { color: '#fff' }]}>{i + 1}</Text>
                     </TouchableOpacity>

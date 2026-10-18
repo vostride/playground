@@ -122,7 +122,7 @@ export function ProductArt({
               fontFamily="Georgia"
               fontSize="18"
             >
-              fernwood
+              Komazon
             </text>
             <text x="160" y="181" fill="#6b755e" textAnchor="middle" fontSize="5" letterSpacing="2">
               GOOD THINGS, EVERY DAY.
@@ -232,7 +232,7 @@ export function ProductArt({
             <path d="M225 111v22h11v-22" fill="#bca16d" />
             <rect x="145" y="154" width="30" height="26" rx="2" fill="#d9bba3" />
             <text x="160" y="170" fontSize="8" textAnchor="middle" fill="#785d49">
-              fw.
+              K.
             </text>
           </>
         )}

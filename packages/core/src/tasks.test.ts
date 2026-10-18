@@ -12,7 +12,7 @@ import {
   updateTask,
 } from './tasks.ts';
 
-test('Corkboard generates 2,400 repeatable tasks across 80 boards', () => {
+test('Brello generates 2,400 repeatable tasks across 80 boards', () => {
   const first = createTasksState();
   assert.equal(first.tasks.length, 2400);
   assert.equal(first.boards.length, 80);

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-test('Corkboard: rapid keyboard moves retain focus and commit one undo step with delayed frames', async ({
+test('Brello: rapid keyboard moves retain focus and commit one undo step with delayed frames', async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -56,7 +56,7 @@ test('Corkboard: rapid keyboard moves retain focus and commit one undo step with
   await expect(task).toBeFocused();
   await expect(undo).toBeDisabled();
 });
-test('Corkboard: keyboard movement between and within columns, undo, inline editing', async ({
+test('Brello: keyboard movement between and within columns, undo, inline editing', async ({
   page,
 }) => {
   await page.goto('/tasks/');
@@ -93,7 +93,7 @@ test('Corkboard: keyboard movement between and within columns, undo, inline edit
   await page.reload();
   await expect(task).toContainText('Updated onboarding task');
 });
-test('Corkboard: pointer drag and empty filtered state', async ({ page }) => {
+test('Brello: pointer drag and empty filtered state', async ({ page }) => {
   await page.goto('/tasks/');
   const from = page.locator('.kanban-column').first().locator('.task-card').first();
   await expect(from).toBeVisible();
@@ -108,7 +108,7 @@ test('Corkboard: pointer drag and empty filtered state', async ({ page }) => {
   await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
   await expect(page.locator('.task-card').first()).toBeVisible();
 });
-test('Corkboard detailed card edits, checklist and creation survive reopening', async ({
+test('Brello detailed card edits, checklist and creation survive reopening', async ({
   page,
 }) => {
   await page.goto('/tasks/');

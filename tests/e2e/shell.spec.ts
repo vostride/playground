@@ -1,5 +1,24 @@
 import { test, expect } from '@playwright/test';
 
+test('test controls fit a landscape viewport and return keyboard focus on close', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.goto('/shop/');
+  const trigger = page.getByRole('button', { name: 'Test controls', exact: true });
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+  const dialog = page.getByRole('dialog', { name: 'Komazon test controls', exact: true });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Close', exact: true })).toBeInViewport();
+  await dialog.getByRole('button', { name: 'Close controls', exact: true }).click();
+  await expect(trigger).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(trigger).toBeFocused();
+});
+
 test('static hosting preserves application assets, noindex headers and missing-page responses', async ({
   request,
 }) => {
@@ -24,10 +43,10 @@ test('static hosting preserves application assets, noindex headers and missing-p
 });
 
 for (const [path, name] of [
-  ['shop', 'Fernwood'],
-  ['flights', 'Wayline'],
-  ['tasks', 'Corkboard'],
-  ['observability', 'Vigil'],
+  ['shop', 'Komazon'],
+  ['flights', 'Looking.com'],
+  ['tasks', 'Brello'],
+  ['observability', 'PepaPog'],
 ]) {
   test(`${name} is self-contained, labelled and noindex`, async ({ page }) => {
     const external: string[] = [];

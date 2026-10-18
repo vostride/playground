@@ -1,5 +1,5 @@
 appId: dev.vostride.playground
-name: Wayline round trip, both seat maps, validated checkout, and booking
+name: Looking.com round trip, both seat maps, validated checkout, and booking
 ---
 - runFlow: ../helpers/launch.yaml
 - runFlow:
@@ -82,16 +82,18 @@ name: Wayline round trip, both seat maps, validated checkout, and booking
       id: field-first-name
     direction: UP
 # The field is already centered by the upward return from validation. A second
-# downward centering gesture can move it behind Wayline's pinned subnavigation.
+# downward centering gesture can move it behind Looking.com's pinned subnavigation.
 - takeScreenshot: wayline-first-name-before-entry
 - tapOn:
     id: field-first-name
 - eraseText
 - inputText: Alex
+# Android run 39139713527 shows the keyboard covering this field after entry.
+# Restore the content viewport before requiring the same exact entered value.
+- runFlow: ../helpers/dismiss-keyboard.yaml
 - assertVisible:
     id: field-first-name
     text: '^Alex$'
-- runFlow: ../helpers/dismiss-keyboard.yaml
 - runFlow:
     file: ../helpers/fill.yaml
     env:
@@ -128,7 +130,7 @@ name: Wayline round trip, both seat maps, validated checkout, and booking
       platform: iOS
     commands:
       # The button already fits the content viewport on iOS. Maestro's extra
-      # centering swipe moves it behind Wayline's pinned navigation (run39138069470).
+      # centering swipe moves it behind Looking.com's pinned navigation (run39138069470).
       - scrollUntilVisible:
           centerElement: false
           element:
