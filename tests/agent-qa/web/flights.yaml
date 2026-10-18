@@ -1,6 +1,6 @@
 test-id: t_python-seeing-macro-retry-cow-adz-ski-sen-eyey-mac
 name: Looking date ranges, filtered flights, seats and validated booking
-target: web-flights
+target: web-looking
 context: >-
   Use visible product controls only, without scripts, storage changes or internal
   APIs. Keep this browser tab for the entire journey. Calendar day buttons have

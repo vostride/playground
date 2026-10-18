@@ -19,7 +19,10 @@ services:
   recording:
     enabled: true
   memory:
-    enabled: false
+    enabled: true
+    provider: local
+    dir: .agent-qa/memory
+    curatorEnabled: true
   logging:
     level: warn
 
@@ -31,23 +34,56 @@ registry:
       screenshotSize: 200kb
       effectiveResolution: 1280
   targets:
-    web-shop:
+    web-komazon:
+      product: komazon
       platform: web
       url: https://playground.vostride.dev/shop/
-    web-flights:
+    web-looking:
+      product: looking
       platform: web
       url: https://playground.vostride.dev/flights/
-    web-tasks:
+    web-brello:
+      product: brello
       platform: web
       url: https://playground.vostride.dev/tasks/
-    web-observability:
+    web-pepapog:
+      product: pepapog
       platform: web
       url: https://playground.vostride.dev/observability/
-    playground-mobile:
+    android-komazon:
+      product: komazon
       platform: android
       appPackage: dev.vostride.playground
       appActivity: .MainActivity
-    playground-ios:
+    android-looking:
+      product: looking
+      platform: android
+      appPackage: dev.vostride.playground
+      appActivity: .MainActivity
+    android-brello:
+      product: brello
+      platform: android
+      appPackage: dev.vostride.playground
+      appActivity: .MainActivity
+    android-pepapog:
+      product: pepapog
+      platform: android
+      appPackage: dev.vostride.playground
+      appActivity: .MainActivity
+    ios-komazon:
+      product: komazon
+      platform: ios
+      bundleId: dev.vostride.playground
+    ios-looking:
+      product: looking
+      platform: ios
+      bundleId: dev.vostride.playground
+    ios-brello:
+      product: brello
+      platform: ios
+      bundleId: dev.vostride.playground
+    ios-pepapog:
+      product: pepapog
       platform: ios
       bundleId: dev.vostride.playground
   devices:

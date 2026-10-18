@@ -1,0 +1,8 @@
+suite-id: s_wagon-pseudo-lea-fall-ettle-ande-ret-wed-ush-start
+name: Brello iOS task workflow
+target: ios-brello
+use:
+  device: ios-local
+tests:
+  - test: tests/agent-qa/mobile/03-brello-task.yaml
+    id: t_nul-kern-agua-flix-moor-meteor-bound-undo-match-boot

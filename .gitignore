@@ -40,10 +40,10 @@ release/
 *.apk
 *.aab
 *.ipa
+
+# agent-qa local state, recordings, memory, generated tests, and credentials.
 .agent-qa/
-.agent-qa/auth-states/
 agent-qa.local.yaml
-.env.secrets.local
 agent-qa.*.generated.yaml
 tests/agent-qa/reports/
 tests/agent-qa/.auth-data/

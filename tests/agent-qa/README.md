@@ -12,7 +12,16 @@ npm run agent-qa:configure -- web
 npx agent-qa dashboard --open
 ```
 
-The checked-in `agent-qa.config.yaml` is the default dashboard config. It discovers all eight tests and defaults the mobile target to Android. The dashboard listens at <http://localhost:3470>. `agent-qa init` has already been run; do not use `--force` over this project config.
+The checked-in `agent-qa.config.yaml` is the default dashboard config. It discovers eight tests and four iOS suites. The mobile tests select Android; the iOS suites reuse the same steps and stable test IDs with an iOS target. The dashboard listens at <http://localhost:3470>. `agent-qa init` has already been run; do not use `--force` over this project config.
+
+| Product memory key | Web target    | Android target    | iOS target    |
+| ------------------ | ------------- | ----------------- | ------------- |
+| `komazon`          | `web-komazon` | `android-komazon` | `ios-komazon` |
+| `looking`          | `web-looking` | `android-looking` | `ios-looking` |
+| `brello`           | `web-brello`  | `android-brello`  | `ios-brello`  |
+| `pepapog`          | `web-pepapog` | `android-pepapog` | `ios-pepapog` |
+
+agent-qa 0.1.21 defines each product through `registry.targets.<target>.product`; it does not have a separate `registry.products` section. Each native target launches the same installed super app. Its journey opens the appropriate product from Home.
 
 ```sh
 npx agent-qa devices init
@@ -21,14 +30,23 @@ npx agent-qa devices list
 
 Device bindings live in ignored `agent-qa.local.yaml`. `devices init` skips an existing file: edit its bindings when switching machines or devices. The application identifier is `dev.vostride.playground` on both platforms. Use a CI-built installed app; native release builds stay in GitHub Actions.
 
-For the iOS tests, generate an iOS config and open that dashboard instead:
+For iOS, choose one of the four **iOS suites** in the dashboard. To run all four iOS journeys through the CLI:
 
 ```sh
 npm run agent-qa:configure -- ios
-npx agent-qa --config agent-qa.ci.generated.yaml dashboard --open
+npm run agent-qa:validate
+npm run agent-qa:test
 ```
 
-Close the previous dashboard first, or pass another `--port`. Set `PLAYGROUND_DEVICE_ID` to a simulator UDID or Android serial before generating the platform config to select a specific device. The generated config is ignored by git. Mobile execution also needs an Appium driver compatible with the local OS/Xcode; CI installs its own pinned drivers. Initialization alone does not install drivers or execute a device test.
+Set `PLAYGROUND_DEVICE_ID` to a simulator UDID or Android serial before generating the platform config to select a specific device. The generated config and native test copies are ignored by git. Copies preserve test IDs and steps, changing only the target/device. They avoid v0.1.21's multi-suite JUnit overwrite and retain all four journeys in the CI report. Mobile execution also needs an Appium driver compatible with the local OS/Xcode; CI installs its own pinned drivers. Initialization alone does not install drivers or execute a device test.
+
+## Shared product memory
+
+Memory and its curator are enabled, stored under ignored `.agent-qa/memory/`. Observations in `products/looking/`, for example, are available to all three Looking targets. Different products retrieve their own product observations. Native test IDs stay identical across Android and iOS, so test-specific knowledge can also be reused. Memory is treated as a hypothesis; assertions still check the live interface. Platform-specific observations should identify their platform.
+
+The local provider uses Markdown files and an in-memory SQLite search index; no embedding service is required. The curator learns from executed runs using the configured model. An empty memory view before the first learned observation is expected: the dashboard builds that view from saved observations. The v0.1.21 curator considers all observations for deduplication, although retrieval is scoped by product, suite and test.
+
+CI restores and saves only sanitized `products/`, `suites/` and `tests/` memory directories. Auth, dashboard databases, reports and locks are excluded. Compatible snapshots are shared across web, Android and iOS and later runs; each job summary records the restored cache and save outcome. Concurrent workflow runs can start from the same snapshot, and their changes are not merged. Local memory is independent of the CI cache and is never committed. Failed tests remain advisory with memory enabled.
 
 ## Subscription authentication and CI secret
 
@@ -71,5 +89,5 @@ Manual dispatch requires a completed main-push source run ID. Choosing `all` res
 Validate helper behavior without model calls or device execution:
 
 ```sh
-node --test tests/agent-qa/auth.test.mjs
+node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs
 ```

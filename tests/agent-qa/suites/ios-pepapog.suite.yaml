@@ -1,0 +1,8 @@
+suite-id: s_avo-alice-quan-ague-above-mentor-ioni-angers-greg-taken
+name: PepaPog iOS monitor workflow
+target: ios-pepapog
+use:
+  device: ios-local
+tests:
+  - test: tests/agent-qa/mobile/04-pepapog-monitor.yaml
+    id: t_sports-headed-day-vole-anton-uke-factor-asem-lemma-dan

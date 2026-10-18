@@ -1,6 +1,6 @@
 test-id: t_early-rame-dow-legend-scalar-raad-locale-asem-cell-ball
 name: Komazon quantity, bug recovery, validated checkout and cancellation
-target: web-shop
+target: web-komazon
 context: >-
   Exercise the product through visible controls in the same browser tab. Do not
   write browser storage, call internal application APIs, or use scripts to change

@@ -1,6 +1,6 @@
 test-id: t_photo-pivot-reload-unci-robe-icho-posit-teste-mall-ulu
 name: Komazon mobile purchase, order history, and cancellation
-target: playground-mobile
+target: android-komazon
 context: >-
   Exercise the installed Playground app through its visible native controls.
   The account and address below are public fixture data. Reset through Test controls
@@ -9,6 +9,7 @@ context: >-
   use Done typing if the keyboard covers the next control. Never replace an assertion
   with a state change that manufactures its expected result.
 use:
+  device: android-local
   mobile:
     appState: reset
 meta:

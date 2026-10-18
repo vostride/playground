@@ -1,6 +1,6 @@
 test-id: t_hello-shire-angler-hunt-limit-plat-alite-non-urent-simple
 name: PepaPog log queries, trace inspection and monitor lifecycle
-target: web-observability
+target: web-pepapog
 context: >-
   Use the visible dashboard, log query form, trace dialog and monitor builder.
   Do not mutate browser storage, use application internals or make API calls.

@@ -1,6 +1,6 @@
 test-id: t_nul-kern-agua-flix-moor-meteor-bound-undo-match-boot
 name: Brello mobile task properties, movement, undo, and persistence
-target: playground-mobile
+target: android-brello
 context: >-
   Exercise the installed Playground app through Brello's visible Board and List views.
   Keep deliberate bugs off. The new task title is unique within the reset fixture.
@@ -9,6 +9,7 @@ context: >-
   necessary and scroll within the detail sheet for properties. Movement uses the product's
   accessible status controls; separate deterministic native tests cover held-touch drag.
 use:
+  device: android-local
   mobile:
     appState: reset
 meta:

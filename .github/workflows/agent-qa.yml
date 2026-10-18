@@ -163,6 +163,20 @@ jobs:
           cache: npm
       - name: Install pinned root dependencies
         run: npm ci
+      - name: Restore the latest compatible product memory
+        id: memory-restore
+        continue-on-error: true
+        uses: actions/cache/restore@v4
+        with:
+          # Keep the same relative paths on Linux and macOS. Never include auth,
+          # databases, reports, curator locks, or runtime counters in this cache.
+          path: |
+            .agent-qa/memory/products/
+            .agent-qa/memory/suites/
+            .agent-qa/memory/tests/
+          key: agent-qa-memory-0.1.21-v1-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.platform }}
+          restore-keys: agent-qa-memory-0.1.21-v1-
+          enableCrossOsArchive: true
       - name: Download only the selected CI artifact
         uses: actions/download-artifact@v4
         with:
@@ -273,7 +287,7 @@ jobs:
           xcrun simctl install "$PLAYGROUND_SIMULATOR_ID" "$RUNNER_TEMP/playground-agent-qa-app/Playground.app"
       - name: Configure and validate the selected test target
         run: |
-          node --test tests/agent-qa/auth.test.mjs
+          node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs
           node tests/agent-qa/configure.mjs "$PLAYGROUND_PLATFORM"
           npm run agent-qa:validate
       - name: Prepare isolated Codex subscription authentication
@@ -333,12 +347,72 @@ jobs:
           if (process.env.PLAYGROUND_PLATFORM === 'android' && existsSync(preparation)) copyFileSync(preparation, `${directory}/emulator-preparation.json`);
           appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Advisory agent-qa ${outcome.platform}: test **${outcome.testOutcome}**, setup **${outcome.jobOutcome}**. Sanitized evidence is uploaded when report sanitation succeeds. Publication is independent of this result.\n`);
           NODE
+      - name: Require executed test evidence before saving memory
+        if: >-
+          always() &&
+          (steps.test.outcome == 'success' || steps.test.outcome == 'failure' ||
+           steps.android-test.outcome == 'success' || steps.android-test.outcome == 'failure')
+        id: memory-executed
+        run: |
+          node --input-type=module <<'NODE'
+          import {appendFileSync, readFileSync} from 'node:fs';
+          import {createRequire} from 'node:module';
+          const require = createRequire(import.meta.resolve('@vostride/agent-qa-core'));
+          const {XMLParser, XMLValidator} = require('fast-xml-parser');
+          let eligible = false;
+          try {
+            const status = JSON.parse(readFileSync('tests/agent-qa/reports/status.json', 'utf8'));
+            const xml = readFileSync('tests/agent-qa/reports/junit.xml', 'utf8');
+            if (XMLValidator.validate(xml) !== true) throw new Error('Invalid JUnit.');
+            const document = new XMLParser({ignoreAttributes: false}).parse(xml);
+            const cases = [];
+            const visit = (node) => {
+              if (!node || typeof node !== 'object') return;
+              for (const [name, value] of Object.entries(node)) {
+                if (name === 'testcase') cases.push(...(Array.isArray(value) ? value : [value]));
+                else visit(value);
+              }
+            };
+            visit(document);
+            eligible = status.agentQaVersion === '0.1.21' && status.platform === process.env.PLAYGROUND_PLATFORM &&
+              !status.launchError && status.signal === null && Number.isInteger(status.exitCode) &&
+              cases.some((test) => test && typeof test === 'object' && !Object.hasOwn(test, 'skipped') &&
+                String(test['@_status'] || '').toLowerCase() !== 'skipped');
+          } catch {
+            // Setup failures, absent reports, and malformed evidence cannot save memory.
+          }
+          appendFileSync(process.env.GITHUB_OUTPUT, `eligible=${eligible}\n`);
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Memory snapshot eligibility: **${eligible}**. Requires a completed agent-qa invocation and a non-skipped JUnit testcase; passing and failing tests both qualify.\n`);
+          NODE
       - name: Sanitize evidence before any upload
         if: always()
         id: sanitize
         env:
           AGENT_QA_AUTH_JSON: ${{ secrets.AGENT_QA_AUTH_JSON }}
         run: node tests/agent-qa/auth.mjs sanitize-reports
+      - name: Save sanitized product memory for subsequent platforms and runs
+        if: always() && steps.sanitize.outcome == 'success' && steps.memory-executed.outputs.eligible == 'true'
+        id: memory-save
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .agent-qa/memory/products/
+            .agent-qa/memory/suites/
+            .agent-qa/memory/tests/
+          key: agent-qa-memory-0.1.21-v1-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.platform }}
+          enableCrossOsArchive: true
+      - name: Report memory snapshot continuity
+        if: always()
+        env:
+          MEMORY_RESTORED: ${{ steps.memory-restore.outputs.cache-matched-key }}
+          MEMORY_SAVED: ${{ steps.memory-save.outcome }}
+        run: |
+          node --input-type=module <<'NODE'
+          import {appendFileSync} from 'node:fs';
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+            `Product memory: restored **${process.env.MEMORY_RESTORED || 'none'}**; save step **${process.env.MEMORY_SAVED || 'skipped'}**. Web, Android, and iOS share the latest compatible sanitized snapshot. Concurrent workflow runs can start from the same snapshot; their additions are not merged, so cross-run continuity is best effort. Auth, databases, reports, locks, and runtime counters are never cached.\n`);
+          NODE
       - name: Remove subscription authentication
         if: always()
         run: node tests/agent-qa/auth.mjs cleanup

@@ -1,6 +1,6 @@
 test-id: t_ionic-baud-cover-near-dar-ase-hag-ido-bun-ijo
 name: Looking mobile dated search, seat selection, booking, and cancellation
-target: playground-mobile
+target: android-looking
 context: >-
   Exercise Looking inside the installed Playground app using visible native controls.
   Use the printed sample payment action; do not use real payment or passenger data.
@@ -9,6 +9,7 @@ context: >-
   confirmation dialog rather than a same-named control behind it. Remember the chosen
   flight and its displayed fare for the later review checks.
 use:
+  device: android-local
   mobile:
     appState: reset
 meta:

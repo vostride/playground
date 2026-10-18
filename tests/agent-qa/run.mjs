@@ -15,7 +15,6 @@ const args = [
   'agent-qa.ci.generated.yaml',
   'run',
   '--no-cache',
-  '--no-memory',
   '--junit-output',
   'tests/agent-qa/reports/junit.xml',
   '--screenshot-dir',

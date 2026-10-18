@@ -1,0 +1,8 @@
+suite-id: s_umbo-sab-imam-irish-teach-ended-loin-latin-rut-query
+name: Komazon iOS checkout
+target: ios-komazon
+use:
+  device: ios-local
+tests:
+  - test: tests/agent-qa/mobile/01-komazon-checkout.yaml
+    id: t_photo-pivot-reload-unci-robe-icho-posit-teste-mall-ulu

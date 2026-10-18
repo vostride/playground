@@ -138,6 +138,8 @@ async function sanitizeReports(directory) {
     }
   }
   await visit(resolve(root, 'tests/agent-qa/reports'));
+  // The CI cache contains observations only; scrub it before persistence as well.
+  await visit(resolve(root, '.agent-qa/memory'));
 }
 
 async function main() {

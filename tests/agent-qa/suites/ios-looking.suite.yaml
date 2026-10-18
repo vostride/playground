@@ -1,0 +1,8 @@
+suite-id: s_lade-phrase-ago-second-find-fee-non-digest-party-hler
+name: Looking iOS booking
+target: ios-looking
+use:
+  device: ios-local
+tests:
+  - test: tests/agent-qa/mobile/02-looking-booking.yaml
+    id: t_ionic-baud-cover-near-dar-ase-hag-ido-bun-ijo

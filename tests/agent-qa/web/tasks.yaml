@@ -1,6 +1,6 @@
 test-id: t_syntax-dish-forge-ural-bloc-anat-token-fee-kin-anion
 name: Brello task properties, checklist, movement, undo and persistence
-target: web-tasks
+target: web-brello
 context: >-
   Interact with the visible board and dialogs. Do not inject task data, change
   browser storage or call application APIs. Reset first; the Product launch board

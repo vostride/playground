@@ -1,6 +1,6 @@
 test-id: t_sports-headed-day-vole-anton-uke-factor-asem-lemma-dan
 name: PepaPog mobile log investigation and monitor lifecycle
-target: playground-mobile
+target: android-pepapog
 context: >-
   Exercise PepaPog inside the installed Playground app using its actual product tabs,
   forms, and confirmation dialogs. Keep deliberate bugs off. Pause live updates before
@@ -8,6 +8,7 @@ context: >-
   is fixture data, not a real notification destination. Use Done typing when a keyboard
   covers controls, and scroll inside the active form or sheet rather than behind it.
 use:
+  device: android-local
   mobile:
     appState: reset
 meta:
