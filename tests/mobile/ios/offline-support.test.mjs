@@ -15,6 +15,9 @@ import {
 const device = '11111111-2222-3333-4444-555555555555';
 const anchor = `com.apple/000.playground-offline-${device}`;
 const success = (stdout = '') => ({ code: 0, stdout, stderr: '', timedOut: false });
+const stockScrub = 'scrub-anchor "com.apple/*" all fragment reassemble';
+const filterHook = 'anchor "com.apple/*" all';
+const stockMainRules = `${stockScrub}\n${filterHook}\n`;
 
 test('mutation guard requires macOS GitHub CI and a concrete UUID', () => {
   const valid = { platform: 'darwin', env: { CI: 'true', GITHUB_ACTIONS: 'true' }, device };
@@ -49,12 +52,33 @@ test('rejects inert, bypassable, or single-family PF rules', () => {
   assert.throws(() => assertAnchorOrder(`000.allow-first\n${own}`, anchor));
 });
 
+test('accepts the observed stock normalization prefix without allowing other main rules', () => {
+  assert.doesNotThrow(() => assertMainRules(stockMainRules));
+  assert.doesNotThrow(() => assertMainRules(`${filterHook}\n`));
+  for (const invalid of [
+    stockScrub,
+    `${filterHook}\n${stockScrub}`,
+    `${stockScrub}\n${stockScrub}\n${filterHook}`,
+    `${stockMainRules}${filterHook}`,
+    `${stockMainRules}pass quick all`,
+    `pass quick all\n${stockMainRules}`,
+    `${stockMainRules}block all`,
+    `${stockMainRules}anchor "another/*" all`,
+    stockMainRules.replace('scrub-anchor "com.apple/*"', 'scrub-anchor "another/*"'),
+    stockMainRules.replace('fragment reassemble', 'fragment crop'),
+    stockMainRules.replace('all fragment', 'inet all fragment'),
+    stockMainRules.replace('all fragment', 'on en0 all fragment'),
+    `${stockScrub}\nanchor "com.apple/*" out inet all`,
+  ])
+    assert.throws(() => assertMainRules(invalid), invalid);
+});
+
 test('activation loads attached first anchor before clearing established states', async () => {
   const calls = [];
   let loaded = false;
   const run = async (args, options) => {
     calls.push(args.join(' '));
-    if (args.join(' ') === '-s rules') return success('anchor "com.apple/*" all');
+    if (args.join(' ') === '-s rules') return success(stockMainRules);
     if (args.includes('Anchors'))
       return success(
         loaded
@@ -70,6 +94,7 @@ test('activation loads attached first anchor before clearing established states'
     return success();
   };
   const result = await activateBlock({ anchor }, { run, shouldStop: () => false });
+  assert.equal(result.mainRules, stockMainRules);
   assert.equal(result.loadedRules, RULES);
   assert.equal(calls.at(-1), '-F states');
   assert.ok(calls.indexOf(`-a ${anchor} -f -`) < calls.indexOf('-F states'));

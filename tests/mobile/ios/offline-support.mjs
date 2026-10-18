@@ -25,9 +25,15 @@ export function assertMainRules(text) {
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
+  // Stock macOS also prints its normalization hook in `-s rules`. Fragment reassembly
+  // runs before packet filtering; it cannot pass around the sole filter hook below.
+  // Accept only the exact observed stock prefix, never arbitrary scrub/filter rules.
+  if (rules[0] === 'scrub-anchor "com.apple/*" all fragment reassemble') rules.shift();
   // Be conservative: do not replace the host ruleset or guess around an earlier pass quick.
   if (rules.length !== 1 || !/^anchor "com\.apple\/\*"(?: all)?$/.test(rules[0]))
-    throw new Error('Active main PF filter rules are not the expected sole com.apple/* hook.');
+    throw new Error(
+      'Active main PF rules must contain only the optional stock scrub hook and sole com.apple/* filter hook.',
+    );
 }
 
 export function assertBlockRules(text) {
