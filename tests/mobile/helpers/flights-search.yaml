@@ -13,9 +13,70 @@ appId: dev.vostride.playground
 - assertVisible:
     id: flight-from-picker
     text: '^From: San Francisco [(]SFO[)]$'
-# Choose both dates and check the return-date constraint before completing it.
+# The picker must persist dates outside the seed month in both directions.
+# Select all before replacing the populated date; tapping alone may put the
+# caret inside the value and leave a suffix after eraseText.
 - tapOn:
     id: flight-dates-picker
+- longPressOn:
+    id: flight-exact-travel-date
+- tapOn: '(?i)^Select all$'
+- eraseText: 1
+- inputText: '2032-06-12'
+- runFlow: dismiss-keyboard.yaml
+- tapOn:
+    id: button-use-date
+- tapOn:
+    id: button-done
+- extendedWaitUntil:
+    notVisible:
+      id: flight-exact-travel-date
+    timeout: 10000
+- tapOn:
+    id: flight-dates-picker
+- assertVisible:
+    id: flight-exact-travel-date
+    text: '^2032-06-12$'
+- assertVisible: '^June 2032$'
+- takeScreenshot: looking-future-date-persisted
+- longPressOn:
+    id: flight-exact-travel-date
+- tapOn: '(?i)^Select all$'
+- eraseText: 1
+- inputText: '2024-04-12'
+- runFlow: dismiss-keyboard.yaml
+- tapOn:
+    id: button-use-date
+- tapOn:
+    id: button-done
+- extendedWaitUntil:
+    notVisible:
+      id: flight-exact-travel-date
+    timeout: 10000
+- tapOn:
+    id: flight-dates-picker
+- assertVisible:
+    id: flight-exact-travel-date
+    text: '^2024-04-12$'
+- assertVisible: '^April 2024$'
+- takeScreenshot: looking-past-date-persisted
+# Return to the original month and departure tab before the existing calendar
+# interaction. Its Nov 12–19 itinerary and downstream quote checks stay intact.
+- longPressOn:
+    id: flight-exact-travel-date
+- tapOn: '(?i)^Select all$'
+- eraseText: 1
+- inputText: '2026-11-10'
+- runFlow: dismiss-keyboard.yaml
+- tapOn:
+    id: button-use-date
+- tapOn:
+    id: chip-departure-nov-10
+- assertVisible:
+    id: flight-exact-travel-date
+    text: '^2026-11-10$'
+- assertVisible: '^November 2026$'
+# Choose both dates and check the return-date constraint before completing it.
 - scrollUntilVisible:
     element:
       text: '^2026-11-12$'
