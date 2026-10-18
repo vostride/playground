@@ -191,8 +191,15 @@ export async function runOffline(device) {
   process.once('SIGTERM', onTerm);
   process.once('SIGINT', onInt);
   try {
+    // CoreSimulator discovery exceeded the default 10s on a freshly booted CI host.
+    // This read-only preflight finishes before the watchdog or outage can begin.
     const devices = JSON.parse(
-      (await required('/usr/bin/xcrun', ['simctl', 'list', 'devices', '--json'])).stdout,
+      (
+        await required('/usr/bin/xcrun', ['simctl', 'list', 'devices', '--json'], {
+          timeout: 30_000,
+          signal: abort.signal,
+        })
+      ).stdout,
     );
     if (
       !Object.entries(devices.devices).some(

@@ -130,9 +130,23 @@ appId: dev.vostride.playground
       text: '^Nonstop only$'
     direction: UP
     centerElement: true
-- tapOn:
-    text: '^Nonstop only$'
-    checked: false
+# iOS exposes both the static label and the switch with this text. Run
+# 39148819893 tapped the label, so target the control to its right explicitly.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: '^Nonstop only$'
+          rightOf: '^Nonstop only$'
+          checked: false
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          text: '^Nonstop only$'
+          checked: false
 - assertVisible:
     text: '^Nonstop only$'
     checked: true

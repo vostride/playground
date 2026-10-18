@@ -1,10 +1,12 @@
 appId: dev.vostride.playground
 ---
+# Centering moved the already visible Maya row behind the sheet header on iOS.
+# Require full visibility without moving an already visible property control.
 - scrollUntilVisible:
     element:
       id: task-detail-assignee-maya
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - assertVisible:
     id: task-detail-assignee-maya
     selected: false
@@ -17,7 +19,7 @@ appId: dev.vostride.playground
     element:
       id: task-detail-label-design
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - assertVisible:
     id: task-detail-label-design
     selected: false
