@@ -31,8 +31,10 @@ name: Home and tab navigation, Back, WebView, deep links, bug recovery, all-prod
       PHASE: after-reset
 # Mutate every app again. The next launch stops the process without clearState,
 # proving restart semantics independently of the visible reset control.
-- tapOn:
-    id: tab-shop
+- runFlow:
+    file: ../helpers/switch-product.yaml
+    env:
+      APP: shop
 - assertVisible:
     id: field-search-products
 - runFlow: ../helpers/add-two-mugs.yaml

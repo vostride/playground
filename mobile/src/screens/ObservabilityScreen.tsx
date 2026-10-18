@@ -12,9 +12,11 @@ import {
   StyleSheet,
   Switch,
   Text,
-  TextInput,
   View,
 } from 'react-native';
+import Svg, { Line, Polyline } from 'react-native-svg';
+import { Button as PrimitiveButton } from '../components/ui/button';
+import { Input } from '../components/ui/input';
 import {
   DEFAULT_MONITORS,
   METRICS,
@@ -34,15 +36,26 @@ import {
   type Trace,
   type TraceSpan,
 } from '@playground/core/observability';
-import { SafeModalArea, useSessionState, type MobileScreenProps } from '../ui';
+import {
+  BottomTabs,
+  Icon,
+  IconButton,
+  SafeModalArea,
+  colors,
+  useSessionState,
+  type IconName,
+  type MobileScreenProps,
+} from '../ui';
 
 type Page = 'overview' | 'logs' | 'traces' | 'monitors';
-const pages: { key: Page; label: string }[] = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'logs', label: 'Log explorer' },
-  { key: 'traces', label: 'Traces' },
-  { key: 'monitors', label: 'Monitors' },
+const pages: { key: Page; label: string; icon: IconName }[] = [
+  { key: 'overview', label: 'Overview', icon: 'activity' },
+  { key: 'logs', label: 'Logs', icon: 'terminal' },
+  { key: 'traces', label: 'Traces', icon: 'gitBranch' },
+  { key: 'monitors', label: 'Monitors', icon: 'bell' },
 ];
+const statusColors = { healthy: '#4ade80', warning: '#fbbf24', error: '#fb7185' };
+const switchColors = { false: '#3f3f46', true: '#a1a1aa' };
 const logs = seededLogs();
 const traces = seededTraces();
 const labels: Record<TimeRange, string> = {
@@ -75,29 +88,42 @@ function Action({
   primary = false,
   danger = false,
   disabled = false,
+  icon,
 }: {
   label: string;
   onPress: () => void;
   primary?: boolean;
   danger?: boolean;
   disabled?: boolean;
+  icon?: IconName;
 }) {
   return (
-    <Pressable
+    <PrimitiveButton
+      variant={primary ? 'default' : danger ? 'destructive' : 'outline'}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [
-        s.action,
-        primary && s.actionPrimary,
-        danger && s.actionDanger,
-        (pressed || disabled) && { opacity: 0.6 },
-      ]}
+      style={s.action}
     >
-      <Text style={[s.actionText, (primary || danger) && { color: '#fff' }]}>{label}</Text>
-    </Pressable>
+      {icon && (
+        <Icon
+          name={icon}
+          size={16}
+          color={primary ? colors.primaryForeground : danger ? statusColors.error : colors.text}
+        />
+      )}
+      <Text
+        style={[
+          s.actionText,
+          primary && { color: colors.primaryForeground },
+          danger && { color: statusColors.error },
+        ]}
+      >
+        {label}
+      </Text>
+    </PrimitiveButton>
   );
 }
 function Panel({ children, style }: { children: ReactNode; style?: object }) {
@@ -106,16 +132,16 @@ function Panel({ children, style }: { children: ReactNode; style?: object }) {
 function Badge({ value, testID }: { value: string; testID?: string }) {
   const color =
     value === 'ok' || value === 'info'
-      ? '#527d6d'
+      ? statusColors.healthy
       : value === 'warn' || value === 'warning'
-        ? '#ac833c'
+        ? statusColors.warning
         : value === 'error' || value === 'alert'
-          ? '#b76c71'
-          : '#8793a4';
+          ? statusColors.error
+          : colors.muted;
   return (
-    <View style={[s.badge, { backgroundColor: `${color}12`, borderColor: `${color}28` }]}>
-      <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color }} />
-      <Text testID={testID} style={{ fontSize: 10, color, fontWeight: '500' }}>
+    <View style={s.badge}>
+      <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: color }} />
+      <Text testID={testID} style={{ fontSize: 12, lineHeight: 18, color, fontWeight: '600' }}>
         {value === 'ok' ? 'Healthy' : value.charAt(0).toUpperCase() + value.slice(1)}
       </Text>
     </View>
@@ -160,7 +186,7 @@ function Field({
   return (
     <View style={s.field}>
       <Text style={s.label}>{label}</Text>
-      <TextInput
+      <Input
         testID={`vigil-field-${label
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
@@ -169,7 +195,9 @@ function Field({
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor="#a2acba"
+        placeholderTextColor={colors.muted}
+        selectionColor={colors.text}
+        keyboardAppearance="dark"
         keyboardType={numeric ? 'decimal-pad' : 'default'}
         multiline={multiline}
         returnKeyType={multiline ? 'default' : 'done'}
@@ -178,7 +206,7 @@ function Field({
         style={[
           s.input,
           multiline && { height: 100, textAlignVertical: 'top' },
-          !!error && { borderColor: '#bd777d' },
+          !!error && { borderColor: statusColors.error },
         ]}
       />
       {error && (
@@ -200,7 +228,7 @@ function Sheet({
 }) {
   return (
     <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <SafeModalArea style={{ backgroundColor: '#f7f8fa' }}>
+      <SafeModalArea style={{ backgroundColor: colors.background }}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -209,7 +237,7 @@ function Sheet({
             <Text accessibilityRole="header" style={s.sheetTitle}>
               {title}
             </Text>
-            <Action label="Close" onPress={onClose} />
+            <IconButton icon="x" label="Close" onPress={onClose} />
           </View>
           {children}
         </KeyboardAvoidingView>
@@ -242,7 +270,7 @@ function Select({
         <Text style={s.selectText}>
           {options.find((option) => option.value === value)?.label ?? value}
         </Text>
-        <Text style={{ color: '#a3adba' }}>⌄</Text>
+        <Icon name="chevronDown" size={16} color={colors.muted} />
       </Pressable>
       {open && (
         <Sheet title={label} onClose={() => setOpen(false)}>
@@ -260,7 +288,7 @@ function Select({
                 style={[s.option, option.value === value && s.optionSelected]}
               >
                 <Text style={s.optionText}>{option.label}</Text>
-                <Text style={{ color: '#b58b4e' }}>{option.value === value ? '✓' : ''}</Text>
+                {option.value === value && <Icon name="check" size={18} color={colors.text} />}
               </Pressable>
             ))}
           </ScrollView>
@@ -271,7 +299,7 @@ function Select({
 }
 function MetricChart({
   values,
-  color = '#c69a56',
+  color = '#60a5fa',
   label,
   height = 130,
 }: {
@@ -281,51 +309,44 @@ function MetricChart({
   height?: number;
 }) {
   const [width, setWidth] = useState(300);
-  const max = Math.max(...values) * 1.15;
+  const max = Math.max(1, ...values) * 1.15;
   const points = values.map((value, i) => ({
     x: (i / (values.length - 1)) * width,
-    y: height - (value / max) * (height - 10),
+    y: height - 6 - (value / max) * (height - 16),
   }));
   return (
     <View
       accessible
       accessibilityLabel={`${label}: minimum ${formatNumber(Math.min(...values), 2)}, maximum ${formatNumber(Math.max(...values), 2)}`}
-      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
-      style={{ height, overflow: 'hidden', marginVertical: 12 }}
+      onLayout={(event) => setWidth(Math.max(1, event.nativeEvent.layout.width))}
+      style={{ height, overflow: 'hidden', marginVertical: 6 }}
     >
-      {[0.25, 0.5, 0.75, 1].map((value) => (
-        <View
-          key={value}
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: height * value - 1,
-            height: 1,
-            backgroundColor: '#edf0f5',
-          }}
-        />
-      ))}
-      {points.slice(0, -1).map((point, index) => {
-        const next = points[index + 1]!;
-        const length = Math.sqrt((next.x - point.x) ** 2 + (next.y - point.y) ** 2);
-        const angle = Math.atan2(next.y - point.y, next.x - point.x);
-        return (
-          <View
-            key={index}
-            style={{
-              position: 'absolute',
-              left: (point.x + next.x) / 2 - length / 2,
-              top: (point.y + next.y) / 2,
-              width: length + 1,
-              height: 2,
-              backgroundColor: color,
-              borderRadius: 1,
-              transform: [{ rotate: `${angle}rad` }],
-            }}
+      <Svg
+        width={width}
+        height={height}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        {[0.25, 0.5, 0.75, 1].map((value) => (
+          <Line
+            key={value}
+            x1={0}
+            x2={width}
+            y1={(height - 6) * value}
+            y2={(height - 6) * value}
+            stroke={colors.border}
+            strokeWidth={1}
           />
-        );
-      })}
+        ))}
+        <Polyline
+          points={points.map((point) => `${point.x},${point.y}`).join(' ')}
+          fill="none"
+          stroke={color}
+          strokeWidth={2}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+      </Svg>
     </View>
   );
 }
@@ -366,33 +387,6 @@ export default function ObservabilityScreen({ route, bug, navigate }: MobileScre
   }
   return (
     <View style={s.root}>
-      <View style={s.brandRow}>
-        <View>
-          <Text style={s.brand}>
-            PepaPog<Text style={{ color: '#d1a35f' }}>.</Text>
-          </Text>
-        </View>
-      </View>
-      <View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={s.tabs}
-        >
-          {pages.map((item) => (
-            <Pressable
-              key={item.key}
-              testID={`vigil-tab-${item.key}`}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: page === item.key }}
-              onPress={() => navigate('observability', item.key)}
-              style={[s.tab, page === item.key && s.tabActive]}
-            >
-              <Text style={[s.tabText, page === item.key && s.tabTextActive]}>{item.label}</Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-      </View>
       {page !== 'monitors' && (
         <View style={s.rangeRow}>
           <View style={{ flex: 1 }}>
@@ -406,25 +400,33 @@ export default function ObservabilityScreen({ route, bug, navigate }: MobileScre
           <View style={s.liveControl}>
             <Text style={s.label}>{live ? 'Live' : 'Paused'}</Text>
             <Switch
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
               testID="vigil-live-updates"
               accessibilityLabel="Live updates"
               value={live}
               onValueChange={setLive}
-              trackColor={{ false: '#d9dfe7', true: '#9fb9ad' }}
-              thumbColor="#fff"
+              trackColor={switchColors}
+              thumbColor={colors.text}
             />
           </View>
         </View>
       )}
       {loading ? (
         <View style={s.empty}>
-          <ActivityIndicator color="#b58a49" />
+          <ActivityIndicator color={colors.text} />
           <Text style={s.description}>Loading telemetry…</Text>
         </View>
       ) : page === 'overview' ? (
         <ScrollView
+          style={s.scroller}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor="#b28b51" />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={refresh}
+              tintColor={colors.text}
+              colors={[colors.text]}
+              progressBackgroundColor={colors.surface}
+            />
           }
           contentContainerStyle={s.content}
         >
@@ -481,16 +483,19 @@ export default function ObservabilityScreen({ route, bug, navigate }: MobileScre
       {notice ? (
         <View accessibilityRole="alert" style={s.notice}>
           <Text style={s.noticeText}>{notice}</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Dismiss notification"
-            onPress={() => setNotice('')}
-            hitSlop={10}
-          >
-            <Text style={s.noticeText}>✕</Text>
-          </Pressable>
+          <IconButton icon="x" label="Dismiss notification" onPress={() => setNotice('')} />
         </View>
       ) : null}
+      <BottomTabs
+        tabs={pages.map((item) => ({
+          id: item.key,
+          label: item.label,
+          icon: item.icon,
+          testID: `vigil-tab-${item.key}`,
+        }))}
+        active={page}
+        onSelect={(id) => navigate('observability', id)}
+      />
     </View>
   );
 }
@@ -567,7 +572,7 @@ function MobileOverview({
       <Panel>
         <Text style={s.panelTitle}>Response time</Text>
         <Text style={s.smallLabel}>95th percentile latency · milliseconds</Text>
-        <MetricChart values={series.latency} color="#7d91b7" label="P95 latency" />
+        <MetricChart values={series.latency} color="#a78bfa" label="P95 latency" />
         <Text style={s.healthy}>Within 300 ms latency budget</Text>
       </Panel>
       <Text accessibilityRole="header" style={s.sectionTitle}>
@@ -590,7 +595,7 @@ function MobileOverview({
               </Text>
             </View>
             <Badge value={index === 2 ? 'warning' : 'ok'} />
-            <Text style={s.chevron}>›</Text>
+            <Icon name="chevronRight" size={16} color={colors.muted} />
           </Pressable>
         ))}
       </Panel>
@@ -658,13 +663,21 @@ function MobileLogs({
     <>
       <FlatList
         testID="vigil-log-list"
+        style={s.scroller}
         data={filtered}
         keyExtractor={(log) => log.id}
         initialNumToRender={18}
         windowSize={7}
         removeClippedSubviews={Platform.OS === 'android'}
-        refreshing={refreshing}
-        onRefresh={refresh}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={refresh}
+            tintColor={colors.text}
+            colors={[colors.text]}
+            progressBackgroundColor={colors.surface}
+          />
+        }
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={s.listContent}
         ListHeaderComponent={
@@ -678,14 +691,16 @@ function MobileLogs({
               error={error}
             />
             <View style={s.row}>
-              <Action label="Search" onPress={search} primary />
+              <Action label="Search" onPress={search} primary icon="search" />
               <Action
                 label={`Filters${levels.length + services.length ? ` (${levels.length + services.length})` : ''}`}
                 onPress={() => setFilters(true)}
+                icon="filter"
               />
               <Action
                 label={newest ? 'Newest first' : 'Oldest first'}
                 onPress={() => setNewest(!newest)}
+                icon="arrowUpDown"
               />
             </View>
             <Text style={s.smallLabel}>
@@ -743,11 +758,13 @@ function MobileLogs({
               <View style={s.switchRow} key={level}>
                 <Badge value={level} />
                 <Switch
+                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                   testID={`vigil-filter-level-${level}`}
                   accessibilityLabel={`Filter ${level} logs`}
                   value={levels.includes(level)}
                   onValueChange={() => setLevels(toggle(levels, level))}
-                  trackColor={{ true: '#b69a72', false: '#dce1e8' }}
+                  trackColor={switchColors}
+                  thumbColor={colors.text}
                 />
               </View>
             ))}
@@ -756,11 +773,13 @@ function MobileLogs({
               <View key={service} style={s.switchRow}>
                 <Text style={s.serviceName}>{service}</Text>
                 <Switch
+                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                   testID={`vigil-filter-service-${service}`}
                   accessibilityLabel={`Filter ${service} logs`}
                   value={services.includes(service)}
                   onValueChange={() => setServices(toggle(services, service))}
-                  trackColor={{ true: '#b69a72', false: '#dce1e8' }}
+                  trackColor={switchColors}
+                  thumbColor={colors.text}
                 />
               </View>
             ))}
@@ -805,6 +824,7 @@ function MobileLogs({
             <Action
               label="View trace"
               primary
+              icon="gitBranch"
               onPress={() => {
                 const trace = traces.find((trace) => trace.id === selected.traceId);
                 setSelected(null);
@@ -855,15 +875,36 @@ function MobileTraces({
     [range, status, query, sort],
   );
   useEffect(() => setSpan(null), [selected]);
-  const palette = ['#8296bb', '#8eae9e', '#c5a263', '#a293b5', '#bc95a3', '#86a8ba'];
+  const palette = ['#60a5fa', '#a78bfa', '#22d3ee', '#34d399', '#fbbf24', '#a1a1aa'];
+  function spanDepth(item: TraceSpan) {
+    let depth = 0;
+    let parentId = item.parentId;
+    const visited = new Set([item.id]);
+    while (parentId && !visited.has(parentId)) {
+      const parent = selected?.spans.find((candidate) => candidate.id === parentId);
+      if (!parent) break;
+      visited.add(parentId);
+      depth++;
+      parentId = parent.parentId;
+    }
+    return depth;
+  }
   return (
     <>
       <FlatList
+        style={s.scroller}
         data={filtered}
         keyExtractor={(trace) => trace.id}
         initialNumToRender={15}
-        refreshing={refreshing}
-        onRefresh={refresh}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={refresh}
+            tintColor={colors.text}
+            colors={[colors.text]}
+            progressBackgroundColor={colors.surface}
+          />
+        }
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={s.listContent}
         ListHeaderComponent={
@@ -948,7 +989,7 @@ function MobileTraces({
             </View>
             <Title
               title={selected.name}
-              detail={`${selected.duration} ms · ${selected.spans.length} spans · 6 services`}
+              detail={`${selected.duration} ms · ${selected.spans.length} spans · ${new Set(selected.spans.map((item) => item.service)).size} services`}
             />
             <Text style={s.sectionTitle}>Trace waterfall</Text>
             <Text style={s.description}>Tap a span to inspect its timing and attributes.</Text>
@@ -961,39 +1002,38 @@ function MobileTraces({
                   accessibilityState={{ selected: span?.id === item.id }}
                   accessibilityLabel={`Inspect ${item.name}, ${item.duration} milliseconds`}
                   onPress={() => setSpan(item)}
-                  style={[s.spanRow, span?.id === item.id && { backgroundColor: '#f8f4ed' }]}
+                  style={[s.spanRow, span?.id === item.id && s.spanSelected]}
                 >
                   <View style={s.logMeta}>
                     <Text
                       style={[
                         s.spanName,
                         {
-                          paddingLeft:
-                            item.parentId === null
-                              ? 0
-                              : item.parentId === selected.spans[0]?.id
-                                ? 8
-                                : 16,
+                          paddingLeft: spanDepth(item) * 10,
                         },
                       ]}
                     >
                       {item.name}
                     </Text>
-                    <Text style={s.time}>{item.duration} ms</Text>
+                    <Text style={s.duration}>{item.duration} ms</Text>
                   </View>
                   <Text style={s.logService}>{item.service}</Text>
                   <View style={s.spanTrack}>
+                    {[0, 25, 50, 75, 100].map((offset) => (
+                      <View key={offset} style={[s.spanGridLine, { left: `${offset}%` }]} />
+                    ))}
                     <View
                       style={{
                         position: 'absolute',
-                        top: 0,
-                        bottom: 0,
+                        top: 5,
+                        height: 8,
                         left: `${(item.start / selected.duration) * 100}%`,
-                        width: `${Math.max(1, (item.duration / selected.duration) * 100)}%`,
-                        borderRadius: 2,
+                        width: `${(item.duration / selected.duration) * 100}%`,
+                        minWidth: 1,
+                        borderRadius: 1,
                         backgroundColor:
                           item.status === 'error'
-                            ? '#c18188'
+                            ? statusColors.error
                             : palette[SERVICES.indexOf(item.service)],
                       }}
                     />
@@ -1012,6 +1052,8 @@ function MobileTraces({
                 {Object.entries({
                   Service: span.service,
                   Duration: `${span.duration} ms`,
+                  'Start offset': `${span.start} ms`,
+                  'End offset': `${span.start + span.duration} ms`,
                   ...span.tags,
                 }).map(([key, value]) => (
                   <View key={key} style={s.detailRow}>
@@ -1123,6 +1165,7 @@ function MobileMonitors({
   return (
     <>
       <FlatList
+        style={s.scroller}
         data={filtered}
         keyExtractor={(rule) => rule.id}
         contentContainerStyle={s.listContent}
@@ -1150,7 +1193,7 @@ function MobileMonitors({
                 </View>
               ))}
             </View>
-            <Action label="New monitor" primary onPress={() => start()} />
+            <Action label="New monitor" primary icon="plus" onPress={() => start()} />
             <Field
               label="Search monitors"
               value={search}
@@ -1167,6 +1210,7 @@ function MobileMonitors({
                 value={evaluateAlert(item, metricValues[item.metric])}
               />
               <Switch
+                hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                 accessibilityLabel={`${item.enabled ? 'Pause' : 'Resume'} ${item.name}`}
                 value={item.enabled}
                 onValueChange={(value) => {
@@ -1175,13 +1219,15 @@ function MobileMonitors({
                   );
                   notify(value ? 'Monitor resumed.' : 'Monitor paused.');
                 }}
-                trackColor={{ true: '#a2b9ac', false: '#dde2e9' }}
+                trackColor={switchColors}
+                thumbColor={colors.text}
               />
             </View>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Edit ${item.name}`}
               onPress={() => start(item)}
+              style={s.monitorOpen}
             >
               <Text style={s.monitorTitle}>{item.name}</Text>
             </Pressable>
@@ -1193,8 +1239,8 @@ function MobileMonitors({
               {item.service === 'all' ? 'All services' : item.service}
             </Text>
             <View style={s.row}>
-              <Action label="Edit monitor" onPress={() => start(item)} />
-              <Action label="Delete" onPress={() => remove(item)} />
+              <Action label="Edit monitor" icon="sliders" onPress={() => start(item)} />
+              <Action label="Delete" danger onPress={() => remove(item)} />
             </View>
           </Panel>
         )}
@@ -1226,7 +1272,7 @@ function MobileMonitors({
               </Text>
             )}
             <Panel>
-              <Text style={s.step}>01 · DEFINE YOUR METRIC</Text>
+              <Text style={s.step}>Metric</Text>
               <Select
                 label="Metric"
                 value={editing.metric}
@@ -1251,7 +1297,7 @@ function MobileMonitors({
               />
             </Panel>
             <Panel>
-              <Text style={s.step}>02 · SET ALERT CONDITIONS</Text>
+              <Text style={s.step}>Alert conditions</Text>
               <Select
                 label="Trigger when value is"
                 value={editing.operator}
@@ -1280,10 +1326,12 @@ function MobileMonitors({
               <View style={s.switchRow}>
                 <Text style={s.label}>Set a warning threshold</Text>
                 <Switch
+                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                   accessibilityLabel="Set a warning threshold"
                   value={warningEnabled}
                   onValueChange={setWarningEnabled}
-                  trackColor={{ true: '#b89e78', false: '#dce1e8' }}
+                  trackColor={switchColors}
+                  thumbColor={colors.text}
                 />
               </View>
               {warningEnabled && (
@@ -1297,7 +1345,7 @@ function MobileMonitors({
               )}
             </Panel>
             <Panel>
-              <Text style={s.step}>03 · NAME AND NOTIFY</Text>
+              <Text style={s.step}>Notifications</Text>
               <Field
                 label="Monitor name"
                 value={editing.name}
@@ -1323,10 +1371,12 @@ function MobileMonitors({
               <View style={s.switchRow}>
                 <Text style={s.label}>Enable this monitor immediately</Text>
                 <Switch
+                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                   accessibilityLabel="Enable this monitor immediately"
                   value={editing.enabled}
                   onValueChange={(value) => patch('enabled', value)}
-                  trackColor={{ true: '#b89e78', false: '#dce1e8' }}
+                  trackColor={switchColors}
+                  thumbColor={colors.text}
                 />
               </View>
             </Panel>
@@ -1357,290 +1407,288 @@ function MobileMonitors({
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#f7f8fa' },
-  brandRow: {
-    paddingHorizontal: 20,
-    paddingVertical: 17,
-    backgroundColor: '#1c222c',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  brand: { fontSize: 29, color: '#fff', fontWeight: '600', letterSpacing: -1.3 },
-  workspace: { fontSize: 8, color: '#84909f', letterSpacing: 1.4, marginTop: 5 },
-  region: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  regionText: { color: '#a6b0bd', fontSize: 10 },
-  liveDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#82aa94' },
-  tabs: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e3e8ee',
-    gap: 4,
-    minWidth: '100%',
-  },
-  tab: {
-    paddingHorizontal: 13,
-    paddingVertical: 16,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabActive: { borderBottomColor: '#b68c50' },
-  tabText: { color: '#94a0b0', fontSize: 11, fontWeight: '500' },
-  tabTextActive: { color: '#a47b3d' },
+  root: { flex: 1, backgroundColor: colors.background },
+  scroller: { flex: 1 },
   rangeRow: {
-    paddingHorizontal: 20,
-    paddingTop: 13,
-    paddingBottom: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 17,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e7ebf0',
+    gap: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
-  liveControl: { alignItems: 'center', gap: 3 },
+  liveControl: { minWidth: 60, alignItems: 'center', gap: 4 },
   content: { padding: 16, gap: 12, paddingBottom: 24 },
-  title: { color: '#3b485b', fontSize: 24, fontWeight: '600', letterSpacing: -0.7, lineHeight: 30 },
-  description: { color: '#8c9aae', fontSize: 12, lineHeight: 20 },
-  action: {
-    minHeight: 44,
-    borderWidth: 1,
-    borderColor: '#dfe5ed',
-    borderRadius: 2,
-    paddingHorizontal: 13,
-    paddingVertical: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
+  title: {
+    color: colors.text,
+    fontSize: 22,
+    fontWeight: '600',
+    letterSpacing: -0.5,
+    lineHeight: 28,
   },
-  actionPrimary: { backgroundColor: '#b58b4e', borderColor: '#b58b4e' },
-  actionDanger: { backgroundColor: '#b86f75', borderColor: '#b86f75' },
-  actionText: { color: '#8695a9', fontSize: 11, fontWeight: '600' },
+  description: { color: colors.muted, fontSize: 13, lineHeight: 20 },
+  action: { paddingHorizontal: 12 },
+  actionText: { color: colors.text, fontSize: 13, fontWeight: '600', lineHeight: 20 },
   panel: {
     backgroundColor: 'transparent',
-    borderBottomWidth: 1,
-    borderColor: '#e2e7ef',
-    borderRadius: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
     paddingVertical: 12,
-    paddingHorizontal: 0,
     gap: 10,
   },
-  panelTitle: { color: '#6f7e93', fontSize: 13, fontWeight: '600' },
-  smallLabel: { color: '#9aa7b8', fontSize: 10, lineHeight: 16 },
-  field: { gap: 7, marginBottom: 6 },
-  label: { color: '#8291a6', fontSize: 10, fontWeight: '500' },
+  panelTitle: { color: colors.text, fontSize: 15, fontWeight: '600', lineHeight: 22 },
+  smallLabel: { color: colors.muted, fontSize: 12, lineHeight: 18 },
+  field: { gap: 6 },
+  label: { color: colors.text, fontSize: 12, lineHeight: 18, fontWeight: '500', flexShrink: 1 },
   input: {
-    height: 46,
-    borderWidth: 1,
-    borderColor: '#dce3ed',
-    borderRadius: 2,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: '#fff',
-    color: '#718197',
-    fontSize: 12,
+    height: 44,
   },
   select: {
     minHeight: 44,
     borderWidth: 1,
-    borderColor: '#dce3ed',
+    borderColor: colors.border,
     borderRadius: 2,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 8,
   },
-  selectText: { fontSize: 11, color: '#7f90a6', flexShrink: 1 },
-  metricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  metricCard: { width: '48%', flexGrow: 1, gap: 11 },
-  metricValue: { color: '#5d6e85', fontSize: 27, letterSpacing: -0.7, fontWeight: '500' },
-  metricUnit: { color: '#a7b2c0', fontSize: 11, letterSpacing: 0, fontWeight: '400' },
-  metricChange: { color: '#7ca18d', fontSize: 10 },
+  selectText: { fontSize: 14, lineHeight: 20, color: colors.text, flexShrink: 1 },
+  metricGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  metricCard: { width: '50%', paddingRight: 12, gap: 6 },
+  metricValue: {
+    color: colors.text,
+    fontSize: 28,
+    lineHeight: 36,
+    letterSpacing: -0.6,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  metricUnit: { color: colors.muted, fontSize: 12, letterSpacing: 0, fontWeight: '400' },
+  metricChange: { color: statusColors.healthy, fontSize: 12, lineHeight: 18 },
   chartTimes: { flexDirection: 'row', justifyContent: 'space-between' },
   time: {
-    color: '#a2afc0',
-    fontSize: 9,
+    color: colors.muted,
+    fontSize: 12,
+    lineHeight: 18,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
-  healthy: { color: '#81a18f', fontSize: 10 },
-  sectionTitle: { fontSize: 14, fontWeight: '600', color: '#76869d', marginTop: 4 },
+  healthy: { color: statusColors.healthy, fontSize: 12, lineHeight: 18 },
+  sectionTitle: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: 4,
+  },
   serviceRow: {
+    minHeight: 64,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingVertical: 13,
-    borderBottomWidth: 1,
-    borderBottomColor: '#edf0f5',
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
-  serviceName: { color: '#7e8fa7', fontSize: 11, fontWeight: '500' },
+  serviceName: {
+    color: colors.text,
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '500',
+    flexShrink: 1,
+  },
   badge: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
-    gap: 5,
+    gap: 6,
     alignItems: 'center',
-    paddingHorizontal: 7,
-    paddingVertical: 4,
-    borderRadius: 2,
-    borderWidth: 1,
-  },
-  chevron: { color: '#b1bbc8', fontSize: 20 },
-  footnote: {
-    color: '#a8b4c4',
-    fontSize: 9,
-    textAlign: 'center',
-    paddingVertical: 16,
-    lineHeight: 16,
+    paddingVertical: 2,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   listContent: { padding: 16, paddingBottom: 24 },
-  listHeader: { gap: 14, marginBottom: 17 },
+  listHeader: { gap: 12, marginBottom: 8 },
   logRow: {
-    backgroundColor: 'transparent',
-    borderBottomWidth: 1,
-    borderColor: '#e5eaf1',
-    borderRadius: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
     paddingVertical: 12,
-    paddingHorizontal: 0,
-    gap: 10,
-    marginBottom: 7,
-    minHeight: 86,
+    gap: 8,
+    minHeight: 88,
   },
-  logMeta: { flexDirection: 'row', alignItems: 'center', gap: 7, justifyContent: 'space-between' },
-  logService: { fontSize: 9, color: '#8d9db3', flexShrink: 1 },
+  logMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'space-between' },
+  logService: { fontSize: 12, lineHeight: 18, color: colors.muted, flexShrink: 1 },
   logMessage: {
-    fontSize: 11,
-    lineHeight: 18,
-    color: '#8493a9',
+    fontSize: 13,
+    lineHeight: 20,
+    color: colors.text,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   resultCount: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 7,
+    flexWrap: 'wrap',
+    gap: 4,
+    paddingVertical: 6,
   },
-  resultCountText: { color: '#8293ab', fontSize: 11, fontWeight: '500' },
-  empty: { padding: 28, gap: 15, justifyContent: 'center', alignItems: 'center', flex: 1 },
-  emptyTitle: { fontSize: 17, color: '#7d8da4', fontWeight: '500' },
+  resultCountText: { color: colors.text, fontSize: 13, lineHeight: 20, fontWeight: '500' },
+  empty: { padding: 24, gap: 12, justifyContent: 'center', alignItems: 'center', flex: 1 },
+  emptyTitle: {
+    fontSize: 17,
+    lineHeight: 24,
+    color: colors.text,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
   sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 19,
-    paddingVertical: 13,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5eaf1',
-  },
-  sheetTitle: { fontSize: 15, fontWeight: '600', color: '#7d8da4' },
-  sheetContent: { padding: 16, gap: 12, paddingBottom: 28 },
-  option: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e1e7f0',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 2,
-  },
-  optionSelected: { borderColor: '#c8ae86', backgroundColor: '#fbf8f2' },
-  optionText: { fontSize: 13, color: '#8192aa' },
-  switchRow: {
+    minHeight: 60,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
-    paddingVertical: 3,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: colors.background,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
-  detailRow: { paddingVertical: 8, gap: 6, borderBottomWidth: 1, borderBottomColor: '#eef2f6' },
-  detailValue: { color: '#8191a8', fontSize: 11, lineHeight: 18 },
+  sheetTitle: {
+    fontSize: 17,
+    lineHeight: 24,
+    fontWeight: '600',
+    color: colors.text,
+    flexShrink: 1,
+  },
+  sheetContent: { padding: 16, gap: 12, paddingBottom: 28 },
+  option: {
+    minHeight: 48,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 2,
+  },
+  optionSelected: { backgroundColor: colors.subtle },
+  optionText: { fontSize: 14, lineHeight: 20, color: colors.text, flexShrink: 1 },
+  switchRow: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingVertical: 6,
+  },
+  detailRow: {
+    paddingVertical: 8,
+    gap: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  detailValue: { color: colors.text, fontSize: 13, lineHeight: 20 },
   json: {
-    fontSize: 10,
-    lineHeight: 18,
-    color: '#8f9eb3',
+    fontSize: 12,
+    lineHeight: 20,
+    color: colors.muted,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   traceRow: {
-    gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 0,
-    backgroundColor: 'transparent',
-    borderBottomWidth: 1,
-    borderColor: '#e1e7ef',
-    borderRadius: 0,
-    marginBottom: 10,
+    gap: 8,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
   },
   traceResource: {
-    color: '#8293aa',
+    color: colors.text,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    flexShrink: 1,
+  },
+  duration: {
     fontSize: 12,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    flexShrink: 1,
+    lineHeight: 18,
+    color: colors.text,
+    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
   },
-  duration: { fontSize: 10, color: '#90a0b7' },
   spanRow: {
-    gap: 7,
-    paddingVertical: 10,
-    paddingHorizontal: 5,
-    borderBottomWidth: 1,
-    borderBottomColor: '#edf1f5',
-    borderRadius: 2,
+    minHeight: 72,
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
+  spanSelected: { backgroundColor: colors.subtle },
   spanName: {
-    color: '#8c9db4',
-    fontSize: 10,
+    color: colors.text,
+    fontSize: 12,
+    lineHeight: 18,
     flexShrink: 1,
+    fontWeight: '500',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
-  spanTrack: {
-    height: 15,
-    position: 'relative',
-    backgroundColor: '#f2f5f9',
-    borderRadius: 2,
-    marginVertical: 5,
-    overflow: 'hidden',
+  spanTrack: { height: 18, position: 'relative', marginTop: 2, overflow: 'hidden' },
+  spanGridLine: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
   },
   monitorStats: {
     flexDirection: 'row',
-    backgroundColor: 'transparent',
-    borderBottomWidth: 1,
-    borderColor: '#e3e9f1',
-    borderRadius: 0,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
     paddingVertical: 12,
-    paddingHorizontal: 0,
   },
-  monitorStat: { flex: 1, alignItems: 'center', gap: 7 },
-  monitorStatValue: { fontSize: 24, color: '#8293ab', fontWeight: '500' },
-  monitorTitle: { fontSize: 15, color: '#7b8ca5', fontWeight: '500', lineHeight: 21 },
-  step: { fontSize: 9, color: '#b59d78', letterSpacing: 1.1, fontWeight: '600', marginBottom: 7 },
-  error: { color: '#b5787e', fontSize: 10, lineHeight: 16 },
+  monitorStat: { flex: 1, alignItems: 'center', gap: 4 },
+  monitorStatValue: {
+    fontSize: 26,
+    lineHeight: 32,
+    color: colors.text,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  monitorOpen: { minHeight: 44, justifyContent: 'center' },
+  monitorTitle: { fontSize: 16, color: colors.text, fontWeight: '600', lineHeight: 23 },
+  step: { fontSize: 15, lineHeight: 22, color: colors.text, fontWeight: '600', marginBottom: 2 },
+  error: { color: statusColors.error, fontSize: 12, lineHeight: 18 },
   errorSummary: {
-    color: '#ad6e77',
-    backgroundColor: '#fcf2f3',
+    color: statusColors.error,
+    backgroundColor: '#261419',
     borderWidth: 1,
-    borderColor: '#f0dfe3',
-    padding: 13,
+    borderColor: '#572330',
+    padding: 12,
     borderRadius: 2,
-    fontSize: 11,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 20,
   },
   notice: {
     position: 'absolute',
-    bottom: 14,
+    zIndex: 5,
+    bottom: 72,
     left: 16,
     right: 16,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#edf4ef',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#d5e4d9',
+    borderColor: colors.border,
     borderRadius: 2,
-    padding: 14,
-    gap: 12,
+    paddingLeft: 12,
+    paddingRight: 4,
+    gap: 8,
   },
-  noticeText: { color: '#75957f', fontSize: 11, lineHeight: 17, flexShrink: 1 },
+  noticeText: { color: colors.text, fontSize: 13, lineHeight: 20, flexShrink: 1 },
 });

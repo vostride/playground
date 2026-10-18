@@ -2,8 +2,7 @@ appId: dev.vostride.playground
 ---
 # Both reset and restart must restore all four products. Never inject state.
 - assertVisible:
-    id: tab-home
-    selected: true
+    id: home-open-shop
 - runFlow:
     file: open-link.yaml
     env:
@@ -32,8 +31,10 @@ appId: dev.vostride.playground
     id: flight-booking-WL6P2K-refund
 - assertNotVisible: '^Deliberate bug:.*'
 - takeScreenshot: '${PHASE}-restored-seeded-booking'
-- tapOn:
-    id: tab-tasks
+- runFlow:
+    file: switch-product.yaml
+    env:
+      APP: tasks
 - assertVisible:
     id: task-search
 - tapOn:
@@ -74,8 +75,10 @@ appId: dev.vostride.playground
     env:
       LINK: playground://observability/logs
 - runFlow: controls-timestamp.yaml
-- tapOn:
-    id: tab-home
+- runFlow:
+    file: switch-product.yaml
+    env:
+      APP: home
 - assertVisible:
     id: home-open-shop
 # Banner absence cannot prove inactive app flags; check all eight switches.

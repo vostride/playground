@@ -14,8 +14,8 @@ import {
   StyleSheet,
   Switch,
   Text,
-  TextInput,
   View,
+  type TextInputProps,
 } from 'react-native';
 import {
   createTask,
@@ -34,18 +34,31 @@ import {
   type TasksState,
   type TaskStatus,
 } from '@playground/core/tasks';
-import { SafeModalArea, useSessionState, type MobileScreenProps } from '../ui';
+import {
+  BottomTabs,
+  Button as SharedButton,
+  colors,
+  Icon,
+  IconButton,
+  SafeModalArea,
+  useSessionState,
+  type MobileScreenProps,
+} from '../ui';
+import { Input } from '../components/ui/input';
 
 const priorityOptions: TaskPriority[] = ['low', 'medium', 'high', 'urgent'];
-const theme = {
-  ink: '#473c50',
-  muted: '#82718e',
-  purple: '#7c6593',
-  pale: '#f2edf6',
-  border: '#e6deec',
-  background: '#f8f6fa',
-  danger: '#ac6477',
-};
+const theme = colors;
+
+function TaskInput(props: TextInputProps) {
+  return (
+    <Input
+      placeholderTextColor={theme.muted}
+      selectionColor={theme.primary}
+      keyboardAppearance="dark"
+      {...props}
+    />
+  );
+}
 
 function TaskButton({
   title,
@@ -61,16 +74,13 @@ function TaskButton({
   testID?: string;
 }) {
   return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
+    <SharedButton
+      title={title}
       onPress={onPress}
-      style={[styles.button, secondary && styles.secondaryButton, disabled && { opacity: 0.4 }]}
-    >
-      <Text style={[styles.buttonText, secondary && { color: theme.purple }]}>{title}</Text>
-    </Pressable>
+      variant={secondary ? 'secondary' : 'primary'}
+      disabled={disabled}
+      testID={testID}
+    />
   );
 }
 function Choice({
@@ -90,12 +100,14 @@ function Choice({
       accessibilityRole="button"
       accessibilityState={{ selected: !!selected }}
       onPress={onPress}
-      style={[styles.choice, selected && styles.selectedChoice]}
+      style={({ pressed }) => [
+        styles.choice,
+        selected && styles.selectedChoice,
+        pressed && { opacity: 0.65 },
+      ]}
     >
-      <Text style={[styles.choiceText, selected && styles.selectedChoiceText]}>
-        {selected ? '✓ ' : ''}
-        {title}
-      </Text>
+      {selected && <Icon name="check" size={14} color={theme.ink} />}
+      <Text style={[styles.choiceText, selected && styles.selectedChoiceText]}>{title}</Text>
     </Pressable>
   );
 }
@@ -139,14 +151,7 @@ function Sheet({
               <Text accessibilityRole="header" style={styles.sheetTitle}>
                 {title}
               </Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Close ${title}`}
-                onPress={onClose}
-                style={styles.closeButton}
-              >
-                <Text style={styles.closeText}>×</Text>
-              </Pressable>
+              <IconButton icon="x" label={`Close ${title}`} onPress={onClose} />
             </View>
             {scroll ? (
               <ScrollView
@@ -269,14 +274,14 @@ function DraggableTask({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Rename ${task.id}`}
-            hitSlop={9}
+            style={styles.renameButton}
             onPress={() => setEditing(!editing)}
           >
-            <Text style={styles.pencil}>✎</Text>
+            <Text style={styles.pencil}>Edit</Text>
           </Pressable>
         </View>
         {editing ? (
-          <TextInput
+          <TaskInput
             autoFocus
             accessibilityLabel={`Title for ${task.id}`}
             value={title}
@@ -302,18 +307,43 @@ function DraggableTask({
             const label = TASK_LABELS.find((item) => item.id === id);
             return label ? (
               <View key={id} style={styles.taskLabel}>
-                <Text style={[styles.labelText, { color: label.color }]}>●</Text>
+                <View style={[styles.labelDot, { backgroundColor: label.color }]} />
                 <Text style={styles.labelText}>{label.name}</Text>
               </View>
             ) : null;
           })}
         </View>
         <View style={styles.cardBottom}>
-          <Text style={[styles.cardMeta, task.priority === 'urgent' && { color: theme.danger }]}>
-            {task.priority === 'high' || task.priority === 'urgent' ? '▂▅█' : '▂▃'}{' '}
-            {task.dueDate ? formatDate(task.dueDate) : 'No date'}
-            {task.checklist.length ? `  ·  ${done}/${task.checklist.length}` : ''}
-          </Text>
+          <View style={styles.metaGroup}>
+            <View accessibilityLabel={`${task.priority} priority`} style={styles.priorityMark}>
+              {[4, 8, 12].map((height, index) => (
+                <View
+                  key={height}
+                  style={{
+                    width: 3,
+                    height,
+                    backgroundColor:
+                      index <= priorityOptions.indexOf(task.priority)
+                        ? task.priority === 'urgent'
+                          ? theme.danger
+                          : theme.muted
+                        : theme.border,
+                  }}
+                />
+              ))}
+            </View>
+            <Text style={styles.cardMeta}>
+              {task.dueDate ? formatDate(task.dueDate) : 'No date'}
+            </Text>
+            {!!task.checklist.length && (
+              <>
+                <Icon name="check" size={13} color={theme.muted} />
+                <Text style={styles.cardMeta}>
+                  {done}/{task.checklist.length}
+                </Text>
+              </>
+            )}
+          </View>
           <View style={styles.row}>
             {task.assignees.slice(0, 2).map((id) => (
               <Avatar key={id} id={id} />
@@ -593,79 +623,55 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
       style={styles.screen}
     >
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <View style={styles.brand}>
-            <View style={styles.brandMark}>
-              <Text style={styles.brandMarkText}>▦</Text>
-            </View>
-            <Text style={styles.brandText}>Brello</Text>
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Browse all boards"
-            onPress={() => setSheet('boards')}
-            style={styles.browseButton}
+        <View style={styles.boardHeading}>
+          <Text
+            testID="task-board-title"
+            accessibilityRole="header"
+            numberOfLines={1}
+            style={styles.boardTitle}
           >
-            <Text style={styles.browseText}>All boards ↗</Text>
-          </Pressable>
-        </View>
-        <View style={styles.titleRow}>
-          <Text testID="task-board-title" accessibilityRole="header" style={styles.boardTitle}>
             {board.name}
           </Text>
-          <Pressable
-            testID="task-new-button"
-            accessibilityRole="button"
-            accessibilityLabel="New task"
-            onPress={() => setSheet('new')}
-            style={styles.newButton}
-          >
-            <Text style={styles.newButtonText}>＋</Text>
-          </Pressable>
-        </View>
-        <View style={styles.headerBottom}>
-          <View style={styles.row}>
-            <Choice
-              testID="task-view-board"
-              title="Board"
-              selected={view === 'board'}
-              onPress={() => setView('board')}
-            />
-            <Choice
-              testID="task-view-list"
-              title="List"
-              selected={view === 'list'}
-              onPress={() => setView('list')}
-            />
-          </View>
           <Text style={styles.progressText}>
             {boardTasks.filter((task) => task.status === 'done').length} of {boardTasks.length}{' '}
             complete
           </Text>
         </View>
+        <IconButton icon="grid" label="Browse all boards" onPress={() => setSheet('boards')} />
+        <Pressable
+          testID="task-new-button"
+          accessibilityRole="button"
+          accessibilityLabel="New task"
+          onPress={() => setSheet('new')}
+          style={({ pressed }) => [styles.newButton, pressed && { opacity: 0.7 }]}
+        >
+          <Icon name="plus" size={20} color={theme.primaryForeground} />
+        </Pressable>
       </View>
       <View style={styles.toolbar}>
-        <TextInput
-          testID="task-search"
-          accessibilityLabel="Search tasks"
-          placeholder="Search tasks…"
-          placeholderTextColor="#a798b2"
-          value={filters.query ?? ''}
-          onChangeText={(query) => setFilters({ ...filters, query })}
-          style={styles.search}
-        />
+        <View style={styles.searchField}>
+          <Icon name="search" size={17} color={theme.muted} />
+          <TaskInput
+            testID="task-search"
+            accessibilityLabel="Search tasks"
+            placeholder="Search tasks…"
+            value={filters.query ?? ''}
+            onChangeText={(query) => setFilters({ ...filters, query })}
+            style={styles.search}
+          />
+        </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Filter tasks"
           onPress={() => setSheet('filters')}
           style={styles.filterButton}
         >
-          <Text style={styles.filterText}>
-            Filter
-            {[filters.label, filters.assignee, filters.priority].filter(Boolean).length
-              ? ` (${[filters.label, filters.assignee, filters.priority].filter(Boolean).length})`
-              : ''}
-          </Text>
+          <Icon name="filter" size={18} color={theme.ink} />
+          {!![filters.label, filters.assignee, filters.priority].filter(Boolean).length && (
+            <Text style={styles.filterText}>
+              {[filters.label, filters.assignee, filters.priority].filter(Boolean).length}
+            </Text>
+          )}
         </Pressable>
         <Pressable
           accessibilityRole="button"
@@ -673,14 +679,14 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
           disabled={!past.length}
           accessibilityState={{ disabled: !past.length }}
           onPress={undo}
-          style={styles.undoButton}
+          style={[styles.undoButton, !past.length && { opacity: 0.35 }]}
         >
-          <Text style={[styles.undoText, !past.length && { opacity: 0.3 }]}>↶</Text>
+          <Text style={styles.undoText}>Undo</Text>
         </Pressable>
       </View>
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color={theme.purple} />
+          <ActivityIndicator color={theme.primary} />
           <Text style={styles.emptyDetail}>Loading board…</Text>
         </View>
       ) : error ? (
@@ -715,6 +721,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
         </ScrollView>
       ) : view === 'list' ? (
         <FlatList
+          style={styles.contentArea}
           testID="task-list"
           data={visible}
           keyExtractor={(task) => task.id}
@@ -734,6 +741,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
         />
       ) : (
         <ScrollView
+          style={styles.contentArea}
           ref={boardScroll}
           horizontal
           onScroll={(event) => {
@@ -779,7 +787,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
                   <RefreshControl
                     refreshing={refreshing}
                     onRefresh={refresh}
-                    tintColor={theme.purple}
+                    tintColor={theme.primary}
                   />
                 }
                 contentContainerStyle={styles.columnContent}
@@ -800,13 +808,22 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
                   }}
                   style={styles.addTask}
                 >
-                  <Text style={styles.addTaskText}>＋ Add task</Text>
+                  <Icon name="plus" size={16} color={theme.muted} />
+                  <Text style={styles.addTaskText}>Add task</Text>
                 </Pressable>
               </ScrollView>
             </View>
           ))}
         </ScrollView>
       )}
+      <BottomTabs
+        tabs={[
+          { id: 'board', label: 'Board', icon: 'columns', testID: 'task-view-board' },
+          { id: 'list', label: 'List', icon: 'list', testID: 'task-view-list' },
+        ]}
+        active={view}
+        onSelect={(id) => setView(id as 'board' | 'list')}
+      />
       {dragTask && (
         <Animated.View
           pointerEvents="none"
@@ -822,7 +839,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
             {notice}
           </Text>
           {past.length > 0 && (
-            <Pressable accessibilityRole="button" onPress={undo}>
+            <Pressable accessibilityRole="button" onPress={undo} style={styles.noticeAction}>
               <Text style={styles.noticeUndo}>Undo</Text>
             </Pressable>
           )}
@@ -830,15 +847,16 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
             accessibilityRole="button"
             accessibilityLabel="Dismiss notification"
             onPress={() => setNotice('')}
+            style={styles.noticeAction}
           >
-            <Text style={styles.noticeUndo}>×</Text>
+            <Icon name="x" size={18} color={theme.ink} />
           </Pressable>
         </View>
       )}
       {sheet === 'boards' && (
         <Sheet title="All boards" onClose={() => setSheet(null)} scroll={false}>
           <View style={styles.boardSearch}>
-            <TextInput
+            <TaskInput
               accessibilityLabel="Search boards"
               placeholder="Search 80 boards…"
               value={boardQuery}
@@ -857,6 +875,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
               <Pressable
                 testID={`task-board-option-${item.id}`}
                 accessibilityRole="button"
+                accessibilityState={{ selected: board.id === item.id }}
                 onPress={() => {
                   setBoardId(item.id);
                   setFilters({});
@@ -866,7 +885,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
                 style={styles.boardOption}
               >
                 <View style={[styles.boardOptionIcon, { backgroundColor: `${item.color}20` }]}>
-                  <Text style={{ color: item.color, fontSize: 22 }}>▦</Text>
+                  <Icon name="columns" size={18} color={item.color} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.boardOptionTitle}>{item.name}</Text>
@@ -874,7 +893,11 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
                     {state.tasks.filter((task) => task.boardId === item.id).length} tasks
                   </Text>
                 </View>
-                <Text style={styles.boardOptionDetail}>{board.id === item.id ? '✓' : '›'}</Text>
+                <Icon
+                  name={board.id === item.id ? 'check' : 'chevronRight'}
+                  size={18}
+                  color={theme.muted}
+                />
               </Pressable>
             )}
             ListEmptyComponent={
@@ -885,7 +908,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
       )}
       {sheet === 'filters' && (
         <Sheet title="Filter tasks" onClose={() => setSheet(null)}>
-          <Text style={styles.sectionLabel}>ASSIGNEE</Text>
+          <Text style={styles.sectionLabel}>Assignee</Text>
           <View style={styles.choices}>
             <Choice
               testID="task-filter-assignee-everyone"
@@ -909,7 +932,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
               />
             ))}
           </View>
-          <Text style={styles.sectionLabel}>LABEL</Text>
+          <Text style={styles.sectionLabel}>Label</Text>
           <View style={styles.choices}>
             <Choice
               testID="task-filter-label-all"
@@ -927,7 +950,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
               />
             ))}
           </View>
-          <Text style={styles.sectionLabel}>PRIORITY</Text>
+          <Text style={styles.sectionLabel}>Priority</Text>
           <View style={styles.choices}>
             <Choice
               title="All priorities"
@@ -950,7 +973,8 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
               accessibilityLabel="Show completed"
               value={showDone}
               onValueChange={setShowDone}
-              trackColor={{ true: theme.purple }}
+              trackColor={{ false: theme.border, true: theme.primary }}
+              thumbColor={theme.background}
             />
           </View>
           <TaskButton
@@ -1032,7 +1056,7 @@ function NewTaskSheet({
   return (
     <Sheet title="New task" onClose={onClose}>
       <Text style={styles.fieldLabel}>Title</Text>
-      <TextInput
+      <TaskInput
         testID="task-create-title"
         returnKeyType="done"
         submitBehavior="blurAndSubmit"
@@ -1052,7 +1076,7 @@ function NewTaskSheet({
         </Text>
       )}
       <Text style={styles.fieldLabel}>Description</Text>
-      <TextInput
+      <TaskInput
         accessibilityLabel="Description"
         multiline
         placeholder="Add a description…"
@@ -1060,7 +1084,7 @@ function NewTaskSheet({
         onChangeText={setDescription}
         style={[styles.input, styles.multiline]}
       />
-      <Text style={styles.sectionLabel}>STATUS</Text>
+      <Text style={styles.sectionLabel}>Status</Text>
       <View style={styles.choices}>
         {TASK_COLUMNS.map((column) => (
           <Choice
@@ -1071,7 +1095,7 @@ function NewTaskSheet({
           />
         ))}
       </View>
-      <Text style={styles.sectionLabel}>PRIORITY</Text>
+      <Text style={styles.sectionLabel}>Priority</Text>
       <View style={styles.choices}>
         {priorityOptions.map((item) => (
           <Choice
@@ -1146,7 +1170,7 @@ function TaskDetail({
   return (
     <Sheet title={task.id} onClose={close}>
       <Text style={styles.fieldLabel}>Task title</Text>
-      <TextInput
+      <TaskInput
         testID="task-detail-title"
         accessibilityLabel="Task title"
         multiline
@@ -1159,7 +1183,7 @@ function TaskDetail({
         }}
         style={[styles.input, styles.detailTitle]}
       />
-      <Text style={styles.sectionLabel}>STATUS</Text>
+      <Text style={styles.sectionLabel}>Status</Text>
       <View style={styles.choices}>
         {TASK_COLUMNS.map((column) => (
           <Choice
@@ -1186,7 +1210,7 @@ function TaskDetail({
           onPress={() => moveTo(task.status, task.position + 1)}
         />
       </View>
-      <Text style={styles.sectionLabel}>PRIORITY</Text>
+      <Text style={styles.sectionLabel}>Priority</Text>
       <View style={styles.choices}>
         {priorityOptions.map((priority) => (
           <Choice
@@ -1197,7 +1221,7 @@ function TaskDetail({
           />
         ))}
       </View>
-      <Text style={styles.sectionLabel}>ASSIGNEES</Text>
+      <Text style={styles.sectionLabel}>Assignees</Text>
       <View style={styles.choices}>
         {TASK_MEMBERS.map((member) => (
           <Choice
@@ -1215,7 +1239,7 @@ function TaskDetail({
           />
         ))}
       </View>
-      <Text style={styles.sectionLabel}>LABELS</Text>
+      <Text style={styles.sectionLabel}>Labels</Text>
       <View style={styles.choices}>
         {TASK_LABELS.map((label) => (
           <Choice
@@ -1233,7 +1257,7 @@ function TaskDetail({
           />
         ))}
       </View>
-      <Text style={styles.sectionLabel}>DUE DATE</Text>
+      <Text style={styles.sectionLabel}>Due date</Text>
       <TaskButton
         testID="task-detail-due-date"
         title={
@@ -1254,12 +1278,16 @@ function TaskDetail({
         />
       )}
       {task.dueDate && (
-        <Pressable accessibilityRole="button" onPress={() => onPatch({ dueDate: '' })}>
+        <Pressable
+          accessibilityRole="button"
+          style={styles.inlineAction}
+          onPress={() => onPatch({ dueDate: '' })}
+        >
           <Text style={styles.textButton}>Remove due date</Text>
         </Pressable>
       )}
-      <Text style={styles.sectionLabel}>DESCRIPTION</Text>
-      <TextInput
+      <Text style={styles.sectionLabel}>Description</Text>
+      <TaskInput
         accessibilityLabel="Description"
         multiline
         value={description}
@@ -1269,7 +1297,7 @@ function TaskDetail({
         style={[styles.input, styles.multiline]}
       />
       <View style={styles.spreadRow}>
-        <Text style={styles.sectionLabel}>CHECKLIST</Text>
+        <Text style={styles.sectionLabel}>Checklist</Text>
         <Text style={styles.progressText}>
           {task.checklist.filter((current) => current.done).length} / {task.checklist.length}
         </Text>
@@ -1290,7 +1318,7 @@ function TaskDetail({
             style={styles.checklistToggle}
           >
             <View style={[styles.checkbox, current.done && styles.checkedBox]}>
-              {current.done && <Text style={styles.checkboxCheck}>✓</Text>}
+              {current.done && <Icon name="check" size={14} color={theme.primaryForeground} />}
             </View>
             <Text style={[styles.checklistText, current.done && styles.completedText]}>
               {current.title}
@@ -1299,17 +1327,17 @@ function TaskDetail({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Delete checklist item ${current.title}`}
-            hitSlop={9}
+            style={styles.closeButton}
             onPress={() =>
               onPatch({ checklist: task.checklist.filter((check) => check.id !== current.id) })
             }
           >
-            <Text style={styles.textButton}>×</Text>
+            <Icon name="x" size={16} color={theme.muted} />
           </Pressable>
         </View>
       ))}
       <View style={styles.row}>
-        <TextInput
+        <TaskInput
           testID="task-checklist-new"
           returnKeyType="done"
           submitBehavior="blurAndSubmit"
@@ -1383,7 +1411,7 @@ function TaskCalendar({ value, onChange }: { value: string; onChange: (value: st
           onPress={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
           style={styles.calendarArrow}
         >
-          <Text style={styles.closeText}>‹</Text>
+          <Icon name="arrowLeft" size={18} color={theme.ink} />
         </Pressable>
         <Text style={styles.fieldLabel}>
           {month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
@@ -1394,7 +1422,7 @@ function TaskCalendar({ value, onChange }: { value: string; onChange: (value: st
           onPress={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
           style={styles.calendarArrow}
         >
-          <Text style={styles.closeText}>›</Text>
+          <Icon name="arrowRight" size={18} color={theme.ink} />
         </Pressable>
       </View>
       <View style={styles.calendarGrid}>
@@ -1417,7 +1445,9 @@ function TaskCalendar({ value, onChange }: { value: string; onChange: (value: st
               style={[styles.calendarCell, value === iso && styles.calendarSelected]}
               onPress={() => onChange(iso)}
             >
-              <Text style={[styles.calendarDay, value === iso && { color: '#fff' }]}>
+              <Text
+                style={[styles.calendarDay, value === iso && { color: theme.primaryForeground }]}
+              >
                 {index + 1}
               </Text>
             </Pressable>
@@ -1430,250 +1460,282 @@ function TaskCalendar({ value, onChange }: { value: string; onChange: (value: st
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.background },
-  header: { backgroundColor: '#fff', paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10 },
-  headerTop: {
+  contentArea: { flex: 1 },
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: theme.background,
   },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  brandMark: {
-    backgroundColor: theme.pale,
-    width: 27,
-    height: 27,
-    borderRadius: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brandMarkText: { color: theme.purple, fontSize: 22 },
-  brandText: { color: theme.ink, fontWeight: '700', fontSize: 17, letterSpacing: -0.5 },
-  browseButton: { padding: 8, minHeight: 44, justifyContent: 'center' },
-  browseText: { color: theme.muted, fontSize: 11 },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 12,
-  },
-  boardTitle: { color: theme.ink, fontSize: 24, fontWeight: '600', letterSpacing: -0.6, flex: 1 },
+  boardHeading: { flex: 1, minWidth: 0, gap: 4 },
+  boardTitle: { color: theme.ink, fontSize: 20, fontWeight: '600', letterSpacing: -0.5 },
   newButton: {
     width: 44,
     height: 44,
     borderRadius: 2,
-    backgroundColor: theme.purple,
+    backgroundColor: theme.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  newButtonText: { color: '#fff', fontSize: 25, lineHeight: 28 },
-  headerBottom: {
-    marginTop: 8,
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  spreadRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'space-between',
+    gap: 8,
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 7, flexWrap: 'wrap' },
-  spreadRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  progressText: { color: theme.muted, fontSize: 10 },
+  progressText: { color: theme.muted, fontSize: 12, lineHeight: 17 },
   toolbar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 6,
     paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderTopWidth: 1,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderColor: theme.border,
-    backgroundColor: '#fefdfF',
+    backgroundColor: theme.background,
   },
-  search: { flex: 1, fontSize: 14, color: theme.ink, paddingVertical: 8, minHeight: 44 },
-  filterButton: {
-    minHeight: 44,
-    justifyContent: 'center',
-    borderBottomWidth: 1,
+  searchField: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 10,
+    borderWidth: 1,
     borderColor: theme.border,
     borderRadius: 2,
-    paddingHorizontal: 11,
-    paddingVertical: 9,
+    backgroundColor: theme.surface,
   },
-  filterText: { fontSize: 11, color: theme.muted },
-  undoButton: { width: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  undoText: { fontSize: 25, color: theme.purple },
-  boardColumns: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 12, gap: 16 },
+  search: {
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+    flex: 1,
+    fontSize: 14,
+    color: theme.ink,
+    paddingVertical: 9,
+    paddingHorizontal: 0,
+    minHeight: 44,
+  },
+  filterButton: {
+    minWidth: 44,
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderRadius: 2,
+    paddingHorizontal: 10,
+    backgroundColor: theme.surface,
+  },
+  filterText: { fontSize: 12, fontWeight: '600', color: theme.ink },
+  undoButton: {
+    minWidth: 44,
+    minHeight: 44,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  undoText: { fontSize: 12, fontWeight: '600', color: theme.ink },
+  // Keep the column width, gap and horizontal padding aligned with existing edge-scroll calculations.
+  boardColumns: { paddingHorizontal: 12, paddingTop: 4, paddingBottom: 8, gap: 16 },
   column: { width: 270 },
   columnHeading: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 0,
     paddingHorizontal: 4,
-    minHeight: 36,
+    minHeight: 44,
     borderBottomWidth: 1,
     borderColor: theme.border,
   },
-  statusDot: { width: 9, height: 9, borderRadius: 5 },
-  columnTitle: { fontSize: 12, fontWeight: '600', color: theme.ink },
-  columnCount: { fontSize: 11, color: theme.muted },
-  columnContent: { paddingBottom: 40, gap: 6 },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  columnTitle: { fontSize: 13, fontWeight: '600', color: theme.ink },
+  columnCount: { fontSize: 12, color: theme.muted },
+  columnContent: { paddingTop: 8, paddingBottom: 24, gap: 8 },
   taskCard: {
     borderWidth: 1,
     borderColor: theme.border,
-    backgroundColor: '#fff',
+    backgroundColor: theme.surface,
     borderRadius: 2,
   },
-  cardPressable: { paddingHorizontal: 10, paddingVertical: 10, gap: 6 },
-  cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  taskId: { fontSize: 10, color: theme.muted, letterSpacing: 0.3 },
-  pencil: { color: '#b4a5bf', fontSize: 16 },
-  cardTitle: { fontSize: 14, fontWeight: '500', lineHeight: 21, color: theme.ink, minHeight: 42 },
-  taskLabel: {
-    borderWidth: 0,
-    borderRadius: 0,
-    paddingHorizontal: 0,
-    paddingVertical: 2,
+  cardPressable: { paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
+  cardTop: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 20,
+  },
+  taskId: { fontSize: 12, color: theme.muted, fontWeight: '500' },
+  renameButton: {
+    position: 'absolute',
+    right: -8,
+    top: -8,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pencil: { color: theme.muted, fontSize: 12, fontWeight: '500' },
+  cardTitle: { fontSize: 14, fontWeight: '500', lineHeight: 20, color: theme.ink, minHeight: 20 },
+  taskLabel: {
+    borderRadius: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    backgroundColor: theme.soft,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 5,
   },
-  labelText: { fontSize: 9, color: theme.muted },
+  labelDot: { width: 5, height: 5, borderRadius: 3 },
+  labelText: { fontSize: 12, lineHeight: 16, color: theme.muted },
   cardBottom: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    minHeight: 25,
+    minHeight: 26,
+    gap: 6,
   },
-  cardMeta: { color: theme.muted, fontSize: 10 },
+  cardMeta: { color: theme.muted, fontSize: 12, lineHeight: 18 },
+  metaGroup: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  priorityMark: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, width: 14, height: 12 },
   avatar: {
-    height: 25,
-    width: 25,
-    borderRadius: 14,
+    height: 26,
+    width: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontSize: 9, color: '#5b5064', fontWeight: '600' },
-  addTask: { padding: 12, minHeight: 44 },
-  addTaskText: { fontSize: 12, color: theme.muted },
-  emptyColumn: {
+  avatarText: { fontSize: 12, color: '#27272a', fontWeight: '600' },
+  addTask: {
+    paddingHorizontal: 10,
+    minHeight: 44,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 25,
-    gap: 10,
-    borderBottomWidth: 1,
-    borderColor: theme.border,
+    gap: 7,
   },
+  addTaskText: { fontSize: 13, color: theme.muted },
+  emptyColumn: { alignItems: 'center', justifyContent: 'center', padding: 20, gap: 8 },
   emptyTitle: { color: theme.ink, fontSize: 18, fontWeight: '600', textAlign: 'center' },
-  emptyDetail: { color: theme.muted, fontSize: 12, lineHeight: 19, textAlign: 'center' },
-  emptyHint: { color: theme.muted, fontSize: 10, lineHeight: 16, textAlign: 'center' },
-  center: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 30 },
-  listContent: { padding: 12, gap: 6 },
+  emptyDetail: { color: theme.muted, fontSize: 14, lineHeight: 20, textAlign: 'center' },
+  emptyHint: { color: theme.muted, fontSize: 12, lineHeight: 18, textAlign: 'center' },
+  center: {
+    flex: 1,
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    padding: 24,
+  },
+  listContent: { padding: 12, gap: 8, flexGrow: 1 },
   dragPreview: {
     position: 'absolute',
     top: 0,
     left: 0,
     width: 245,
-    padding: 15,
-    borderWidth: 2,
-    borderColor: '#b59bc9',
+    padding: 12,
+    borderWidth: 1,
+    borderColor: theme.ink,
     borderRadius: 2,
-    backgroundColor: '#fff',
+    backgroundColor: theme.soft,
     elevation: 14,
-    shadowColor: '#3b2450',
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    shadowOffset: { width: 0, height: 6 },
-    gap: 7,
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    gap: 8,
   },
   notice: {
     position: 'absolute',
-    bottom: 12,
-    left: 15,
-    right: 15,
-    backgroundColor: '#fff',
+    bottom: 72,
+    left: 12,
+    right: 12,
+    backgroundColor: theme.soft,
     borderColor: theme.border,
     borderWidth: 1,
     borderRadius: 2,
-    padding: 13,
+    paddingLeft: 12,
+    paddingRight: 4,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 4,
     elevation: 5,
   },
-  noticeText: { flex: 1, fontSize: 11, color: theme.muted },
-  noticeUndo: { color: theme.purple, fontSize: 12 },
-  button: {
+  noticeText: { flex: 1, fontSize: 12, lineHeight: 18, color: theme.ink },
+  noticeAction: {
+    minWidth: 44,
     minHeight: 44,
-    backgroundColor: theme.purple,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 2,
-    justifyContent: 'center',
+    paddingHorizontal: 6,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  buttonText: { fontSize: 12, fontWeight: '600', color: '#fff' },
-  secondaryButton: { backgroundColor: '#fff', borderWidth: 1, borderColor: theme.border },
+  noticeUndo: { color: theme.ink, fontSize: 12, fontWeight: '600' },
   choice: {
     minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
-    borderBottomWidth: 1,
+    gap: 6,
+    borderWidth: 1,
     borderColor: theme.border,
-    backgroundColor: '#fff',
+    backgroundColor: theme.surface,
     borderRadius: 2,
     paddingHorizontal: 10,
     paddingVertical: 9,
   },
-  choiceText: { color: theme.muted, fontSize: 11 },
-  selectedChoice: { backgroundColor: theme.pale, borderColor: '#b7a1c8' },
-  selectedChoiceText: { color: theme.purple, fontWeight: '600' },
-  choices: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  modalOuter: { flex: 1, justifyContent: 'flex-end', backgroundColor: '#25183066' },
+  choiceText: { color: theme.muted, fontSize: 13 },
+  selectedChoice: { backgroundColor: theme.soft, borderColor: theme.ink },
+  selectedChoiceText: { color: theme.ink, fontWeight: '600' },
+  choices: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 4 },
+  modalOuter: { flex: 1, justifyContent: 'flex-end', backgroundColor: '#000000b3' },
   sheet: {
-    maxHeight: '93%',
+    maxHeight: '94%',
     minHeight: '55%',
-    backgroundColor: '#fff',
+    backgroundColor: theme.background,
+    borderTopWidth: 1,
+    borderColor: theme.border,
     borderTopLeftRadius: 2,
     borderTopRightRadius: 2,
-    paddingBottom: 18,
+    paddingBottom: 8,
     overflow: 'hidden',
   },
   sheetHandle: {
-    width: 35,
-    height: 4,
-    backgroundColor: '#d6ccde',
+    width: 32,
+    height: 3,
+    backgroundColor: theme.border,
     borderRadius: 2,
     alignSelf: 'center',
-    marginVertical: 10,
+    marginTop: 8,
   },
   sheetHeader: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 4,
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
     borderColor: theme.border,
   },
-  sheetTitle: { fontSize: 20, fontWeight: '600', color: theme.ink, letterSpacing: -0.4 },
-  closeButton: {
-    paddingHorizontal: 8,
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeText: { fontSize: 25, color: theme.muted },
-  sheetContent: { padding: 16, paddingBottom: 20, gap: 10 },
+  sheetTitle: { fontSize: 18, fontWeight: '600', color: theme.ink, letterSpacing: -0.3 },
+  closeButton: { minWidth: 44, minHeight: 44, justifyContent: 'center', alignItems: 'center' },
+  sheetContent: { padding: 16, paddingBottom: 24, gap: 10 },
   sectionLabel: {
-    fontSize: 10,
+    fontSize: 12,
+    lineHeight: 17,
     color: theme.muted,
     fontWeight: '600',
-    letterSpacing: 0.8,
-    marginTop: 7,
+    marginTop: 8,
   },
-  fieldLabel: { fontSize: 12, color: theme.ink, fontWeight: '500' },
+  fieldLabel: { fontSize: 13, color: theme.ink, fontWeight: '500' },
   input: {
-    borderBottomWidth: 1,
-    borderColor: theme.border,
-    backgroundColor: '#fefdfF',
+    borderWidth: 1,
+    backgroundColor: theme.surface,
     borderRadius: 2,
     paddingHorizontal: 12,
     paddingVertical: 11,
@@ -1683,80 +1745,101 @@ const styles = StyleSheet.create({
   },
   inlineInput: {
     borderWidth: 1,
-    borderColor: '#b39bc7',
-    padding: 5,
+    borderColor: theme.ink,
+    padding: 8,
+    minHeight: 44,
     borderRadius: 2,
     color: theme.ink,
+    backgroundColor: theme.background,
     fontSize: 14,
   },
-  multiline: { minHeight: 120, textAlignVertical: 'top', lineHeight: 21 },
-  detailTitle: { fontSize: 21, fontWeight: '500', lineHeight: 29, minHeight: 80 },
+  multiline: { minHeight: 96, textAlignVertical: 'top', lineHeight: 21 },
+  detailTitle: {
+    fontSize: 18,
+    fontWeight: '500',
+    lineHeight: 25,
+    minHeight: 72,
+    textAlignVertical: 'top',
+  },
   boardSearch: { padding: 16 },
-  boardList: { paddingHorizontal: 16, paddingBottom: 35 },
+  boardList: { paddingHorizontal: 16, paddingBottom: 24 },
   boardOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    padding: 12,
+    gap: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f2edf6',
+    borderColor: theme.border,
   },
   boardOptionIcon: {
-    width: 37,
-    height: 37,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 2,
   },
-  boardOptionTitle: { fontSize: 13, color: theme.ink, marginBottom: 5 },
-  boardOptionDetail: { fontSize: 10, color: theme.muted },
+  boardOptionTitle: { fontSize: 14, color: theme.ink, fontWeight: '500', marginBottom: 3 },
+  boardOptionDetail: { fontSize: 12, color: theme.muted },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 10,
+    paddingVertical: 8,
   },
-  checklistRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  checklistRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderBottomWidth: 1,
+    borderColor: theme.border,
+  },
   checklistToggle: {
     minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    gap: 9,
-    paddingVertical: 5,
+    gap: 10,
+    paddingVertical: 8,
   },
   checkbox: {
-    height: 19,
-    width: 19,
+    height: 18,
+    width: 18,
     borderWidth: 1,
-    borderColor: '#b9a6c7',
+    borderColor: theme.muted,
     borderRadius: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkedBox: { backgroundColor: theme.purple, borderColor: theme.purple },
-  checkboxCheck: { color: '#fff', fontSize: 13 },
-  checklistText: { flex: 1, fontSize: 12, lineHeight: 19, color: theme.muted },
-  completedText: { textDecorationLine: 'line-through', color: '#ac9cb7' },
-  textButton: { color: theme.purple, fontSize: 12, padding: 3 },
-  deleteButton: { alignItems: 'center', justifyContent: 'center', minHeight: 44, padding: 9 },
-  error: { color: theme.danger, fontSize: 12 },
+  checkedBox: { backgroundColor: theme.primary, borderColor: theme.primary },
+  checklistText: { flex: 1, fontSize: 14, lineHeight: 20, color: theme.ink },
+  completedText: { textDecorationLine: 'line-through', color: theme.muted },
+  inlineAction: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
+  textButton: { color: theme.ink, fontSize: 13, fontWeight: '500' },
+  deleteButton: { alignItems: 'center', justifyContent: 'center', minHeight: 44, padding: 10 },
+  error: { color: theme.danger, fontSize: 13, lineHeight: 19 },
   deleteBox: {
-    backgroundColor: '#fbf3f5',
+    backgroundColor: theme.surface,
+    borderWidth: 1,
+    borderColor: theme.border,
     borderRadius: 2,
-    padding: 15,
-    gap: 14,
+    padding: 14,
+    gap: 10,
     alignItems: 'center',
   },
-  calendar: { borderTopWidth: 1, borderColor: theme.border, paddingVertical: 10 },
-  calendarArrow: { paddingHorizontal: 14, paddingVertical: 4, minHeight: 44, minWidth: 44 },
+  calendar: {
+    borderTopWidth: 1,
+    borderColor: theme.border,
+    paddingVertical: 8,
+    marginHorizontal: -10,
+  },
+  calendarArrow: { minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center' },
   calendarGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   calendarWeekday: {
     width: '14.2857%',
     paddingVertical: 10,
     textAlign: 'center',
     color: theme.muted,
-    fontSize: 11,
+    fontSize: 12,
   },
   calendarCell: {
     width: '14.2857%',
@@ -1765,6 +1848,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 2,
   },
-  calendarSelected: { backgroundColor: theme.purple },
-  calendarDay: { fontSize: 13, color: theme.ink },
+  calendarSelected: { backgroundColor: theme.primary },
+  calendarDay: { fontSize: 14, color: theme.ink },
 });

@@ -8,7 +8,6 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -36,15 +35,19 @@ import {
 } from '@playground/core/flights';
 import {
   Button,
+  BottomTabs,
   Card,
   Chip,
   colors,
   Empty,
   Field,
   Heading,
+  Icon,
+  IconButton,
   Row,
   SafeModalArea,
   Screen,
+  Text,
   useSessionState,
   type MobileScreenProps,
 } from '../ui';
@@ -65,16 +68,19 @@ const initialSearch: SearchState = {
   roundTrip: true,
   passengers: 1,
 };
-export default function FlightsScreen({ route, bug }: MobileScreenProps) {
+export default function FlightsScreen({ route, bug, navigationKey }: MobileScreenProps) {
   const [search, setSearch] = useSessionState<SearchState>('wayline-search', initialSearch),
     [bookings, setBookings] = useSessionState<Booking[]>('wayline-bookings', [sampleBooking]);
   const [view, setView] = useState<Step>(route.startsWith('bookings') ? 'bookings' : 'search'),
-    [picker, setPicker] = useState<'' | 'from' | 'to' | 'dates' | 'passengers'>(''),
+    [picker, setPicker] = useState<
+      '' | 'from' | 'to' | 'dates' | 'passengers' | 'filters' | 'sort'
+    >(''),
     [query, setQuery] = useState(''),
     [month, setMonth] = useState('2026-11'),
     [datePart, setDatePart] = useState<'departure' | 'returnDate'>('departure'),
     [exactDate, setExactDate] = useState(initialSearch.departure),
-    [dateError, setDateError] = useState('');
+    [dateError, setDateError] = useState(''),
+    [calendarWidth, setCalendarWidth] = useState(308);
   const [outbound, setOutbound] = useState<Flight>(),
     [inbound, setInbound] = useState<Flight>(),
     [leg, setLeg] = useState<'outbound' | 'return'>('outbound'),
@@ -99,9 +105,10 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
     [status, setStatus] = useState('all'),
     [editing, setEditing] = useState<Booking>();
   useEffect(() => {
+    setEditing(undefined);
     if (route.startsWith('bookings')) setView('bookings');
     else if (route === '') setView('search');
-  }, [route]);
+  }, [route, navigationKey]);
   const go = (next: Step) => {
     setError('');
     setView(next);
@@ -313,17 +320,16 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
       ],
     );
   return (
-    <>
-      <Row style={styles.subnav}>
-        <Chip label="Flights" selected={view !== 'bookings'} onPress={() => go('search')} />
-        <Chip label="My trips" selected={view === 'bookings'} onPress={() => go('bookings')} />
-      </Row>
+    <View style={styles.root}>
       <Screen
         key={`${view}-${leg}-${seatLeg}-${checkoutStep}`}
         refreshControl={
           view === 'bookings' ? (
             <RefreshControl
               refreshing={loading}
+              tintColor={colors.ink}
+              colors={[colors.ink]}
+              progressBackgroundColor={colors.surface}
               onRefresh={() => {
                 setLoading(true);
                 setTimeout(() => setLoading(false), 450);
@@ -335,8 +341,8 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
         {view === 'search' && (
           <>
             <Heading title="Flight search" />
-            <Card>
-              <Row>
+            <View style={styles.searchForm}>
+              <Row style={styles.tripType}>
                 <Chip
                   label="Round trip"
                   selected={search.roundTrip}
@@ -347,7 +353,17 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                   selected={!search.roundTrip}
                   onPress={() => setSearch({ ...search, roundTrip: false })}
                 />
+                <View style={{ flex: 1 }} />
                 <Text style={styles.small}>Economy</Text>
+              </Row>
+              <Row style={styles.sectionHeader}>
+                <Text style={styles.label}>Airports</Text>
+                <IconButton
+                  icon="arrowUpDown"
+                  label="Swap departure and arrival"
+                  testID="button-swap-departure-and-arrival"
+                  onPress={() => setSearch({ ...search, from: search.to, to: search.from })}
+                />
               </Row>
               {(['from', 'to'] as const).map((key) => (
                 <TouchableOpacity
@@ -368,47 +384,48 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                       <Text style={styles.medium}>{airport(search[key]).city}</Text>
                       <Text style={styles.small}>{airport(search[key]).name}</Text>
                     </View>
-                    <Text style={styles.muted}>⌄</Text>
+                    <Icon name="chevronDown" size={18} color={colors.muted} />
                   </Row>
                 </TouchableOpacity>
               ))}
-              <Button
-                title="Swap departure and arrival"
-                variant="secondary"
-                onPress={() => setSearch({ ...search, from: search.to, to: search.from })}
-              />
-              <TouchableOpacity
-                testID="flight-dates-picker"
-                accessibilityRole="button"
-                accessibilityLabel={`Travel dates: ${shortDate(search.departure)}${search.roundTrip ? ` – ${shortDate(search.returnDate)}` : ''}`}
-                style={styles.searchField}
-                onPress={() => {
-                  setPicker('dates');
-                  selectDatePart('departure');
-                }}
-              >
-                <Text style={styles.label}>Travel dates</Text>
-                <Text style={styles.medium}>
-                  {shortDate(search.departure)}
-                  {search.roundTrip && ` – ${shortDate(search.returnDate)}`}{' '}
-                  <Text style={styles.muted}>⌄</Text>
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                testID="flight-travelers-picker"
-                accessibilityRole="button"
-                accessibilityLabel={`Travelers: ${search.passengers} adult${search.passengers > 1 ? 's' : ''}`}
-                style={styles.searchField}
-                onPress={() => setPicker('passengers')}
-              >
-                <Text style={styles.label}>Travelers</Text>
-                <Text style={styles.medium}>
-                  {search.passengers} adult{search.passengers > 1 ? 's' : ''}{' '}
-                  <Text style={styles.muted}>⌄</Text>
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.searchDetails}>
+                <TouchableOpacity
+                  testID="flight-dates-picker"
+                  accessibilityRole="button"
+                  accessibilityLabel={`Travel dates: ${shortDate(search.departure)}${search.roundTrip ? ` – ${shortDate(search.returnDate)}` : ''}`}
+                  style={[styles.searchField, styles.searchDetail]}
+                  onPress={() => {
+                    setPicker('dates');
+                    selectDatePart('departure');
+                  }}
+                >
+                  <Row style={styles.fieldLabel}>
+                    <Icon name="calendar" size={16} color={colors.muted} />
+                    <Text style={styles.label}>Travel dates</Text>
+                  </Row>
+                  <Text style={styles.medium}>
+                    {shortDate(search.departure)}
+                    {search.roundTrip && ` – ${shortDate(search.returnDate)}`}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  testID="flight-travelers-picker"
+                  accessibilityRole="button"
+                  accessibilityLabel={`Travelers: ${search.passengers} adult${search.passengers > 1 ? 's' : ''}`}
+                  style={[styles.searchField, styles.searchDetail]}
+                  onPress={() => setPicker('passengers')}
+                >
+                  <Row style={styles.fieldLabel}>
+                    <Icon name="user" size={16} color={colors.muted} />
+                    <Text style={styles.label}>Travelers</Text>
+                  </Row>
+                  <Text style={styles.medium}>
+                    {search.passengers} adult{search.passengers > 1 ? 's' : ''}
+                  </Text>
+                </TouchableOpacity>
+              </View>
               <Button title="Search flights" onPress={runSearch} />
-            </Card>
+            </View>
           </>
         )}
         {view === 'results' && (
@@ -431,7 +448,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
               </Card>
             )}
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <Row>
+              <Row style={styles.dateStrip}>
                 {flightDateWindow(date).map((next) => {
                   return (
                     <TouchableOpacity
@@ -461,99 +478,65 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                 })}
               </Row>
             </ScrollView>
-            <Card>
-              <Row>
-                <Text style={styles.medium}>Filters</Text>
-                <View style={{ flex: 1 }} />
-                <Chip
-                  label="Reset"
-                  onPress={() => {
-                    setNonstop(false);
-                    setSelectedAirlines([]);
-                    setDepartureTime('any');
-                    setMaxPrice('1000');
-                  }}
-                />
-              </Row>
-              <Row>
-                <Text style={[styles.small, { flex: 1 }]}>Nonstop only</Text>
-                <Switch
-                  accessibilityLabel="Nonstop only"
-                  value={nonstop}
-                  onValueChange={setNonstop}
-                />
-              </Row>
-              <Row>
-                {[
-                  { id: 'any', label: 'Any time' },
-                  { id: 'morning', label: 'Morning · before 12 pm' },
-                  { id: 'afternoon', label: 'Afternoon · after 12 pm' },
-                ].map((t) => (
-                  <Chip
-                    key={t.id}
-                    label={t.label}
-                    selected={departureTime === t.id}
-                    onPress={() => setDepartureTime(t.id)}
-                  />
-                ))}
-              </Row>
-              <Field
-                label="Maximum flight price"
-                keyboardType="numeric"
-                value={maxPrice}
-                onChangeText={setMaxPrice}
-              />
-              <ScrollView horizontal>
-                <Row>
-                  <Chip
-                    label="All airlines"
-                    selected={!selectedAirlines.length}
-                    onPress={() => setSelectedAirlines([])}
-                  />
-                  {airlines.map((name) => (
-                    <Chip
-                      key={name}
-                      label={name}
-                      selected={selectedAirlines.includes(name)}
-                      onPress={() =>
-                        setSelectedAirlines((previous) =>
-                          previous.includes(name)
-                            ? previous.filter((a) => a !== name)
-                            : [...previous, name],
-                        )
-                      }
-                    />
-                  ))}
-                </Row>
-              </ScrollView>
-              <Text style={styles.label}>Sort by</Text>
-              <Row>
-                {[
-                  { id: 'recommended', label: 'Recommended' },
-                  { id: 'cheapest', label: 'Lowest price' },
-                  { id: 'fastest', label: 'Shortest duration' },
-                  { id: 'earliest', label: 'Earliest departure' },
-                ].map((s) => (
-                  <Chip
-                    key={s.id}
-                    label={s.label}
-                    selected={sort === s.id}
-                    onPress={() => setSort(s.id)}
-                  />
-                ))}
-              </Row>
-            </Card>
+            <View style={styles.resultTools}>
+              <TouchableOpacity
+                testID="flight-open-filters"
+                accessibilityRole="button"
+                accessibilityLabel="Filters"
+                style={styles.toolButton}
+                onPress={() => setPicker('filters')}
+              >
+                <Icon name="sliders" size={18} color={colors.ink} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.medium}>Filters</Text>
+                  <Text style={styles.small}>
+                    {nonstop ||
+                    selectedAirlines.length ||
+                    departureTime !== 'any' ||
+                    maxPrice !== '1000'
+                      ? `${Number(nonstop) + selectedAirlines.length + Number(departureTime !== 'any') + Number(maxPrice !== '1000')} active`
+                      : 'All flights'}
+                  </Text>
+                </View>
+                <Icon name="chevronDown" size={16} color={colors.muted} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                testID="flight-open-sort"
+                accessibilityRole="button"
+                accessibilityLabel="Sort flights"
+                style={styles.toolButton}
+                onPress={() => setPicker('sort')}
+              >
+                <Icon name="arrowUpDown" size={18} color={colors.ink} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.medium}>Sort</Text>
+                  <Text style={styles.small}>
+                    {sort === 'cheapest'
+                      ? 'Lowest price'
+                      : sort === 'fastest'
+                        ? 'Shortest duration'
+                        : sort === 'earliest'
+                          ? 'Earliest departure'
+                          : 'Recommended'}
+                  </Text>
+                </View>
+                <Icon name="chevronDown" size={16} color={colors.muted} />
+              </TouchableOpacity>
+            </View>
             <Text testID="flight-results-count" style={styles.small}>
               {results.length} flights found
             </Text>
             {loading ? (
-              <ActivityIndicator color={colors.primary} accessibilityLabel="Finding your way" />
+              <ActivityIndicator color={colors.primary} accessibilityLabel="Searching flights" />
             ) : results.length ? (
               results.map((f, index) => (
-                <Card key={f.id}>
-                  <Text testID={`flight-result-${index}-summary`} style={styles.medium}>
-                    {f.airline} <Text style={styles.small}>{f.number}</Text>
-                  </Text>
+                <Card key={f.id} style={styles.flightResult}>
+                  <Row style={styles.airlineRow}>
+                    <Icon name="plane" size={18} color={colors.muted} />
+                    <Text testID={`flight-result-${index}-summary`} style={styles.medium}>
+                      {f.airline} <Text style={styles.small}>{f.number}</Text>
+                    </Text>
+                  </Row>
                   <Row style={{ justifyContent: 'space-between' }}>
                     <View>
                       <Text style={styles.time}>{f.departure}</Text>
@@ -561,7 +544,11 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                     </View>
                     <View style={{ alignItems: 'center' }}>
                       <Text style={styles.small}>{durationLabel(f.duration)}</Text>
-                      <Text style={styles.muted}>──── ✈ ────</Text>
+                      <View style={styles.flightPath}>
+                        <View style={styles.flightPathLine} />
+                        <Icon name="plane" size={15} color={colors.muted} />
+                        <View style={styles.flightPathLine} />
+                      </View>
                       <Text style={styles.small}>
                         {f.stops ? `${f.stops} stop${f.stops > 1 ? 's' : ''}` : 'Nonstop'}
                       </Text>
@@ -601,8 +588,9 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                 key={f.id}
                 style={fare === f.id ? { borderColor: colors.primary, borderBottomWidth: 2 } : {}}
               >
-                <Row>
-                  <Text style={[styles.price, { flex: 1 }]}>{f.name}</Text>
+                <Row style={styles.sectionHeader}>
+                  <Text style={styles.fareName}>{f.name}</Text>
+                  {fare === f.id && <Icon name="check" size={20} color={colors.ink} />}
                 </Row>
                 <Text style={styles.price}>
                   {f.extra ? `+${money(f.extra)}` : 'Included'}{' '}
@@ -611,9 +599,10 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                   </Text>
                 </Text>
                 {f.features.map((feature) => (
-                  <Text style={styles.body} key={feature}>
-                    ✓ {feature}
-                  </Text>
+                  <Row key={feature} style={styles.featureRow}>
+                    <Icon name="check" size={15} color={colors.muted} />
+                    <Text style={[styles.body, { flex: 1 }]}>{feature}</Text>
+                  </Row>
                 ))}
                 <Button
                   testID={`flight-fare-${f.id}`}
@@ -643,71 +632,89 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
               title="Choose your seats"
               subtitle={`${seatLeg === 'outbound' ? 'Outbound' : 'Return'} · ${seatFlight.from} to ${seatFlight.to} · ${seatFlight.aircraft}. Select ${passengerCount} seat${passengerCount > 1 ? 's' : ''}.`}
             />
-            <Row style={{ justifyContent: 'center' }}>
-              <Text style={styles.small}>□ Available</Text>
-              <Text style={styles.small}>■ Selected</Text>
-              <Text style={styles.small}>× Occupied</Text>
-            </Row>
-            <Card style={styles.airplane}>
-              <Text style={[styles.time, { textAlign: 'center', marginBottom: 20 }]}>✈</Text>
-              <Row style={{ justifyContent: 'center' }}>
-                {'ABC DEF'.split('').map((letter, i) => (
-                  <Text style={letter === ' ' ? styles.rowNumber : styles.seatLetter} key={i}>
-                    {letter}
-                  </Text>
-                ))}
+            <Row style={styles.seatLegend}>
+              <Row style={styles.legendItem}>
+                <View style={styles.availableSwatch} />
+                <Text style={styles.small}>Available</Text>
               </Row>
-              {Array.from({ length: 12 }, (_, row) => (
-                <Row style={{ justifyContent: 'center', gap: 5, flexWrap: 'nowrap' }} key={row}>
-                  {'ABC DEF'.split('').map((letter, i) => {
-                    if (letter === ' ')
-                      return (
-                        <Text style={styles.rowNumber} key={i}>
-                          {row + 1}
-                        </Text>
-                      );
-                    const seat = `${row + 1}${letter}`,
-                      selected = selectedSeats.includes(seat),
-                      occupied =
-                        unavailableSeats(seatFlight.id).includes(seat) &&
-                        !(seatLeg === 'outbound' ? editing?.seats : editing?.returnSeats)?.includes(
-                          seat,
-                        );
-                    return (
-                      <TouchableOpacity
-                        key={seat}
-                        testID={`flight-seat-${seat}`}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Seat ${seat}${occupied ? ', occupied' : ''}${selected ? ', selected' : ''}`}
-                        accessibilityState={{
-                          selected,
-                          disabled: occupied && bug !== 'seat-conflict',
-                        }}
-                        disabled={occupied && bug !== 'seat-conflict'}
-                        style={[
-                          styles.seat,
-                          occupied && styles.occupiedSeat,
-                          selected && styles.selectedSeat,
-                        ]}
-                        onPress={() => {
-                          if (selected) setSelectedSeats(selectedSeats.filter((s) => s !== seat));
-                          else if (selectedSeats.length < passengerCount)
-                            setSelectedSeats([...selectedSeats, seat]);
-                          else
-                            setError(
-                              `Deselect a seat before choosing another. Select ${passengerCount} seat${passengerCount > 1 ? 's' : ''}.`,
-                            );
-                        }}
-                      >
-                        <Text style={[styles.seatText, selected && { color: '#fff' }]}>
-                          {selected ? '✓' : occupied ? '×' : seat}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+              <Row style={styles.legendItem}>
+                <View style={[styles.availableSwatch, styles.selectedSeat]} />
+                <Text style={styles.small}>Selected</Text>
+              </Row>
+              <Row style={styles.legendItem}>
+                <Icon name="x" size={14} color={colors.muted} />
+                <Text style={styles.small}>Occupied</Text>
+              </Row>
+            </Row>
+            <ScrollView horizontal contentContainerStyle={styles.seatScroll}>
+              <View style={styles.airplane}>
+                <View style={styles.cabinHeader}>
+                  <Icon name="plane" size={22} color={colors.muted} />
+                  <Text style={styles.label}>Front of cabin</Text>
+                </View>
+                <Row style={styles.seatRow}>
+                  {'ABC DEF'.split('').map((letter, i) => (
+                    <Text style={letter === ' ' ? styles.rowNumber : styles.seatLetter} key={i}>
+                      {letter}
+                    </Text>
+                  ))}
                 </Row>
-              ))}
-            </Card>
+                {Array.from({ length: 12 }, (_, row) => (
+                  <Row style={styles.seatRow} key={row}>
+                    {'ABC DEF'.split('').map((letter, i) => {
+                      if (letter === ' ')
+                        return (
+                          <Text style={styles.rowNumber} key={i}>
+                            {row + 1}
+                          </Text>
+                        );
+                      const seat = `${row + 1}${letter}`,
+                        selected = selectedSeats.includes(seat),
+                        occupied =
+                          unavailableSeats(seatFlight.id).includes(seat) &&
+                          !(
+                            seatLeg === 'outbound' ? editing?.seats : editing?.returnSeats
+                          )?.includes(seat);
+                      return (
+                        <TouchableOpacity
+                          key={seat}
+                          testID={`flight-seat-${seat}`}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Seat ${seat}${occupied ? ', occupied' : ''}${selected ? ', selected' : ''}`}
+                          accessibilityState={{
+                            selected,
+                            disabled: occupied && bug !== 'seat-conflict',
+                          }}
+                          disabled={occupied && bug !== 'seat-conflict'}
+                          style={[
+                            styles.seat,
+                            occupied && styles.occupiedSeat,
+                            selected && styles.selectedSeat,
+                          ]}
+                          onPress={() => {
+                            if (selected) setSelectedSeats(selectedSeats.filter((s) => s !== seat));
+                            else if (selectedSeats.length < passengerCount)
+                              setSelectedSeats([...selectedSeats, seat]);
+                            else
+                              setError(
+                                `Deselect a seat before choosing another. Select ${passengerCount} seat${passengerCount > 1 ? 's' : ''}.`,
+                              );
+                          }}
+                        >
+                          {selected ? (
+                            <Icon name="check" size={18} color={colors.background} />
+                          ) : occupied ? (
+                            <Icon name="x" size={17} color={colors.muted} />
+                          ) : (
+                            <Text style={styles.seatText}>{seat}</Text>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </Row>
+                ))}
+              </View>
+            </ScrollView>
             <Card>
               <Text style={styles.medium}>
                 Your seats: {selectedSeats.length ? selectedSeats.join(', ') : 'Not selected'}
@@ -832,7 +839,6 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
             )}
             {checkoutStep === 1 && (
               <Card>
-                <Text style={styles.medium}>Payment details</Text>
                 <Text style={styles.body}>Sample card</Text>
                 <Text style={styles.small}>
                   4242 4242 4242 4242 · Expiry 12/30 · Security code 123
@@ -860,19 +866,25 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                   value={payment.number}
                   onChangeText={(number) => setPayment({ ...payment, number })}
                 />
-                <Field
-                  label="Expiry date"
-                  placeholder="MM/YY"
-                  value={payment.expiry}
-                  onChangeText={(expiry) => setPayment({ ...payment, expiry })}
-                />
-                <Field
-                  label="Security code"
-                  keyboardType="numeric"
-                  maxLength={3}
-                  value={payment.cvc}
-                  onChangeText={(cvc) => setPayment({ ...payment, cvc })}
-                />
+                <View style={styles.pairedFields}>
+                  <View style={{ flex: 1 }}>
+                    <Field
+                      label="Expiry date"
+                      placeholder="MM/YY"
+                      value={payment.expiry}
+                      onChangeText={(expiry) => setPayment({ ...payment, expiry })}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Field
+                      label="Security code"
+                      keyboardType="numeric"
+                      maxLength={3}
+                      value={payment.cvc}
+                      onChangeText={(cvc) => setPayment({ ...payment, cvc })}
+                    />
+                  </View>
+                </View>
               </Card>
             )}
             {checkoutStep === 2 && (
@@ -913,6 +925,8 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                       testID="flight-accept-terms"
                       accessibilityLabel="I have reviewed the trip details and accept the fare conditions."
                       value={terms}
+                      trackColor={{ false: colors.border, true: colors.primary }}
+                      thumbColor={terms ? colors.background : colors.muted}
                       onValueChange={setTerms}
                     />
                     <Text style={[styles.small, { flex: 1 }]}>
@@ -945,7 +959,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
         {view === 'confirmation' && confirmed && (
           <>
             <View style={styles.confirmationMark}>
-              <Text style={{ fontSize: 34, color: colors.primary }}>✓</Text>
+              <Icon name="check" size={24} color={colors.ink} />
             </View>
             <Heading title="Booking confirmed" />
             <Card>
@@ -1086,15 +1100,23 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
         )}
         {Boolean(error) && (
           <View accessibilityRole="alert" style={styles.error}>
-            <Text
-              testID="flight-error"
-              style={{ fontSize: 12, color: colors.danger, lineHeight: 19 }}
-            >
+            <Text testID="flight-error" style={styles.errorText}>
               {error}
             </Text>
           </View>
         )}
       </Screen>
+      <BottomTabs
+        tabs={[
+          { id: 'search', label: 'Search', icon: 'search', testID: 'flight-tab-search' },
+          { id: 'bookings', label: 'My trips', icon: 'ticket', testID: 'flight-tab-bookings' },
+        ]}
+        active={view === 'bookings' || view === 'confirmation' || editing ? 'bookings' : 'search'}
+        onSelect={(next) => {
+          setEditing(undefined);
+          go(next === 'bookings' ? 'bookings' : 'search');
+        }}
+      />
       <Modal
         visible={Boolean(picker)}
         animationType="slide"
@@ -1110,12 +1132,16 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                   ? 'Flying to'
                   : picker === 'dates'
                     ? 'Travel dates'
-                    : 'Travelers'}
+                    : picker === 'filters'
+                      ? 'Filters'
+                      : picker === 'sort'
+                        ? 'Sort flights'
+                        : 'Travelers'}
             </Text>
             <Button title="Done" variant="secondary" onPress={() => setPicker('')} />
           </View>
           {(picker === 'from' || picker === 'to') && (
-            <View style={{ flex: 1, padding: 20 }}>
+            <View style={{ flex: 1, padding: 16 }}>
               <Field
                 label="Search airports"
                 autoFocus
@@ -1193,60 +1219,184 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
               ) : null}
               <Button title="Use date" variant="secondary" onPress={() => chooseDate(exactDate)} />
               <Row style={{ justifyContent: 'space-between' }}>
-                <Button
-                  title="‹"
+                <IconButton
+                  icon="arrowLeft"
+                  label="Previous month"
                   testID="flight-previous-month"
                   disabled={month === '0001-01'}
-                  variant="secondary"
                   onPress={() => setMonth(addDays(`${month}-01`, -1).slice(0, 7))}
                 />
                 <Text style={styles.medium}>
                   {shortDate(`${month}-01`, { month: 'long', year: 'numeric' })}
                 </Text>
-                <Button
-                  title="›"
+                <IconButton
+                  icon="arrowRight"
+                  label="Next month"
                   testID="flight-next-month"
                   disabled={month === '9999-12'}
-                  variant="secondary"
                   onPress={() => setMonth(addDays(`${month}-${days}`, 1).slice(0, 7))}
                 />
               </Row>
-              <View style={styles.calendar}>
-                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
-                  <View style={styles.calendarCell} key={`weekday-${i}`}>
-                    <Text style={styles.small}>{d}</Text>
+              <View
+                onLayout={(event) =>
+                  setCalendarWidth(Math.max(308, event.nativeEvent.layout.width))
+                }
+              >
+                <ScrollView horizontal>
+                  <View style={[styles.calendar, { width: calendarWidth }]}>
+                    {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+                      <View style={styles.calendarCell} key={`weekday-${i}`}>
+                        <Text style={styles.small}>{d}</Text>
+                      </View>
+                    ))}
+                    {Array.from({ length: start }, (_, i) => (
+                      <View key={`empty-${i}`} style={styles.calendarCell} />
+                    ))}
+                    {Array.from({ length: days }, (_, i) => {
+                      const value = `${month}-${String(i + 1).padStart(2, '0')}`,
+                        selected =
+                          value === search.departure ||
+                          (search.roundTrip && value === search.returnDate);
+                      return (
+                        <TouchableOpacity
+                          accessibilityRole="button"
+                          accessibilityLabel={value}
+                          accessibilityState={{
+                            selected,
+                            disabled: datePart === 'returnDate' && value < search.departure,
+                          }}
+                          disabled={datePart === 'returnDate' && value < search.departure}
+                          key={value}
+                          style={[
+                            styles.calendarCell,
+                            datePart === 'returnDate' &&
+                              value < search.departure &&
+                              styles.calendarDisabled,
+                            selected && styles.calendarSelected,
+                            search.roundTrip &&
+                              value > search.departure &&
+                              value < search.returnDate &&
+                              styles.calendarRange,
+                          ]}
+                          onPress={() => chooseDate(value)}
+                        >
+                          <Text
+                            style={[
+                              styles.body,
+                              selected && { color: colors.background, fontWeight: '600' },
+                            ]}
+                          >
+                            {i + 1}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
-                ))}
-                {Array.from({ length: start }, (_, i) => (
-                  <View key={`empty-${i}`} style={styles.calendarCell} />
-                ))}
-                {Array.from({ length: days }, (_, i) => {
-                  const value = `${month}-${String(i + 1).padStart(2, '0')}`,
-                    selected =
-                      value === search.departure ||
-                      (search.roundTrip && value === search.returnDate);
-                  return (
-                    <TouchableOpacity
-                      accessibilityRole="button"
-                      accessibilityLabel={value}
-                      accessibilityState={{ selected }}
-                      disabled={datePart === 'returnDate' && value < search.departure}
-                      key={value}
-                      style={[
-                        styles.calendarCell,
-                        selected && styles.calendarSelected,
-                        search.roundTrip &&
-                          value > search.departure &&
-                          value < search.returnDate &&
-                          styles.calendarRange,
-                      ]}
-                      onPress={() => chooseDate(value)}
-                    >
-                      <Text style={[styles.body, selected && { color: '#fff' }]}>{i + 1}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
+                </ScrollView>
               </View>
+            </Screen>
+          )}
+          {picker === 'filters' && (
+            <Screen>
+              <Row style={styles.filterToggle}>
+                <Text style={[styles.body, { flex: 1 }]}>Nonstop only</Text>
+                <Switch
+                  testID="flight-nonstop-filter"
+                  accessibilityLabel="Nonstop only"
+                  value={nonstop}
+                  trackColor={{ false: colors.border, true: colors.primary }}
+                  thumbColor={nonstop ? colors.background : colors.muted}
+                  onValueChange={setNonstop}
+                />
+              </Row>
+              <View style={styles.filterSection}>
+                <Text style={styles.label}>Departure time</Text>
+                <Row>
+                  {[
+                    { id: 'any', label: 'Any time' },
+                    { id: 'morning', label: 'Morning · before 12 pm' },
+                    { id: 'afternoon', label: 'Afternoon · after 12 pm' },
+                  ].map((time) => (
+                    <Chip
+                      key={time.id}
+                      label={time.label}
+                      selected={departureTime === time.id}
+                      onPress={() => setDepartureTime(time.id)}
+                    />
+                  ))}
+                </Row>
+              </View>
+              <Field
+                label="Maximum flight price"
+                keyboardType="numeric"
+                value={maxPrice}
+                onChangeText={setMaxPrice}
+              />
+              <View style={styles.filterSection}>
+                <Text style={styles.label}>Airlines</Text>
+                <Row>
+                  <Chip
+                    label="All airlines"
+                    selected={!selectedAirlines.length}
+                    onPress={() => setSelectedAirlines([])}
+                  />
+                  {airlines.map((name) => (
+                    <Chip
+                      key={name}
+                      label={name}
+                      selected={selectedAirlines.includes(name)}
+                      onPress={() =>
+                        setSelectedAirlines((previous) =>
+                          previous.includes(name)
+                            ? previous.filter((airline) => airline !== name)
+                            : [...previous, name],
+                        )
+                      }
+                    />
+                  ))}
+                </Row>
+              </View>
+              <Button
+                testID="flight-apply-filters"
+                title={`Show ${results.length} flights`}
+                onPress={() => setPicker('')}
+              />
+              <Button
+                testID="chip-reset"
+                title="Reset filters"
+                variant="secondary"
+                onPress={() => {
+                  setNonstop(false);
+                  setSelectedAirlines([]);
+                  setDepartureTime('any');
+                  setMaxPrice('1000');
+                }}
+              />
+            </Screen>
+          )}
+          {picker === 'sort' && (
+            <Screen>
+              {[
+                { id: 'recommended', label: 'Recommended' },
+                { id: 'cheapest', label: 'Lowest price' },
+                { id: 'fastest', label: 'Shortest duration' },
+                { id: 'earliest', label: 'Earliest departure' },
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.id}
+                  testID={`chip-${option.label.toLowerCase().replaceAll(' ', '-')}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: sort === option.id }}
+                  style={styles.sortOption}
+                  onPress={() => {
+                    setSort(option.id);
+                    setPicker('');
+                  }}
+                >
+                  <Text style={styles.body}>{option.label}</Text>
+                  {sort === option.id && <Icon name="check" size={18} color={colors.ink} />}
+                </TouchableOpacity>
+              ))}
             </Screen>
           )}
           {picker === 'passengers' && (
@@ -1255,18 +1405,24 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                 <Text style={styles.medium}>Adults</Text>
                 <Text style={styles.small}>Age 12 and above</Text>
                 <Row style={{ justifyContent: 'space-between' }}>
-                  <Button
-                    title="Remove traveler"
-                    variant="secondary"
+                  <TouchableOpacity
+                    testID="button-remove-traveler"
+                    accessibilityRole="button"
+                    accessibilityLabel="Remove traveler"
+                    accessibilityState={{ disabled: search.passengers === 1 }}
                     disabled={search.passengers === 1}
+                    style={[styles.counterButton, search.passengers === 1 && { opacity: 0.4 }]}
                     onPress={() => setSearch({ ...search, passengers: search.passengers - 1 })}
-                  />
+                  >
+                    <View style={styles.minus} />
+                  </TouchableOpacity>
                   <Text testID="flight-traveler-count" style={styles.price}>
                     {search.passengers}
                   </Text>
-                  <Button
-                    title="Add traveler"
-                    variant="secondary"
+                  <IconButton
+                    icon="plus"
+                    label="Add traveler"
+                    testID="button-add-traveler"
                     disabled={search.passengers === 6}
                     onPress={() => setSearch({ ...search, passengers: search.passengers + 1 })}
                   />
@@ -1276,112 +1432,183 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
           )}
         </SafeModalArea>
       </Modal>
-    </>
+    </View>
   );
 }
 const styles = StyleSheet.create({
-  subnav: {
-    paddingHorizontal: 20,
+  root: { flex: 1, backgroundColor: colors.background },
+  searchForm: { gap: 14 },
+  tripType: { gap: 8 },
+  sectionHeader: { justifyContent: 'space-between', minHeight: 44 },
+  searchField: {
+    minHeight: 72,
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    backgroundColor: '#fff',
-  },
-  searchField: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    gap: 9,
-  },
-  label: { fontSize: 10, color: colors.muted, fontWeight: '500' },
-  medium: { fontSize: 15, color: colors.ink, fontWeight: '600' },
-  small: { fontSize: 10, color: colors.muted, lineHeight: 17 },
-  muted: { color: colors.muted, fontSize: 15 },
-  body: { fontSize: 12, color: colors.ink, lineHeight: 20 },
-  airportCode: { fontSize: 19, fontWeight: '600', color: colors.primary, minWidth: 50 },
-  datePrice: {
-    width: 74,
     gap: 7,
+  },
+  searchDetails: { flexDirection: 'row', gap: 16, marginBottom: 6 },
+  searchDetail: { flex: 1, minWidth: 0, alignSelf: 'stretch' },
+  fieldLabel: { gap: 6, flexWrap: 'nowrap' },
+  label: { fontSize: 12, lineHeight: 18, color: colors.muted, fontWeight: '500' },
+  medium: { fontSize: 14, lineHeight: 20, color: colors.ink, fontWeight: '600' },
+  small: { fontSize: 12, color: colors.muted, lineHeight: 18 },
+  muted: { color: colors.muted, fontSize: 14, lineHeight: 20 },
+  body: { fontSize: 14, color: colors.ink, lineHeight: 22 },
+  airportCode: { fontSize: 26, lineHeight: 32, fontWeight: '600', color: colors.ink, minWidth: 62 },
+  resultTools: {
+    flexDirection: 'row',
+    gap: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderColor: colors.border,
+  },
+  toolButton: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 52,
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 13,
-    borderRadius: 0,
+    gap: 8,
+  },
+  filterToggle: { minHeight: 56, borderBottomWidth: 1, borderColor: colors.border },
+  filterSection: { paddingVertical: 12, gap: 10, borderBottomWidth: 1, borderColor: colors.border },
+  sortOption: {
+    minHeight: 52,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderColor: colors.border,
+  },
+  dateStrip: { gap: 6, flexWrap: 'nowrap' },
+  datePrice: {
+    width: 96,
+    minHeight: 72,
+    gap: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderColor: colors.border,
     backgroundColor: 'transparent',
   },
-  datePriceSelected: { borderBottomWidth: 2, borderColor: colors.primary },
-  time: { fontSize: 25, letterSpacing: -0.5, color: colors.ink },
-  price: { fontSize: 22, fontWeight: '600', letterSpacing: -0.6, color: colors.ink },
-  airplane: {
-    paddingHorizontal: 12,
-    paddingVertical: 28,
-    borderTopLeftRadius: 2,
-    borderTopRightRadius: 2,
-    gap: 9,
+  datePriceSelected: {
+    borderBottomWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: colors.soft,
   },
-  seat: {
-    height: 35,
-    width: 35,
-    borderRadius: 2,
-    borderWidth: 1,
-    borderBottomWidth: 3,
-    borderColor: '#aac09d',
-    backgroundColor: '#eff5e9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  seatText: { fontSize: 9, color: '#627e55' },
-  occupiedSeat: { backgroundColor: '#e2e6dc', borderColor: '#d7dfce' },
-  selectedSeat: { backgroundColor: colors.primary, borderColor: colors.primary },
-  seatLetter: { width: 35, textAlign: 'center', fontSize: 10, color: colors.muted },
-  rowNumber: { width: 15, textAlign: 'center', fontSize: 9, color: colors.muted },
-  confirmationMark: {
-    height: 75,
-    width: 75,
-    borderRadius: 2,
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    margin: 15,
-  },
-  reference: { fontSize: 28, letterSpacing: 4, fontWeight: '600', color: colors.ink },
-  status: {
-    fontSize: 10,
+  flightResult: { paddingVertical: 16, gap: 12 },
+  airlineRow: { gap: 8, flexWrap: 'nowrap' },
+  flightPath: { flexDirection: 'row', alignItems: 'center', gap: 6, width: 94, marginVertical: 6 },
+  flightPathLine: { flex: 1, height: 1, backgroundColor: colors.border },
+  time: {
+    fontSize: 26,
+    lineHeight: 32,
     fontWeight: '600',
-    backgroundColor: 'transparent',
-    paddingHorizontal: 0,
-    paddingVertical: 6,
-    borderRadius: 2,
+    letterSpacing: -0.7,
+    color: colors.ink,
+    fontVariant: ['tabular-nums'],
   },
-  error: {
-    backgroundColor: '#fbece4',
+  price: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '600',
+    letterSpacing: -0.5,
+    color: colors.ink,
+    fontVariant: ['tabular-nums'],
+  },
+  fareName: { fontSize: 20, lineHeight: 26, fontWeight: '600', color: colors.ink },
+  featureRow: { gap: 8, flexWrap: 'nowrap', alignItems: 'flex-start' },
+  seatLegend: { gap: 16, paddingVertical: 8, justifyContent: 'center' },
+  legendItem: { gap: 6, flexWrap: 'nowrap' },
+  availableSwatch: {
+    width: 14,
+    height: 14,
+    borderRadius: 2,
     borderWidth: 1,
-    borderColor: '#ebc9ba',
-    padding: 15,
-    borderRadius: 2,
+    borderColor: colors.input,
+    backgroundColor: colors.surface,
   },
+  seatScroll: { flexGrow: 1, justifyContent: 'center' },
+  airplane: { width: 312, paddingVertical: 12, gap: 8 },
+  cabinHeader: { alignItems: 'center', gap: 8, paddingBottom: 16 },
+  seatRow: { justifyContent: 'center', gap: 4, flexWrap: 'nowrap' },
+  seat: {
+    height: 44,
+    width: 44,
+    borderRadius: 2,
+    borderWidth: 1,
+    borderBottomWidth: 2,
+    borderColor: colors.input,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  seatText: { fontSize: 12, fontWeight: '500', color: colors.ink },
+  occupiedSeat: { backgroundColor: colors.soft, borderColor: colors.border },
+  selectedSeat: { backgroundColor: colors.primary, borderColor: colors.primary },
+  seatLetter: { width: 44, textAlign: 'center', fontSize: 12, lineHeight: 18, color: colors.muted },
+  rowNumber: { width: 24, textAlign: 'center', fontSize: 12, lineHeight: 18, color: colors.muted },
+  pairedFields: { flexDirection: 'row', alignItems: 'flex-start', gap: 16 },
+  confirmationMark: {
+    height: 44,
+    width: 44,
+    borderRadius: 2,
+    backgroundColor: colors.soft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reference: {
+    fontSize: 26,
+    lineHeight: 34,
+    letterSpacing: 2,
+    fontWeight: '600',
+    color: colors.ink,
+  },
+  status: { fontSize: 12, lineHeight: 18, fontWeight: '600', paddingVertical: 4 },
+  error: {
+    backgroundColor: colors.dangerSurface,
+    borderLeftWidth: 2,
+    borderColor: colors.danger,
+    padding: 12,
+  },
+  errorText: { fontSize: 14, color: colors.danger, lineHeight: 22 },
   pickerHeader: {
-    padding: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    backgroundColor: colors.background,
   },
-  pickerTitle: { fontSize: 23, fontWeight: '600', color: colors.ink },
+  pickerTitle: { fontSize: 18, lineHeight: 24, fontWeight: '600', color: colors.ink },
   airportOption: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 19,
+    minHeight: 76,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  calendar: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 10 },
+  counterButton: {
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 2,
+  },
+  minus: { width: 14, height: 2, backgroundColor: colors.ink },
+  calendar: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 },
   calendarCell: {
     width: '14.2857%',
-    height: 45,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
@@ -1389,4 +1616,5 @@ const styles = StyleSheet.create({
   },
   calendarSelected: { backgroundColor: colors.primary },
   calendarRange: { backgroundColor: colors.soft },
+  calendarDisabled: { opacity: 0.4 },
 });

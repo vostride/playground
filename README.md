@@ -9,7 +9,7 @@ Four original, self-contained products for testing automation. Built from scratc
 | **PepaPog** | `/observability/` | Watch simulated charts, query 6,000 logs, inspect traces and waterfalls, create and manage alert monitors             |
 | **Brello**  | `/tasks/`         | Organize 2,400 tasks across 80 boards, drag with mouse or keyboard, edit task details, filter and undo                |
 
-The bare React Native **Playground** app opens the same four products. It uses the same seeded TypeScript data and logic, with native controls, touch gestures and an offline WebView guide. See [mobile development](mobile/README.md).
+The bare React Native **Playground** app opens the same four products. Each has its own bottom navigation; a header app switcher moves between products. Locally owned React Native Reusables adaptations provide dark native controls with no UI-library dependency. The app uses the same seeded TypeScript data and logic, touch gestures and an offline WebView guide. See [mobile development](mobile/README.md).
 
 ## Design and product controls
 
@@ -86,11 +86,11 @@ To check a deployed preview: `PLAYGROUND_URL=https://your-preview.pages.dev npm 
 
 Browser tests cover the shopping/booking/board/telemetry journeys, desktop and narrow layouts, noindex, and absence of outside requests. Browser artifacts are in `playwright-report/` and `test-results/`. Mobile JS bundles can be checked locally; **native release artifacts are built only by GitHub Actions**.
 
-Recorded local verification on 2026-10-18 passed 32 browser tests (including five date regressions, responsive trace geometry and dialog focus), 27 core tests, web/native TypeScript checks, all four Vite builds, and both Metro JavaScript bundles with four brand assets each. The expanded native harness now passes 39 local helper tests and validation of 38 Maestro YAML files. Helper tests use fixture or mocked evidence; YAML validation checks the test definitions. Neither executes the product journeys on a device.
+Recorded local verification on 2026-10-18 passed 32 browser tests (including five date regressions, responsive trace geometry and dialog focus), 27 core tests, web/native TypeScript checks, all four Vite builds, and both Metro JavaScript bundles with four brand assets each. The expanded native harness now passes 39 local helper tests and validation of 39 Maestro YAML files. Helper tests use fixture or mocked evidence; YAML validation checks the test definitions. Neither executes the product journeys on a device.
 
 The five native scenarios now define checks for product forms and validation, both labelled defects per app and recovery, list refresh, persisted edits, booking and order management, navigation and the WebView, all-product reset, and process restart without clearing storage. Separate native checks cover continuous touch dragging and iOS URL delivery. Offline evidence is also a required CI check. See [native acceptance coverage](tests/mobile/README.md) for the scenario mapping and platform details.
 
-The current Android candidate, including the new logos, passed all five expanded device journeys, continuous touch/Undo checks and offline gates. Its downloaded APK checksum and GitHub attestation were independently verified; [MOBILE-ACCEPTANCE.md](MOBILE-ACCEPTANCE.md) records the exact binary and evidence. The iOS candidate compiled and its complete device gate remains in progress. Neither candidate is a published release. Exact runtime results and remaining deployment/release work are recorded in [IMPLEMENTATION-AUDIT.md](IMPLEMENTATION-AUDIT.md).
+The preceding logo candidate passed all Android journeys, touch/Undo and offline gates; its checksum and attestation were verified. Its iOS gate passed four journeys, native gestures, URLs and offline launch, but failed a monitor-save scroll lookup; the retained screenshot showed the button visible, and the helper now checks visibility without forcing centering. [MOBILE-ACCEPTANCE.md](MOBILE-ACCEPTANCE.md) records the prior binary. The October 19 mobile UI redesign changes the source fingerprint and requires a fresh native build and device verification. No candidate is a published release. Exact runtime results and remaining deployment/release work are recorded in [IMPLEMENTATION-AUDIT.md](IMPLEMENTATION-AUDIT.md).
 
 ## Releases and deployment
 

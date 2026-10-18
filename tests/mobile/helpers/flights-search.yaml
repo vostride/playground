@@ -127,9 +127,11 @@ appId: dev.vostride.playground
     text: '^12 flights found$'
 - scrollUntilVisible:
     element:
-      text: '^Nonstop only$'
+      id: flight-open-filters
     direction: UP
     centerElement: true
+- tapOn:
+    id: flight-open-filters
 # iOS exposes both the static label and the switch with this text. Run
 # 39148819893 tapped the label, so target the control to its right explicitly.
 - runFlow:
@@ -152,6 +154,17 @@ appId: dev.vostride.playground
     checked: true
 - scrollUntilVisible:
     element:
+      id: flight-apply-filters
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: flight-apply-filters
+- extendedWaitUntil:
+    notVisible:
+      id: flight-nonstop-filter
+    timeout: 10000
+- scrollUntilVisible:
+    element:
       id: flight-results-count
     direction: DOWN
     centerElement: true
@@ -161,11 +174,17 @@ appId: dev.vostride.playground
 # Prove both sort orders by the resulting first flight, not only the chip state.
 - scrollUntilVisible:
     element:
-      id: chip-earliest-departure
+      id: flight-open-sort
     direction: UP
     centerElement: true
 - tapOn:
+    id: flight-open-sort
+- tapOn:
     id: chip-earliest-departure
+- extendedWaitUntil:
+    notVisible:
+      id: chip-earliest-departure
+    timeout: 10000
 - scrollUntilVisible:
     element:
       id: flight-result-0-summary
@@ -176,11 +195,17 @@ appId: dev.vostride.playground
     text: '^Meridian Air MD 177$'
 - scrollUntilVisible:
     element:
-      id: chip-lowest-price
+      id: flight-open-sort
     direction: UP
     centerElement: true
 - tapOn:
+    id: flight-open-sort
+- tapOn:
     id: chip-lowest-price
+- extendedWaitUntil:
+    notVisible:
+      id: chip-lowest-price
+    timeout: 10000
 - scrollUntilVisible:
     element:
       id: flight-result-0-price

@@ -2,8 +2,7 @@ appId: dev.vostride.playground
 ---
 # Home exposes all four products. Only one switch per product may be active.
 - assertVisible:
-    id: tab-home
-    selected: true
+    id: home-open-shop
 - tapOn: '^Test controls$'
 - scrollUntilVisible:
     element:

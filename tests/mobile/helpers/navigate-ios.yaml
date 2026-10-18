@@ -2,26 +2,20 @@ appId: dev.vostride.playground
 env:
   UI_ROUTE: '${LINK.split("?")[0]}'
   UI_TASK_ID: '${LINK.split("/").pop().split("?")[0]}'
-  # The native tab buttons expose their product names as explicit labels.
-  # Maestro 2.11 does not interpolate expressions containing a dollar sign;
-  # keep the regex anchors outside the expression at the tap below.
-  UI_TAB: >-
-    ${({home:'Home',shop:'Komazon',flights:'Looking',tasks:'Brello',observability:'PepaPog'})[LINK.replace('playground://','').split('/')[0].split('?')[0]]}
+  UI_APP: '${LINK.replace("playground://", "").split("/")[0].split("?")[0]}'
 ---
-# Tapping the current product's tab changes its route without unmounting the
-# screen, preserving Brello's component-local undo stack and task filters.
-- tapOn: '^${UI_TAB}$'
+# The chooser resets the route without unmounting the current product, preserving
+# Brello's component-local undo stack and filters while closing any prior route.
+- runFlow:
+    file: switch-product.yaml
+    env:
+      APP: '${UI_APP}'
 - runFlow:
     when:
       true: '${UI_ROUTE === "playground://shop/cart"}'
     commands:
-      - scrollUntilVisible:
-          element:
-            id: 'chip-bag-[0-9]+'
-          direction: UP
-          centerElement: false
       - tapOn:
-          id: 'chip-bag-[0-9]+'
+          id: shop-tab-cart
 - runFlow:
     when:
       true: '${LINK === "playground://shop?bug=cart-total"}'
@@ -41,17 +35,19 @@ env:
       true: '${UI_ROUTE === "playground://flights/bookings"}'
     commands:
       - tapOn:
-          id: chip-my-trips
+          id: flight-tab-bookings
 - runFlow:
     when:
       true: '${UI_ROUTE === "playground://observability/logs"}'
     commands:
-      - tapOn: '^Log explorer$'
+      - tapOn:
+          id: vigil-tab-logs
 - runFlow:
     when:
       true: '${UI_ROUTE === "playground://observability/monitors"}'
     commands:
-      - tapOn: '^Monitors$'
+      - tapOn:
+          id: vigil-tab-monitors
 - runFlow:
     when:
       true: '${UI_ROUTE.indexOf("playground://tasks/task/") === 0}'
@@ -59,7 +55,8 @@ env:
       - extendedWaitUntil:
           visible: '^Search tasks$'
           timeout: 10000
-      - tapOn: '^(?:✓ )?List$'
+      - tapOn:
+          id: task-view-list
       # The created task is beyond the initially rendered list. Search by its
       # real ID once; reopening the visible card keeps the same warm session.
       - runFlow:

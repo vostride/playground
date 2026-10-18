@@ -2,6 +2,19 @@
 
 A bare React Native 0.83.1 application with four bundled products: Komazon, Looking, Brello, and PepaPog. The native projects are based on the MIT-licensed [official React Native Community Template](https://github.com/react-native-community/template/tree/0.83-stable); its license is retained in `TEMPLATE-LICENSE`. There is no Expo runtime.
 
+## Interface and navigation
+
+The UI uses locally owned native adaptations of [React Native Reusables](https://github.com/founded-labs/react-native-reusables). Button variants, contextual text, inputs and semantic theme tokens live in `src/components/ui/`; the upstream MIT notice is retained there. Native StyleSheet replaces NativeWind and its class utilities. No UI-library dependency is installed. The dark zinc palette, 2px corners, compact spacing and outline icons are shared across products.
+
+Home opens a product. The header grid button opens the app switcher; each product owns its bottom navigation:
+
+- Komazon: Shop, Cart, Orders and Profile.
+- Looking: Search and My trips.
+- Brello: Board and List.
+- PepaPog: Overview, Logs, Traces and Monitors.
+
+Profile shows Komazon's signed-in account and shipping details, orders and sign-out. Product filters and sorting use sheets; the catalogue remains a two-column grid and Brello retains draggable cards. Test controls are available from the header sliders button.
+
 ## Development
 
 Install dependencies at the repository root with `npm ci` using Node 24.15 or later. For Android, use JDK 17, Android SDK 36, build tools 36.0.0, and NDK 27.1.12297006. For iOS, use Xcode with an iOS simulator and install CocoaPods dependencies with `bundle install` in this directory followed by `bundle exec pod install` in `ios`.

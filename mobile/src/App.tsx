@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   BackHandler,
+  Appearance,
   Image,
   Linking,
   Modal,
   StatusBar,
   StyleSheet,
   Switch,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -23,6 +23,9 @@ import TasksScreen from './screens/TasksScreen';
 import ObservabilityScreen from './screens/ObservabilityScreen';
 import {
   Button,
+  Text,
+  Icon,
+  IconButton,
   Card,
   colors,
   Heading,
@@ -38,33 +41,21 @@ const apps = [
     id: 'shop' as const,
     logo: require('./assets/brands/shop.png'),
     name: 'Komazon',
-    symbol: 'f',
-    color: '#516347',
-    tint: '#e4eadc',
   },
   {
     id: 'flights' as const,
     logo: require('./assets/brands/flights.png'),
     name: 'Looking',
-    symbol: '↗',
-    color: '#1b5149',
-    tint: '#dce8e0',
   },
   {
     id: 'tasks' as const,
     logo: require('./assets/brands/tasks.png'),
     name: 'Brello',
-    symbol: '▥',
-    color: '#85583d',
-    tint: '#f0e5d6',
   },
   {
     id: 'observability' as const,
     logo: require('./assets/brands/observability.png'),
     name: 'PepaPog',
-    symbol: 'v',
-    color: '#5a568d',
-    tint: '#e7e5f2',
   },
 ];
 const bugDefinitions: Record<string, { id: string; label: string }[]> = {
@@ -86,13 +77,18 @@ const bugDefinitions: Record<string, { id: string; label: string }[]> = {
   ],
 };
 type Location = { app: AppId; route: string };
-const helpHtml = `<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><style>body{font:15px -apple-system,BlinkMacSystemFont,sans-serif;color:#233a35;background:#f7f8f4;padding:16px;line-height:1.6}h1{font-size:24px;line-height:1.25}h2{font-size:18px;margin-top:20px;padding-top:16px;border-top:1px solid #dfe5dc}code{font-size:12px}</style></head><body><h1>Navigation</h1><p>Choose an app from Home or use the bottom tabs. Use the back button to return to the previous screen.</p><h2>Session controls</h2><p>Open Test controls to reset changes or enable a deliberate bug. Bugs are off by default.</p><h2>Direct links</h2><p><code>playground://shop</code><br><code>playground://flights</code><br><code>playground://tasks</code><br><code>playground://observability</code></p></body></html>`;
+const helpHtml = `<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><style>body{font:15px -apple-system,BlinkMacSystemFont,sans-serif;color:#fafafa;background:#09090b;padding:16px;line-height:1.6}h1{font-size:24px;line-height:1.25}h2{font-size:18px;margin-top:20px;padding-top:16px;border-top:1px solid #27272a}code{font-size:12px}</style></head><body><h1>Navigation</h1><p>Choose an app from Home. Use the grid button to switch apps and the bottom tabs to navigate within each app. The back button returns to the previous screen.</p><h2>Session controls</h2><p>Open Test controls to reset changes or enable a deliberate bug. Bugs are off by default.</p><h2>Direct links</h2><p><code>playground://shop</code><br><code>playground://flights</code><br><code>playground://tasks</code><br><code>playground://observability</code></p></body></html>`;
 export default function App() {
   const [stack, setStack] = useState<Location[]>([{ app: 'home', route: '' }]),
     [bugs, setBugs] = useState<Record<string, string>>({}),
     [controls, setControls] = useState(false),
     [guide, setGuide] = useState(false),
+    [switcher, setSwitcher] = useState(false),
+    [navigationKey, setNavigationKey] = useState(0),
     [session, setSession] = useState(0);
+  useEffect(() => {
+    Appearance.setColorScheme('dark');
+  }, []);
   const current = stack[stack.length - 1];
   const product = apps.find((a) => a.id === current.app);
   const navigate = useCallback(
@@ -113,6 +109,7 @@ export default function App() {
       );
       if (bugDefinitions[app]?.some((b) => b.id === bug))
         setBugs((previous) => ({ ...previous, [app]: bug }));
+      setNavigationKey((value) => value + 1);
       setStack([
         { app: 'home', route: '' },
         { app: app as AppId, route: parts.join('/') },
@@ -124,6 +121,10 @@ export default function App() {
   }, []);
   useEffect(() => {
     const listener = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (switcher) {
+        setSwitcher(false);
+        return true;
+      }
       if (guide) {
         setGuide(false);
         return true;
@@ -139,35 +140,47 @@ export default function App() {
       return false;
     });
     return () => listener.remove();
-  }, [stack.length, guide, controls]);
+  }, [stack.length, guide, controls, switcher]);
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <SafeAreaView style={styles.safe}>
-        <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+        <StatusBar barStyle="light-content" backgroundColor={colors.background} />
 
         <View style={styles.header}>
-          <TouchableOpacity
-            testID="navigation-back"
-            accessibilityRole="button"
-            accessibilityLabel={
-              current.app === 'home' ? 'Playground home' : 'Back to previous screen'
-            }
-            onPress={() =>
-              current.app !== 'home' &&
-              setStack((previous) =>
-                previous.length > 1 ? previous.slice(0, -1) : [{ app: 'home', route: '' }],
-              )
-            }
-          >
-            <Text style={styles.headerTitle}>
-              {current.app !== 'home' ? '‹  ' : ''}
+          <View style={styles.headerBrand}>
+            {current.app !== 'home' && (
+              <IconButton
+                icon="arrowLeft"
+                label="Back to previous screen"
+                testID="navigation-back"
+                onPress={() =>
+                  setStack((previous) =>
+                    previous.length > 1 ? previous.slice(0, -1) : [{ app: 'home', route: '' }],
+                  )
+                }
+              />
+            )}
+            {product && <Image source={product.logo} style={styles.brandLogo} accessible={false} />}
+            <Text accessibilityRole="header" style={styles.headerTitle}>
               {product?.name || 'Playground'}
-              <Text style={{ color: colors.accent }}>.</Text>
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity accessibilityRole="button" onPress={() => setControls(true)}>
-            <Text style={styles.controlsLabel}>Test controls</Text>
-          </TouchableOpacity>
+          </View>
+          <View style={styles.headerActions}>
+            {current.app !== 'home' && (
+              <IconButton
+                icon="grid"
+                label="Switch app"
+                testID="app-switcher"
+                onPress={() => setSwitcher(true)}
+              />
+            )}
+            <IconButton
+              icon="sliders"
+              label="Test controls"
+              testID="open-test-controls"
+              onPress={() => setControls(true)}
+            />
+          </View>
         </View>
         {bugs[current.app] && (
           <View style={styles.bugBanner}>
@@ -190,13 +203,13 @@ export default function App() {
                   onPress={() => navigate(app.id)}
                   style={styles.appCard}
                 >
-                  <View style={[styles.appIcon, { backgroundColor: app.tint }]}>
+                  <View style={styles.appIcon}>
                     <Image source={app.logo} style={{ width: 32, height: 32 }} accessible={false} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.appName}>{app.name}</Text>
                   </View>
-                  <Text style={styles.arrow}>›</Text>
+                  <Icon name="chevronRight" size={18} color={colors.muted} />
                 </TouchableOpacity>
               ))}
               <Button
@@ -209,7 +222,12 @@ export default function App() {
           ) : current.app === 'shop' ? (
             <ShopScreen route={current.route} bug={bugs.shop || ''} navigate={navigate} />
           ) : current.app === 'flights' ? (
-            <FlightsScreen route={current.route} bug={bugs.flights || ''} navigate={navigate} />
+            <FlightsScreen
+              route={current.route}
+              bug={bugs.flights || ''}
+              navigate={navigate}
+              navigationKey={navigationKey}
+            />
           ) : current.app === 'tasks' ? (
             <TasksScreen route={current.route} bug={bugs.tasks || ''} navigate={navigate} />
           ) : (
@@ -220,48 +238,55 @@ export default function App() {
             />
           )}
         </View>
-        <View style={styles.tabs}>
-          {[{ id: 'home' as const, name: 'Home', symbol: '⌂' }, ...apps].map((app) => (
-            <TouchableOpacity
-              testID={`tab-${app.id}`}
-              accessibilityRole="tab"
-              accessibilityLabel={app.name}
-              accessibilityState={{ selected: current.app === app.id }}
-              key={app.id}
-              onPress={() =>
-                setStack(
-                  app.id === 'home'
-                    ? [{ app: 'home', route: '' }]
-                    : [
-                        { app: 'home', route: '' },
-                        { app: app.id, route: '' },
-                      ],
-                )
-              }
-              style={styles.tab}
-            >
-              {'logo' in app ? (
-                <Image
-                  source={app.logo}
-                  style={{
-                    width: 21,
-                    height: 21,
-                    marginBottom: 3,
-                    opacity: current.app === app.id ? 1 : 0.65,
-                  }}
-                  accessible={false}
+        <Modal
+          visible={switcher}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setSwitcher(false)}
+        >
+          <SafeModalArea style={styles.scrim}>
+            <View style={styles.switcherSheet}>
+              <View style={styles.switcherHeading}>
+                <Text style={styles.sheetTitle}>Apps</Text>
+                <IconButton
+                  icon="x"
+                  label="Close app switcher"
+                  onPress={() => setSwitcher(false)}
                 />
-              ) : (
-                <Text style={[styles.tabSymbol, current.app === app.id && styles.tabSelected]}>
-                  {app.symbol}
-                </Text>
-              )}
-              <Text style={[styles.tabLabel, current.app === app.id && styles.tabSelected]}>
-                {app.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+              </View>
+              {[{ id: 'home' as const, name: 'All apps' }, ...apps].map((app) => (
+                <TouchableOpacity
+                  key={app.id}
+                  testID={`switch-to-${app.id}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={app.name}
+                  accessibilityState={{ selected: current.app === app.id }}
+                  style={styles.switcherRow}
+                  onPress={() => {
+                    setNavigationKey((value) => value + 1);
+                    setStack(
+                      app.id === 'home'
+                        ? [{ app: 'home', route: '' }]
+                        : [
+                            { app: 'home', route: '' },
+                            { app: app.id, route: '' },
+                          ],
+                    );
+                    setSwitcher(false);
+                  }}
+                >
+                  {'logo' in app ? (
+                    <Image source={app.logo} style={styles.brandLogo} accessible={false} />
+                  ) : (
+                    <Icon name="grid" />
+                  )}
+                  <Text style={styles.switcherName}>{app.name}</Text>
+                  {app.id === current.app && <Icon name="check" size={18} />}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </SafeModalArea>
+        </Modal>
         <Modal
           visible={controls}
           animationType="slide"
@@ -288,7 +313,7 @@ export default function App() {
                           onValueChange={(enabled) =>
                             setBugs((previous) => ({ ...previous, [app.id]: enabled ? b.id : '' }))
                           }
-                          trackColor={{ false: '#d7dfd2', true: '#5e8574' }}
+                          trackColor={{ false: colors.input, true: colors.muted }}
                         />
                       </Row>
                     ))}
@@ -341,59 +366,82 @@ export default function App() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   header: {
-    height: 54,
-    paddingHorizontal: 16,
+    minHeight: 56,
+    paddingLeft: 12,
+    paddingRight: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
-  headerTitle: { fontSize: 24, fontWeight: '700', letterSpacing: -0.8, color: colors.ink },
-  controlsLabel: { fontSize: 10, color: colors.muted },
-  bugBanner: { backgroundColor: '#fff0db', paddingVertical: 7, paddingHorizontal: 15 },
-  bugText: { fontSize: 10, color: '#866022' },
+  headerBrand: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerActions: { flexDirection: 'row', alignItems: 'center' },
+  brandLogo: { width: 24, height: 24 },
+  headerTitle: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '600',
+    letterSpacing: -0.4,
+    color: colors.ink,
+  },
+  bugBanner: {
+    backgroundColor: '#30230c',
+    borderBottomWidth: 1,
+    borderBottomColor: '#594018',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  bugText: { fontSize: 12, lineHeight: 18, color: '#fcd68a' },
   appCard: {
-    paddingVertical: 12,
+    minHeight: 76,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderColor: colors.border,
-    backgroundColor: 'transparent',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 14,
   },
-  appIcon: {
-    height: 40,
-    width: 40,
-    borderRadius: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  appIcon: { height: 40, width: 40, alignItems: 'center', justifyContent: 'center' },
   appName: {
-    fontSize: 21,
+    fontSize: 18,
+    lineHeight: 24,
     fontWeight: '600',
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
     color: colors.ink,
-    marginVertical: 5,
   },
-  arrow: { fontSize: 28, color: '#96a18f' },
   localNote: {
-    fontSize: 11,
+    fontSize: 12,
     color: colors.muted,
-    lineHeight: 19,
+    lineHeight: 18,
     textAlign: 'center',
-    marginVertical: 9,
+    marginVertical: 8,
   },
-  tabs: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
+  scrim: { flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000099' },
+  switcherSheet: {
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingVertical: 10,
+    borderTopColor: colors.input,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
-  tab: { flex: 1, alignItems: 'center', gap: 3 },
-  tabSymbol: { fontSize: 23, color: '#99a491', height: 28 },
-  tabLabel: { fontSize: 9, color: '#82907b' },
-  tabSelected: { color: colors.primary, fontWeight: '700' },
+  switcherHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  sheetTitle: { fontSize: 16, fontWeight: '600' },
+  switcherRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 56,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  switcherName: { flex: 1, fontSize: 15, fontWeight: '500' },
 });

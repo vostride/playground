@@ -24,5 +24,4 @@ appId: dev.vostride.playground
       id: home-open-shop
     timeout: 30000
 - assertVisible:
-    id: tab-home
-    selected: true
+    id: home-open-shop

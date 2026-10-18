@@ -29,34 +29,34 @@ final class OfflineLaunchTests: XCTestCase {
         try require(element("home-open-shop"), "Home product launcher")
         attach("Offline fresh launch")
 
-        try tap("tab-shop")
+        try tap("home-open-shop")
         try require(element("shop-products-heading"), "Komazon products")
         try require(element("shop-product-FW-0001"), "Komazon seeded product")
         attach("Offline Komazon catalog")
 
-        try tap("tab-flights")
+        try switchProduct("flights")
         try require(app.staticTexts["Flight search"].firstMatch, "Looking search form")
         try require(element("flight-from-picker"), "Looking departure picker")
         attach("Offline Looking search")
 
-        try tap("tab-tasks")
+        try switchProduct("tasks")
         try require(element("task-board-title"), "Brello board")
         try require(element("task-card-CKB-001"), "Brello seeded task")
         attach("Offline Brello board")
 
-        try tap("tab-observability")
+        try switchProduct("observability")
         try require(app.staticTexts["Production overview"].firstMatch, "PepaPog overview")
         try require(element("vigil-metric-request-rate"), "PepaPog rendered request metric")
         attach("Offline PepaPog overview")
 
-        try tap("tab-home")
+        try switchProduct("home")
         try tap("button-a-quick-guide-to-the-playground")
         let web = app.webViews.firstMatch
         try require(web, "Local help WebView")
         // Require actual DOM text within the WebView, not the native sheet's Help heading.
         try require(web.staticTexts["Navigation"].firstMatch, "Local help HTML heading")
         try require(web.staticTexts[
-            "Choose an app from Home or use the bottom tabs. Use the back button to return to the previous screen."
+            "Choose an app from Home. Use the grid button to switch apps and the bottom tabs to navigate within each app. The back button returns to the previous screen."
         ].firstMatch, "Local help HTML content")
         attach("Offline local WebView content")
         try await control("complete")
@@ -91,6 +91,13 @@ final class OfflineLaunchTests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: id).firstMatch
     }
 
+    private func switchProduct(_ id: String) throws {
+        // Use the same visible header chooser as a person; the installed candidate
+        // remains unmodified and every destination still requires its real content.
+        try tap("app-switcher")
+        try tap("switch-to-\(id)")
+    }
+
     private func tap(_ id: String) throws {
         let target = element(id)
         try require(target, id)
@@ -99,7 +106,9 @@ final class OfflineLaunchTests: XCTestCase {
     }
 
     private func require(_ target: XCUIElement, _ description: String) throws {
-        guard target.waitForExistence(timeout: 3) else { throw SmokeError.missing(description) }
+        // Avoid an unnecessary polling interval for an already-rendered control;
+        // missing controls retain the same bounded wait and mandatory assertion.
+        guard target.exists || target.waitForExistence(timeout: 3) else { throw SmokeError.missing(description) }
     }
 
     private func attach(_ name: String) {

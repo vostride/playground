@@ -97,11 +97,13 @@ appId: dev.vostride.playground
     env:
       FIELD: vigil-field-notify
       VALUE: sre@example.test
+# Save sits near the form's end. Require full visibility without centering:
+# iOS run 39153739148 found it 100% visible but timed out trying to scroll it higher.
 - scrollUntilVisible:
     element:
       text: '^Save changes$'
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - tapOn: '^Save changes$'
 # Leave the product view and re-enter; the saved name, threshold, and recipient
 # must persist. These assertions read UI only and do not touch the session Map.
@@ -148,7 +150,7 @@ appId: dev.vostride.playground
     element:
       text: '^Save changes$'
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - tapOn: '^Save changes$'
 - assertVisible:
     id: vigil-monitor-4-condition
@@ -176,7 +178,7 @@ appId: dev.vostride.playground
     element:
       text: '^Save changes$'
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - tapOn: '^Save changes$'
 - assertVisible:
     id: vigil-monitor-4-condition

@@ -1,0 +1,41 @@
+appId: dev.vostride.playground
+env:
+  SWITCH_LANDMARK: >-
+    ${({home:'home-open-shop',shop:'field-search-products',flights:'flight-from-picker',tasks:'task-search',observability:'vigil-tab-overview'})[APP]}
+---
+# Switching the current product resets its route without unmounting it. This is
+# essential for reopening a Brello task while retaining its local undo stack.
+- runFlow:
+    when:
+      visible:
+        id: app-switcher
+    commands:
+      - tapOn:
+          id: app-switcher
+      - extendedWaitUntil:
+          visible:
+            id: 'switch-to-${APP}'
+          timeout: 10000
+      - tapOn:
+          id: 'switch-to-${APP}'
+      - extendedWaitUntil:
+          notVisible:
+            id: 'switch-to-${APP}'
+          timeout: 10000
+# Home has no switcher. After a product selection above these launchers are
+# absent, so this fallback cannot accidentally navigate twice.
+- runFlow:
+    when:
+      true: '${APP !== "home"}'
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: 'home-open-${APP}'
+          commands:
+            - tapOn:
+                id: 'home-open-${APP}'
+- extendedWaitUntil:
+    visible:
+      id: '${SWITCH_LANDMARK}'
+    timeout: 10000

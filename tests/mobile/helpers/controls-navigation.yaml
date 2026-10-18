@@ -1,7 +1,7 @@
 appId: dev.vostride.playground
 ---
 # Every Home button must open its own product; the visible Back control must
-# restore Home, rather than merely changing the highlighted bottom tab.
+# restore Home rather than only changing the product route.
 - scrollUntilVisible:
     element:
       id: home-open-shop
@@ -12,7 +12,7 @@ appId: dev.vostride.playground
 - assertVisible:
     id: field-search-products
 - assertVisible:
-    id: tab-shop
+    id: shop-tab-catalog
     selected: true
 - tapOn:
     id: navigation-back
@@ -27,7 +27,7 @@ appId: dev.vostride.playground
     id: home-open-flights
 - assertVisible: '^Flight search$'
 - assertVisible:
-    id: tab-flights
+    id: flight-tab-search
     selected: true
 - tapOn:
     id: navigation-back
@@ -43,7 +43,7 @@ appId: dev.vostride.playground
 - assertVisible:
     id: task-search
 - assertVisible:
-    id: tab-tasks
+    id: task-view-board
     selected: true
 - tapOn:
     id: navigation-back
@@ -60,7 +60,7 @@ appId: dev.vostride.playground
     visible: '^Production overview$'
     timeout: 10000
 - assertVisible:
-    id: tab-observability
+    id: vigil-tab-overview
     selected: true
 - tapOn:
     id: navigation-back
@@ -77,45 +77,132 @@ appId: dev.vostride.playground
       - pressKey: back
       - assertVisible:
           id: home-open-shop
-      - assertVisible:
-          id: tab-home
-          selected: true
-# Every tab must render its destination as well as updating selected state.
-- tapOn:
-    id: tab-shop
+# Product switching uses the header chooser. Each dedicated footer must render
+# its functional destination as well as updating its selected state.
+- runFlow:
+    file: switch-product.yaml
+    env:
+      APP: shop
 - assertVisible:
     id: field-search-products
 - assertVisible:
-    id: tab-shop
+    id: shop-tab-catalog
     selected: true
 - tapOn:
-    id: tab-flights
+    id: shop-tab-cart
+- assertVisible: '^Your bag \(0\)$'
+- assertVisible: '^Your bag is empty$'
+- assertVisible:
+    id: shop-tab-cart
+    selected: true
+- tapOn:
+    id: shop-tab-orders
+- assertVisible: '^Your orders$'
+- assertVisible: '^Sign in to see your orders$'
+- assertVisible:
+    id: shop-tab-orders
+    selected: true
+- tapOn:
+    id: shop-tab-profile
+- assertVisible: '^Profile$'
+- assertVisible: '^Sign in to manage your orders and shipping details[.]$'
+- assertVisible:
+    id: shop-tab-profile
+    selected: true
+- tapOn:
+    id: shop-tab-catalog
+- assertVisible:
+    id: field-search-products
+- assertVisible:
+    id: shop-tab-catalog
+    selected: true
+- runFlow:
+    file: switch-product.yaml
+    env:
+      APP: flights
 - assertVisible: '^Flight search$'
 - assertVisible:
-    id: tab-flights
+    id: flight-tab-search
     selected: true
 - tapOn:
-    id: tab-tasks
+    id: flight-tab-bookings
+- assertVisible: '^Booking WL6P2K$'
+- assertVisible:
+    id: flight-tab-bookings
+    selected: true
+- tapOn:
+    id: flight-tab-search
+- assertVisible:
+    id: flight-from-picker
+- assertVisible:
+    id: flight-tab-search
+    selected: true
+- runFlow:
+    file: switch-product.yaml
+    env:
+      APP: tasks
 - assertVisible:
     id: task-search
 - assertVisible:
-    id: tab-tasks
+    id: task-view-board
     selected: true
 - tapOn:
-    id: tab-observability
+    id: task-view-list
+- assertVisible:
+    id: task-list
+- assertVisible:
+    id: task-card-CKB-001
+- assertVisible:
+    id: task-view-list
+    selected: true
+- tapOn:
+    id: task-view-board
+- assertVisible:
+    id: task-card-CKB-001
+- assertVisible:
+    id: task-view-board
+    selected: true
+- runFlow:
+    file: switch-product.yaml
+    env:
+      APP: observability
 - extendedWaitUntil:
     visible: '^Production overview$'
     timeout: 10000
 - assertVisible:
-    id: tab-observability
+    id: vigil-tab-overview
     selected: true
 - tapOn:
-    id: tab-home
+    id: vigil-tab-logs
+- assertVisible:
+    id: vigil-field-log-search-query
+- assertVisible:
+    id: vigil-tab-logs
+    selected: true
+- tapOn:
+    id: vigil-tab-traces
+- assertVisible: '^Distributed traces$'
+- assertVisible:
+    id: vigil-tab-traces
+    selected: true
+- tapOn:
+    id: vigil-tab-monitors
+- assertVisible: '^New monitor$'
+- assertVisible:
+    id: vigil-tab-monitors
+    selected: true
+- tapOn:
+    id: vigil-tab-overview
+- assertVisible: '^Production overview$'
+- assertVisible:
+    id: vigil-tab-overview
+    selected: true
+- runFlow:
+    file: switch-product.yaml
+    env:
+      APP: home
 - assertVisible:
     id: home-open-shop
-- assertVisible:
-    id: tab-home
-    selected: true
 # Keep native URL coverage on Android. The mandatory NativeLinkTests companion
 # exercises the same URL/query contract on iOS; its business routes use UI here.
 - runFlow:

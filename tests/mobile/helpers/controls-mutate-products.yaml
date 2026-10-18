@@ -49,8 +49,10 @@ appId: dev.vostride.playground
     id: flight-booking-WL6P2K-refund
     text: '^Travel credit of \$558 recorded[.]$'
 - takeScreenshot: '${PHASE}-cancelled-seeded-booking'
-- tapOn:
-    id: tab-tasks
+- runFlow:
+    file: switch-product.yaml
+    env:
+      APP: tasks
 - assertVisible:
     id: task-search
 - tapOn:
@@ -107,7 +109,9 @@ appId: dev.vostride.playground
     id: vigil-monitor-1-status
     text: '^Paused$'
 - takeScreenshot: '${PHASE}-paused-seeded-monitor'
-- tapOn:
-    id: tab-home
+- runFlow:
+    file: switch-product.yaml
+    env:
+      APP: home
 - assertVisible:
     id: home-open-shop
