@@ -3,12 +3,14 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {parseAllDocuments} from 'yaml';
+import {checkInterpolations} from './interpolation.mjs';
 
 const root=path.dirname(fileURLToPath(import.meta.url));
 const commands=new Set(['launchApp','extendedWaitUntil','assertVisible','assertNotVisible','tapOn','longPressOn','scrollUntilVisible','runFlow','openLink','eraseText','inputText','hideKeyboard','takeScreenshot','swipe','copyTextFrom','evalScript','pressKey']);
 const files=['flows','helpers','expected-failure'].flatMap(directory=>fs.readdirSync(path.join(root,directory)).filter(file=>file.endsWith('.yaml')).map(file=>path.join(root,directory,file)));
 const dependencies=new Map();
 const launchPlatforms=new Set();
+const restartPlatforms=new Set();
 const routes=new Set(['playground://home','playground://shop','playground://shop/cart','playground://shop?bug=cart-total','playground://flights','playground://flights/bookings','playground://tasks','playground://tasks/task/CKB-001','playground://tasks/task/CKB-2401','playground://observability/logs','playground://observability/monitors']);
 function checkSteps(steps,file,platform){
  assert.ok(Array.isArray(steps)&&steps.length>0,`${file}: commands must be a nonempty list`);
@@ -31,16 +33,21 @@ function checkSteps(steps,file,platform){
   }
   if(name==='copyTextFrom')assert.ok(typeof value==='string'||value?.id||value?.text,`${file}: copyTextFrom needs a rendered element`);
   if(name==='evalScript')assert.equal(typeof value,'string',`${file}: evalScript must be a test expression`);
-  if(name==='pressKey'){assert.equal(value,'Back',`${file}: only actual Back navigation is exercised`);assert.equal(platform,'Android',`${file}: hardware Back is Android-only`)}
+  if(name==='pressKey'){assert.equal(value,'back',`${file}: only actual Back navigation is exercised`);assert.equal(platform,'Android',`${file}: hardware Back is Android-only`)}
   if(name==='scrollUntilVisible')assert.ok(value.element&&['DOWN','UP','LEFT','RIGHT'].includes(value.direction),`${file}: scroll needs a selector and direction`);
   if(name==='launchApp'){
-   assert.equal(file,path.join(root,'helpers','launch.yaml'),`${file}: launches belong in the shared isolation helper`);
+   const restarting=file===path.join(root,'helpers','controls-restart.yaml');
+   assert.ok(restarting||file===path.join(root,'helpers','launch.yaml'),`${file}: launches belong in the shared isolation or explicit restart helper`);
    assert.equal(value.permissions?.all,'deny',`${file}: native smoke must run without granting permissions`);
    assert.ok(['Android','iOS'].includes(platform),`${file}: session reset must be explicitly scoped by platform`);
-   assert.ok(!launchPlatforms.has(platform),`${file}: duplicate ${platform} session reset`);
-   launchPlatforms.add(platform);
-   if(platform==='Android')assert.equal(value.clearState,true,`${file}: Android starts with cleared app state`);
-   if(platform==='iOS'){
+   const platforms=restarting?restartPlatforms:launchPlatforms;
+   assert.ok(!platforms.has(platform),`${file}: duplicate ${platform} session ${restarting?'restart':'reset'}`);
+   platforms.add(platform);
+   if(restarting){
+    assert.equal(value.stopApp,true,`${file}: restart must stop the existing process`);
+    assert.ok(!Object.hasOwn(value,'clearState'),`${file}: restart must prove recovery without clearing application storage`);
+   }else if(platform==='Android')assert.equal(value.clearState,true,`${file}: Android starts with cleared app state`);
+   else{
     assert.equal(value.stopApp,true,`${file}: iOS must restart the process-local session`);
     assert.ok(!Object.hasOwn(value,'clearState'),`${file}: iOS must preserve installed URL-scheme registration`);
    }
@@ -60,6 +67,7 @@ for(const file of files){
  for(const doc of docs)assert.equal(doc.errors.length,0,`${file}: ${doc.errors.map(error=>error.message).join(', ')}`);
  assert.equal(docs.length,2,`${file}: requires config and command documents`);
  const [config,steps]=docs.map(doc=>doc.toJSON());
+ checkInterpolations([config,steps],file);
  assert.equal(config.appId,'dev.vostride.playground',`${file}: wrong native app id`);
  dependencies.set(file,[]);
  checkSteps(steps,file);
@@ -71,6 +79,7 @@ for(const file of files){
  }
 }
 assert.deepEqual([...launchPlatforms].sort(),['Android','iOS'],'Shared launch helper must reset both platforms');
+assert.deepEqual([...restartPlatforms].sort(),['Android','iOS'],'Explicit restart helper must restart both platforms without clearing storage');
 function visit(file,ancestors=[]){assert.ok(!ancestors.includes(file),`Recursive helper cycle: ${[...ancestors,file].join(' → ')}`);for(const next of dependencies.get(file)||[])visit(next,[...ancestors,file])}
 for(const file of files)visit(file);
 assert.equal(files.filter(file=>file.includes(`${path.sep}flows${path.sep}`)).length,5,'Expected all five native acceptance scenarios');

@@ -1,0 +1,28 @@
+appId: dev.vostride.playground
+---
+# Deliberately preserve app storage on both platforms. These assertions follow
+# proven mutations in all four products, so a stopped process must restore the
+# process-local seed rather than silently carrying the previous session.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - launchApp:
+          stopApp: true
+          permissions:
+            all: deny
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - launchApp:
+          stopApp: true
+          permissions:
+            all: deny
+- extendedWaitUntil:
+    visible:
+      id: home-open-shop
+    timeout: 30000
+- assertVisible:
+    id: tab-home
+    selected: true

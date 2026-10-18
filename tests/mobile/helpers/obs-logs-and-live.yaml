@@ -61,7 +61,7 @@ appId: dev.vostride.playground
     text: '^[0-9,]+ req/s$'
 - copyTextFrom:
     id: vigil-metric-request-rate
-- evalScript: ${output.obsPausedRate = '^' + maestro.copiedText + '$'}
+- evalScript: ${output.obsPausedRate = maestro.copiedText}
 - tapOn:
     id: vigil-tab-logs
 # Apply status AND service facets with an empty query: 5,187 -> 62 events.
@@ -191,14 +191,14 @@ appId: dev.vostride.playground
     centerElement: true
 - assertVisible:
     id: vigil-metric-request-rate
-    text: '${output.obsPausedRate}'
+    text: '^${output.obsPausedRate}$'
 - tapOn:
     id: vigil-live-updates
 - assertVisible: '^Live$'
 - extendedWaitUntil:
     notVisible:
       id: vigil-metric-request-rate
-      text: '${output.obsPausedRate}'
+      text: '^${output.obsPausedRate}$'
     timeout: 15000
 - assertVisible:
     id: vigil-metric-request-rate

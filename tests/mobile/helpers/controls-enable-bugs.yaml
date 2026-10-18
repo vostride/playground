@@ -1,0 +1,69 @@
+appId: dev.vostride.playground
+---
+# Home exposes all four products. Only one switch per product may be active.
+- assertVisible:
+    id: tab-home
+    selected: true
+- tapOn: '^Test controls$'
+- scrollUntilVisible:
+    element:
+      id: bug-shop-cart-total
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: bug-shop-cart-total
+    checked: false
+- tapOn:
+    id: bug-shop-cart-total
+- assertVisible:
+    id: bug-shop-cart-total
+    checked: true
+- scrollUntilVisible:
+    element:
+      id: bug-flights-fare-total
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: bug-flights-fare-total
+    checked: false
+- tapOn:
+    id: bug-flights-fare-total
+- assertVisible:
+    id: bug-flights-fare-total
+    checked: true
+- scrollUntilVisible:
+    element:
+      id: bug-tasks-move-drops-label
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: bug-tasks-move-drops-label
+    checked: false
+- tapOn:
+    id: bug-tasks-move-drops-label
+- assertVisible:
+    id: bug-tasks-move-drops-label
+    checked: true
+- scrollUntilVisible:
+    element:
+      id: bug-observability-log-filter
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: bug-observability-log-filter
+    checked: false
+- tapOn:
+    id: bug-observability-log-filter
+- assertVisible:
+    id: bug-observability-log-filter
+    checked: true
+- takeScreenshot: '${PHASE}-bugs-enabled-before-clearing'
+- scrollUntilVisible:
+    element:
+      id: button-close-controls
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-close-controls
+- assertVisible:
+    id: home-open-shop

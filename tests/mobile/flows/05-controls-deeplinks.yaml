@@ -1,67 +1,21 @@
 appId: dev.vostride.playground
-name: Warm navigation, local WebView, opt-in defect, and session reset
+name: Home and tab navigation, Back, WebView, deep links, bug recovery, all-product reset and process restart
 ---
 - runFlow: ../helpers/launch.yaml
 - runFlow:
-    file: ../helpers/open-link.yaml
+    file: ../helpers/controls-navigation.yaml
     env:
-      LINK: playground://flights
+      PHASE: fresh-install
+- runFlow: ../helpers/controls-cart-total.yaml
 - runFlow:
-    file: ../helpers/open-link.yaml
+    file: ../helpers/controls-mutate-products.yaml
     env:
-      LINK: playground://flights/bookings
-- assertVisible: My trips
-- assertVisible: Booking WL6P2K
+      PHASE: before-reset
 - runFlow:
-    file: ../helpers/open-link.yaml
+    file: ../helpers/controls-enable-bugs.yaml
     env:
-      LINK: playground://observability/logs
-- assertVisible:
-    id: vigil-field-log-search-query
-- runFlow:
-    file: ../helpers/open-link.yaml
-    env:
-      LINK: playground://observability/monitors
-- assertVisible: New monitor
-- runFlow:
-    file: ../helpers/open-link.yaml
-    env:
-      LINK: playground://tasks/task/CKB-001
-- assertVisible:
-    id: task-detail-title
-- tapOn: Close CKB-001
-- runFlow:
-    file: ../helpers/open-link.yaml
-    env:
-      LINK: playground://home
-- scrollUntilVisible:
-    element:
-      id: button-a-quick-guide-to-the-playground
-    direction: DOWN
-    centerElement: true
-- tapOn:
-    id: button-a-quick-guide-to-the-playground
-- assertVisible: Help
-- assertVisible: 'Navigation'
-- takeScreenshot: local-webview-guide
-- tapOn:
-    id: button-close
-# The labelled opt-in bug changes two $24 mugs from $53 to $29 including shipping.
-- runFlow:
-    file: ../helpers/open-link.yaml
-    env:
-      LINK: playground://shop?bug=cart-total
-- assertVisible: 'Deliberate bug: Quantity ignored in totals'
-- runFlow: ../helpers/add-two-mugs.yaml
-- scrollUntilVisible:
-    element:
-      text: '\$29\.00'
-    direction: DOWN
-    centerElement: true
-- assertVisible: '\$29\.00'
-- assertNotVisible: '\$53\.00'
-- takeScreenshot: labelled-cart-total-bug
-- tapOn: Test controls
+      PHASE: before-reset
+- tapOn: '^Test controls$'
 - scrollUntilVisible:
     element:
       id: button-reset-playground-session
@@ -69,12 +23,40 @@ name: Warm navigation, local WebView, opt-in defect, and session reset
     centerElement: true
 - tapOn:
     id: button-reset-playground-session
-- assertVisible: 'Open Komazon'
-- assertNotVisible: 'Deliberate bug:.*'
+- assertVisible:
+    id: home-open-shop
 - runFlow:
-    file: ../helpers/open-link.yaml
+    file: ../helpers/controls-baseline.yaml
     env:
-      LINK: playground://shop/cart
-- assertVisible: 'Your bag \(0\)'
-- assertVisible: 'Your bag is empty'
-- takeScreenshot: session-reset-empty-bag
+      PHASE: after-reset
+# Mutate every app again. The next launch stops the process without clearState,
+# proving restart semantics independently of the visible reset control.
+- tapOn:
+    id: tab-shop
+- assertVisible:
+    id: field-search-products
+- runFlow: ../helpers/add-two-mugs.yaml
+- scrollUntilVisible:
+    element:
+      text: '^\$53\.00$'
+    direction: DOWN
+    centerElement: true
+- assertVisible: '^\$53\.00$'
+- takeScreenshot: before-restart-cart-53
+- runFlow:
+    file: ../helpers/controls-mutate-products.yaml
+    env:
+      PHASE: before-restart
+- runFlow:
+    file: ../helpers/controls-enable-bugs.yaml
+    env:
+      PHASE: before-restart
+- runFlow: ../helpers/controls-restart.yaml
+- runFlow:
+    file: ../helpers/controls-baseline.yaml
+    env:
+      PHASE: after-restart
+- assertVisible:
+    id: home-open-shop
+- assertNotVisible: '^Deliberate bug:.*'
+- takeScreenshot: controls-restart-complete

@@ -1,0 +1,47 @@
+appId: dev.vostride.playground
+---
+# The two-column list initially renders 12 rows. Product 25 is the first
+# generated Edition 3 product, beyond that initial batch and well below fold.
+- assertVisible:
+    id: shop-product-list
+- scrollUntilVisible:
+    element:
+      id: shop-product-FW-0025
+    direction: DOWN
+    centerElement: true
+    timeout: 60000
+- assertVisible:
+    id: shop-product-FW-0025
+    text: '^View Arc Table Lamp · Edition 3$'
+- assertNotVisible:
+    id: shop-product-FW-0001
+- takeScreenshot: komazon-generated-catalog-product
+- scrollUntilVisible:
+    element:
+      id: shop-products-heading
+    direction: UP
+    centerElement: true
+    timeout: 60000
+# Pull from the list viewport, not a header or a potentially clipped product.
+# The first swipe reaches the top; the second completes pull-to-refresh.
+- swipe:
+    from:
+      id: shop-product-list
+    direction: DOWN
+    duration: 800
+- swipe:
+    from:
+      id: shop-product-list
+    direction: DOWN
+    duration: 800
+- extendedWaitUntil:
+    visible:
+      id: shop-status-message
+      text: '^Products refreshed$'
+    timeout: 10000
+- assertVisible:
+    id: shop-products-heading
+- takeScreenshot: komazon-catalog-refreshed
+- tapOn: '^Dismiss notification$'
+- assertNotVisible:
+    id: shop-status-message

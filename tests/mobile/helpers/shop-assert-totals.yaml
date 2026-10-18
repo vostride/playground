@@ -1,0 +1,20 @@
+appId: dev.vostride.playground
+---
+# Two FW-0002 mugs cost 2 × $24, with $5 standard shipping. Assert the summary
+# fields themselves so a matching line-item amount cannot satisfy the check.
+- scrollUntilVisible:
+    element:
+      id: shop-subtotal
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: shop-subtotal
+    text: '^\$48\.00$'
+- scrollUntilVisible:
+    element:
+      id: shop-total
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: shop-total
+    text: '^\$53\.00$'

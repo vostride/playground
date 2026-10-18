@@ -1,0 +1,109 @@
+appId: dev.vostride.playground
+---
+# Cart already holds two mugs. Prove saved changes in the other three products.
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://flights/bookings
+- assertVisible:
+    id: flight-booking-WL6P2K-status
+    text: '^Confirmed$'
+- scrollUntilVisible:
+    element:
+      id: button-cancel-booking
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-cancel-booking
+- assertVisible: '^Cancel this trip[?]$'
+- assertVisible: '^Booking WL6P2K will be cancelled for every traveler[.] Your Standard fare receives a travel credit less a \$40 cancellation fee[.]$'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: android:id/button1
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: '^Cancel booking$'
+- scrollUntilVisible:
+    element:
+      id: flight-booking-WL6P2K-status
+    direction: UP
+    centerElement: true
+- assertVisible:
+    id: flight-booking-WL6P2K-status
+    text: '^Cancelled$'
+- scrollUntilVisible:
+    element:
+      id: flight-booking-WL6P2K-refund
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-booking-WL6P2K-refund
+    text: '^Travel credit of \$558 recorded[.]$'
+- takeScreenshot: '${PHASE}-cancelled-seeded-booking'
+- tapOn:
+    id: tab-tasks
+- assertVisible:
+    id: task-search
+- tapOn:
+    id: task-new-button
+- tapOn:
+    id: task-create-title
+- inputText: Reset verification task
+- runFlow: dismiss-keyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: task-create-submit
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: task-create-submit
+- extendedWaitUntil:
+    notVisible:
+      id: task-create-title
+    timeout: 10000
+- tapOn:
+    id: task-view-list
+- runFlow:
+    file: fill.yaml
+    env:
+      FIELD: task-search
+      VALUE: Reset verification task
+- assertVisible:
+    id: task-card-CKB-2401
+    text: '^CKB-2401: Reset verification task$'
+- tapOn:
+    id: task-card-CKB-2401
+- assertVisible:
+    id: task-detail-title
+    text: '^Reset verification task$'
+- takeScreenshot: '${PHASE}-created-task'
+- tapOn: '^Close CKB-2401$'
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://observability/monitors
+- scrollUntilVisible:
+    element:
+      text: '^Pause Checkout error rate is elevated$'
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: '^Pause Checkout error rate is elevated$'
+    checked: true
+- tapOn: '^Pause Checkout error rate is elevated$'
+- assertVisible:
+    text: '^Resume Checkout error rate is elevated$'
+    checked: false
+- assertVisible:
+    id: vigil-monitor-1-status
+    text: '^Paused$'
+- takeScreenshot: '${PHASE}-paused-seeded-monitor'
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: home-open-shop

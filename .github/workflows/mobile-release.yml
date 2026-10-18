@@ -75,7 +75,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run test:mobile:flows
-      - run: node --test tests/mobile/android-drag.test.mjs tests/mobile/inspect-apk.test.mjs
+      - run: node --test tests/mobile/*.test.mjs
       - run: npm run typecheck --workspace @playground/mobile
 
   android:
@@ -83,7 +83,7 @@ jobs:
     needs: prepare
     if: github.event_name == 'push' || inputs.platform != 'ios'
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 90
     permissions:
       contents: read
       id-token: write
@@ -156,8 +156,7 @@ jobs:
           script: |
             adb install mobile/android/app/build/outputs/apk/release/app-release.apk
             mkdir -p maestro-reports/android
-            maestro --device emulator-5554 test --format JUNIT --output maestro-reports/android/results.xml --debug-output maestro-reports/android/debug --test-output-dir maestro-reports/android/artifacts tests/mobile/flows/
-            node tests/mobile/android-drag.mjs emulator-5554
+            node tests/mobile/run-diagnostic.mjs android emulator-5554 all
       - name: Preserve Android acceptance evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -298,28 +297,10 @@ jobs:
           xcrun simctl boot "$PLAYGROUND_SIMULATOR_ID"
           xcrun simctl bootstatus "$PLAYGROUND_SIMULATOR_ID" -b
           xcrun simctl install "$PLAYGROUND_SIMULATOR_ID" mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app
-      - name: Verify product journeys on the simulator build
+      - name: Verify product journeys, native URLs and touch dragging on the simulator build
         env:
           PLAYGROUND_SIMULATOR_ID: ${{ steps.simulator.outputs.id }}
-        run: |
-          mkdir -p maestro-reports/ios
-          maestro --device "$PLAYGROUND_SIMULATOR_ID" test --format JUNIT --output maestro-reports/ios/results.xml --debug-output maestro-reports/ios/debug --test-output-dir maestro-reports/ios/artifacts tests/mobile/flows/
-      - name: Verify native URL routing and continuous touch dragging on the simulator build
-        env:
-          PLAYGROUND_SIMULATOR_ID: ${{ steps.simulator.outputs.id }}
-        run: |
-          xcodebuild test \
-            -project tests/mobile/ios/CorkboardGestures.xcodeproj \
-            -scheme CorkboardGestures \
-            -configuration Debug \
-            -sdk iphonesimulator \
-            -destination "platform=iOS Simulator,id=$PLAYGROUND_SIMULATOR_ID" \
-            -parallel-testing-enabled NO \
-            -maximum-concurrent-test-simulator-destinations 1 \
-            -derivedDataPath maestro-reports/ios/gesture-build \
-            -resultBundlePath maestro-reports/ios/corkboard-gestures.xcresult \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
+        run: node tests/mobile/run-diagnostic.mjs ios "$PLAYGROUND_SIMULATOR_ID" all
       - name: Preserve iOS acceptance evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,12 +1,14 @@
 appId: dev.vostride.playground
-name: Komazon sign-in, quantity, validated checkout, and cancellation
+name: Komazon catalog refresh, exact totals, checkout bug recovery, and cancellation
 ---
 - runFlow: ../helpers/launch.yaml
 - runFlow:
     file: ../helpers/open-link.yaml
     env:
       LINK: playground://shop
+- runFlow: ../helpers/shop-browse-refresh.yaml
 - runFlow: ../helpers/add-two-mugs.yaml
+- runFlow: ../helpers/shop-assert-totals.yaml
 - scrollUntilVisible:
     centerElement: true
     element:
@@ -54,6 +56,7 @@ name: Komazon sign-in, quantity, validated checkout, and cancellation
       text: 'Enter a street address\.[\s\S]*'
     direction: UP
 - assertVisible: 'Enter a street address\.[\s\S]*'
+- runFlow: ../helpers/shop-checkout-validation-bug.yaml
 - runFlow:
     file: ../helpers/fill.yaml
     env:
@@ -92,6 +95,7 @@ name: Komazon sign-in, quantity, validated checkout, and cancellation
       text: 'Everyday Ceramic Mug × 2'
     direction: DOWN
 - assertVisible: 'Everyday Ceramic Mug × 2'
+- runFlow: ../helpers/shop-assert-totals.yaml
 - scrollUntilVisible:
     centerElement: true
     element:

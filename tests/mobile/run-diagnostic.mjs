@@ -26,6 +26,13 @@ export function diagnosticCommands({ platform, device, scenario }) {
   const selection = diagnosticSelection(scenario);
   const directory = `maestro-reports/${platform}`;
   const commands = [];
+  if (platform === 'android' && scenario === 'all') {
+    commands.push({
+      name: 'offline-start',
+      command: process.execPath,
+      args: ['tests/mobile/android-offline.mjs', device, 'configure'],
+    });
+  }
   if (selection.flow) {
     commands.push({
       name: 'maestro',
@@ -82,6 +89,13 @@ export function diagnosticCommands({ platform, device, scenario }) {
             ],
           },
     );
+  }
+  if (platform === 'android' && scenario === 'all') {
+    commands.push({
+      name: 'offline-end',
+      command: process.execPath,
+      args: ['tests/mobile/android-offline.mjs', device, 'verify'],
+    });
   }
   return commands;
 }

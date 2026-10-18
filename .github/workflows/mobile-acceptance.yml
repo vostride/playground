@@ -40,7 +40,7 @@ jobs:
   acceptance:
     name: Retest the preserved ${{ inputs.platform }} app
     runs-on: ${{ inputs.platform == 'ios' && 'macos-15' || 'ubuntu-24.04' }}
-    timeout-minutes: 45
+    timeout-minutes: ${{ inputs.scenario == 'all' && 90 || 45 }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -162,7 +162,7 @@ jobs:
           NODE
       - run: npm ci --ignore-scripts
       - run: npm run test:mobile:flows
-      - run: node --test tests/mobile/android-drag.test.mjs tests/mobile/inspect-apk.test.mjs
+      - run: node --test tests/mobile/*.test.mjs
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -196,7 +196,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
       - name: Run the current Android acceptance harness
         if: inputs.platform == 'android'
-        timeout-minutes: 35
+        timeout-minutes: ${{ inputs.scenario == 'all' && 75 || 35 }}
         uses: reactivecircus/android-emulator-runner@v2
         env:
           DIAGNOSTIC_SCENARIO: ${{ steps.candidate.outputs.scenario }}

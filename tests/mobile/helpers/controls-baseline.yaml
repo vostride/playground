@@ -1,0 +1,156 @@
+appId: dev.vostride.playground
+---
+# Both reset and restart must restore all four products. Never inject state.
+- assertVisible:
+    id: tab-home
+    selected: true
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://shop/cart
+- assertVisible: '^Your bag \(0\)$'
+- assertVisible: '^Your bag is empty$'
+- assertNotVisible: '^Deliberate bug:.*'
+- takeScreenshot: '${PHASE}-empty-bag'
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://flights/bookings
+- assertVisible: '^Booking WL6P2K$'
+- assertVisible:
+    id: flight-booking-WL6P2K-status
+    text: '^Confirmed$'
+- scrollUntilVisible:
+    element:
+      id: flight-booking-WL6P2K-seats
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-booking-WL6P2K-seats
+    text: '^Seats 4B$'
+- assertNotVisible:
+    id: flight-booking-WL6P2K-refund
+- assertNotVisible: '^Deliberate bug:.*'
+- takeScreenshot: '${PHASE}-restored-seeded-booking'
+- tapOn:
+    id: tab-tasks
+- assertVisible:
+    id: task-search
+- tapOn:
+    id: task-view-list
+- runFlow:
+    file: fill.yaml
+    env:
+      FIELD: task-search
+      VALUE: Reset verification task
+- assertVisible: '^No tasks match your filters$'
+- assertNotVisible:
+    id: task-card-CKB-2401
+- assertNotVisible: '^Deliberate bug:.*'
+- takeScreenshot: '${PHASE}-created-task-cleared'
+- tapOn:
+    id: task-clear-filters
+- assertVisible:
+    id: task-card-CKB-001
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://observability/monitors
+- scrollUntilVisible:
+    element:
+      text: '^Pause Checkout error rate is elevated$'
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: '^Pause Checkout error rate is elevated$'
+    checked: true
+- assertVisible:
+    id: vigil-monitor-1-status
+    text: '^Healthy$'
+- assertNotVisible: '^Deliberate bug:.*'
+- takeScreenshot: '${PHASE}-restored-seeded-monitor'
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://observability/logs
+- runFlow: controls-timestamp.yaml
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: home-open-shop
+# Banner absence cannot prove inactive app flags; check all eight switches.
+- tapOn: '^Test controls$'
+- scrollUntilVisible:
+    element:
+      id: bug-shop-cart-total
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: bug-shop-cart-total
+    checked: false
+- scrollUntilVisible:
+    element:
+      id: bug-shop-checkout-validation
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: bug-shop-checkout-validation
+    checked: false
+- scrollUntilVisible:
+    element:
+      id: bug-flights-fare-total
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: bug-flights-fare-total
+    checked: false
+- scrollUntilVisible:
+    element:
+      id: bug-flights-seat-conflict
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: bug-flights-seat-conflict
+    checked: false
+- scrollUntilVisible:
+    element:
+      id: bug-tasks-move-drops-label
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: bug-tasks-move-drops-label
+    checked: false
+- scrollUntilVisible:
+    element:
+      id: bug-tasks-filter-ignores-assignee
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: bug-tasks-filter-ignores-assignee
+    checked: false
+- scrollUntilVisible:
+    element:
+      id: bug-observability-log-filter
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: bug-observability-log-filter
+    checked: false
+- scrollUntilVisible:
+    element:
+      id: bug-observability-alert-threshold
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: bug-observability-alert-threshold
+    checked: false
+- takeScreenshot: '${PHASE}-all-bugs-disabled'
+- scrollUntilVisible:
+    element:
+      id: button-close-controls
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-close-controls
+- assertVisible:
+    id: home-open-shop

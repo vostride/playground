@@ -1,0 +1,32 @@
+appId: dev.vostride.playground
+---
+# First seeded production event, independent of the wall clock. Pause live too.
+- assertVisible:
+    id: vigil-live-updates
+    checked: true
+- tapOn:
+    id: vigil-live-updates
+- assertVisible:
+    id: vigil-live-updates
+    checked: false
+- scrollUntilVisible:
+    element:
+      id: vigil-log-000001
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: vigil-log-000001
+- assertVisible:
+    id: vigil-selected-event-id
+    text: '^log-000001$'
+- scrollUntilVisible:
+    element:
+      text: '^2026-10-18T14:30:00\.000Z$'
+    direction: DOWN
+    centerElement: true
+- assertVisible: '^2026-10-18T14:30:00\.000Z$'
+- takeScreenshot: '${PHASE}-fixed-seed-timestamp'
+- tapOn: '^Close$'
+- extendedWaitUntil:
+    notVisible: '^Log event$'
+    timeout: 10000

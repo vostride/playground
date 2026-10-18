@@ -1,0 +1,63 @@
+appId: dev.vostride.playground
+---
+# Two $24 mugs plus $5 shipping are the normal result. Preserve quantity while
+# toggling the actual bug switch so the changed total cannot come from a cart edit.
+- runFlow: add-two-mugs.yaml
+- scrollUntilVisible:
+    element:
+      text: '^\$53\.00$'
+    direction: DOWN
+    centerElement: true
+- assertVisible: '^\$53\.00$'
+- assertNotVisible: '^\$29\.00$'
+- takeScreenshot: controls-cart-normal-53
+- tapOn: '^Test controls$'
+- assertVisible:
+    id: bug-shop-cart-total
+    checked: false
+- tapOn:
+    id: bug-shop-cart-total
+- assertVisible:
+    id: bug-shop-cart-total
+    checked: true
+- scrollUntilVisible:
+    element:
+      id: button-close-controls
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-close-controls
+- assertVisible: '^Deliberate bug: Quantity ignored in totals$'
+- scrollUntilVisible:
+    element:
+      text: '^\$29\.00$'
+    direction: DOWN
+    centerElement: true
+- assertVisible: '^\$29\.00$'
+- assertNotVisible: '^\$53\.00$'
+- takeScreenshot: labelled-cart-total-bug
+- tapOn: '^Test controls$'
+- assertVisible:
+    id: bug-shop-cart-total
+    checked: true
+- tapOn:
+    id: bug-shop-cart-total
+- assertVisible:
+    id: bug-shop-cart-total
+    checked: false
+- scrollUntilVisible:
+    element:
+      id: button-close-controls
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-close-controls
+- assertNotVisible: '^Deliberate bug: Quantity ignored in totals$'
+- scrollUntilVisible:
+    element:
+      text: '^\$53\.00$'
+    direction: DOWN
+    centerElement: true
+- assertVisible: '^\$53\.00$'
+- assertNotVisible: '^\$29\.00$'
+- takeScreenshot: controls-cart-recovered-53

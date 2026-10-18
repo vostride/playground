@@ -104,3 +104,31 @@ test('an invalid scenario cannot execute commands or create a passing report', (
     assert.equal(reports, 0);
   }
 });
+
+test('full Android acceptance requires offline evidence before and after product checks', () => {
+  for (const failedCommand of [-1, 0, 3]) {
+    const calls = [];
+    let final;
+    const exitCode = runDiagnostics(
+      { platform: 'android', device: 'emulator-5554', scenario: 'all' },
+      {
+        execute(command, args) {
+          const index = calls.length;
+          calls.push({ command, args });
+          return { status: index === failedCommand ? 1 : 0 };
+        },
+        save(report) {
+          final = structuredClone(report);
+        },
+      },
+    );
+    assert.deepEqual(
+      final.commands.map(({ name }) => name),
+      ['offline-start', 'maestro', 'drag', 'offline-end'],
+    );
+    assert.equal(calls[0].args.at(-1), 'configure');
+    assert.equal(calls[3].args.at(-1), 'verify');
+    assert.equal(exitCode, failedCommand === -1 ? 0 : 1);
+    assert.equal(final.passed, failedCommand === -1);
+  }
+});

@@ -3,12 +3,14 @@ env:
   UI_ROUTE: '${LINK.split("?")[0]}'
   UI_TASK_ID: '${LINK.split("/").pop().split("?")[0]}'
   # The native tab buttons expose their product names as explicit labels.
+  # Maestro 2.11 does not interpolate expressions containing a dollar sign;
+  # keep the regex anchors outside the expression at the tap below.
   UI_TAB: >-
-    ${({home:'^Home$',shop:'^Komazon$',flights:'^Looking$',tasks:'^Brello$',observability:'^PepaPog$'})[LINK.replace('playground://','').split('/')[0].split('?')[0]]}
+    ${({home:'Home',shop:'Komazon',flights:'Looking',tasks:'Brello',observability:'PepaPog'})[LINK.replace('playground://','').split('/')[0].split('?')[0]]}
 ---
 # Tapping the current product's tab changes its route without unmounting the
 # screen, preserving Brello's component-local undo stack and task filters.
-- tapOn: '${UI_TAB}'
+- tapOn: '^${UI_TAB}$'
 - runFlow:
     when:
       true: '${UI_ROUTE === "playground://shop/cart"}'

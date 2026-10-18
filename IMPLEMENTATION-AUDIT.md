@@ -20,7 +20,18 @@ Local verification after the redesign and rename passed **29 browser tests**, in
 
 The historical CI records below retain the product names used by those runs: Fernwood is now Komazon, Wayline is Looking, Vigil is PepaPog, and Corkboard is Brello. Prior binary results do not automatically verify the renamed source.
 
+## Platform layout and expanded native acceptance
+
+Commit `8f74c2b` moves the four browser projects to `web/` and React Native to `mobile/`, retaining shared packages at the root. Workspace links, native dependency paths, build tooling, Tailwind source paths and CI artifact paths were updated. Dependency versions and integrity hashes are unchanged. Local checks passed: 29 browser cases, both TypeScript targets, all four web builds and both Metro bundles. Brello’s cards and connected heading dividers were visually checked at 1440 and 390 pixels; Looking’s title and wordmark use the shortened name.
+
+The native harness now includes catalog/list refresh, both switches per product, exact totals, persisted task properties, monitor edits, navigation, cross-product reset and process restart coverage. These test-only additions preserve the current candidate’s application source fingerprint. The shared iOS helper was corrected after the pinned Maestro parser left regex dollar anchors inside an expression as literal text. A regression validator checks all YAML interpolation before CI.
+
+Android full-suite CI now requires observed offline connectivity before and after the product journeys. Native touch and URL checks run even after a Maestro failure so their separate evidence is retained; any failed check still fails the gate. The expanded journeys and offline checks still require actual runtime execution. iOS offline isolation remains an open verification item.
+
 ## Recorded CI evidence
+
+- [Web run 39146136937](https://github.com/vostride/playground/actions/runs/39146136937) and [mobile source run 39146136929](https://github.com/vostride/playground/actions/runs/39146136929), commit `8f74c2b`, both passed after the platform directory move. Pages secrets were still absent; no deployment was inferred.
+- [Native candidate 39143705568](https://github.com/vostride/playground/actions/runs/39143705568), commit `35e548b`: Android compiled and passed all five then-current Maestro flows and touch dragging, with checksum and provenance attestation. iOS compiled with both architectures, but all five flows failed at the shared navigation helper’s literal interpolation; screenshots showed the expected product tabs and successful launches. The iOS URL/drag step was skipped, so this was not complete acceptance.
 
 - [Web run 39133315700](https://github.com/vostride/playground/actions/runs/39133315700), commit `645a23a`: source checks, 23 core tests, four static builds, and 23 browser checks passed. Cloudflare publication was skipped because the repository secrets were not yet configured.
 - [Mobile source run 39133315578](https://github.com/vostride/playground/actions/runs/39133315578), commit `645a23a`: source and Metro bundle checks passed. This is not native runtime acceptance.

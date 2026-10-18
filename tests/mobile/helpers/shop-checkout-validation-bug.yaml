@@ -1,0 +1,88 @@
+appId: dev.vostride.playground
+---
+# The caller has already submitted the fresh blank address and asserted the
+# street-address error. Sign-in only populated name/email; no address field
+# is edited anywhere in this bug cycle.
+- assertVisible: 'Enter a street address\.[\s\S]*'
+- assertNotVisible: '^Delivery method$'
+- takeScreenshot: komazon-blank-shipping-rejected
+- tapOn: '^Test controls$'
+- scrollUntilVisible:
+    element:
+      id: bug-shop-checkout-validation
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: bug-shop-checkout-validation
+    checked: false
+- tapOn:
+    id: bug-shop-checkout-validation
+- assertVisible:
+    id: bug-shop-checkout-validation
+    checked: true
+- scrollUntilVisible:
+    element:
+      id: button-close-controls
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-close-controls
+- assertVisible: '^Deliberate bug: Incomplete address accepted$'
+- scrollUntilVisible:
+    element:
+      id: button-continue-to-delivery
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-continue-to-delivery
+# The identical blank address now advances, demonstrating the labelled defect.
+- assertVisible: '^Delivery method$'
+- assertNotVisible: '^Shipping address$'
+- assertNotVisible: 'Enter a street address\.[\s\S]*'
+- takeScreenshot: komazon-checkout-validation-bug-reproduced
+- tapOn: '^Test controls$'
+- scrollUntilVisible:
+    element:
+      id: bug-shop-checkout-validation
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: bug-shop-checkout-validation
+    checked: true
+- tapOn:
+    id: bug-shop-checkout-validation
+- assertVisible:
+    id: bug-shop-checkout-validation
+    checked: false
+- scrollUntilVisible:
+    element:
+      id: button-close-controls
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-close-controls
+- assertNotVisible: '^Deliberate bug:.*'
+# Return using delivery's Back control, retaining the untouched blank fields.
+- scrollUntilVisible:
+    element:
+      id: button-back
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-back
+- assertVisible: '^Shipping address$'
+- scrollUntilVisible:
+    element:
+      id: button-continue-to-delivery
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-continue-to-delivery
+- scrollUntilVisible:
+    element:
+      text: 'Enter a street address\.[\s\S]*'
+    direction: UP
+    centerElement: true
+- assertVisible: 'Enter a street address\.[\s\S]*'
+- assertNotVisible: '^Delivery method$'
+- takeScreenshot: komazon-shipping-validation-restored

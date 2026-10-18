@@ -1,0 +1,192 @@
+appId: dev.vostride.playground
+---
+# Every Home button must open its own product; the visible Back control must
+# restore Home, rather than merely changing the highlighted bottom tab.
+- scrollUntilVisible:
+    element:
+      id: home-open-shop
+    direction: UP
+    centerElement: true
+- tapOn:
+    id: home-open-shop
+- assertVisible:
+    id: field-search-products
+- assertVisible:
+    id: tab-shop
+    selected: true
+- tapOn:
+    id: navigation-back
+- assertVisible:
+    id: home-open-shop
+- scrollUntilVisible:
+    element:
+      id: home-open-flights
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: home-open-flights
+- assertVisible: '^Flight search$'
+- assertVisible:
+    id: tab-flights
+    selected: true
+- tapOn:
+    id: navigation-back
+- assertVisible:
+    id: home-open-shop
+- scrollUntilVisible:
+    element:
+      id: home-open-tasks
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: home-open-tasks
+- assertVisible:
+    id: task-search
+- assertVisible:
+    id: tab-tasks
+    selected: true
+- tapOn:
+    id: navigation-back
+- assertVisible:
+    id: home-open-shop
+- scrollUntilVisible:
+    element:
+      id: home-open-observability
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: home-open-observability
+- extendedWaitUntil:
+    visible: '^Production overview$'
+    timeout: 10000
+- assertVisible:
+    id: tab-observability
+    selected: true
+- tapOn:
+    id: navigation-back
+- assertVisible:
+    id: home-open-shop
+# This invokes the OS hardware Back path, independently of the header button.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: home-open-flights
+      - assertVisible: '^Flight search$'
+      - pressKey: back
+      - assertVisible:
+          id: home-open-shop
+      - assertVisible:
+          id: tab-home
+          selected: true
+# Every tab must render its destination as well as updating selected state.
+- tapOn:
+    id: tab-shop
+- assertVisible:
+    id: field-search-products
+- assertVisible:
+    id: tab-shop
+    selected: true
+- tapOn:
+    id: tab-flights
+- assertVisible: '^Flight search$'
+- assertVisible:
+    id: tab-flights
+    selected: true
+- tapOn:
+    id: tab-tasks
+- assertVisible:
+    id: task-search
+- assertVisible:
+    id: tab-tasks
+    selected: true
+- tapOn:
+    id: tab-observability
+- extendedWaitUntil:
+    visible: '^Production overview$'
+    timeout: 10000
+- assertVisible:
+    id: tab-observability
+    selected: true
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: home-open-shop
+- assertVisible:
+    id: tab-home
+    selected: true
+# Keep native URL coverage on Android. The mandatory NativeLinkTests companion
+# exercises the same URL/query contract on iOS; its business routes use UI here.
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://flights
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://flights/bookings
+- assertVisible: '^Booking WL6P2K$'
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://observability/logs
+- assertVisible:
+    id: vigil-field-log-search-query
+- runFlow: controls-timestamp.yaml
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://observability/monitors
+- assertVisible: '^New monitor$'
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://tasks/task/CKB-001
+- assertVisible:
+    id: task-detail-title
+- tapOn: '^Close CKB-001$'
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://home
+- scrollUntilVisible:
+    element:
+      id: button-a-quick-guide-to-the-playground
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-a-quick-guide-to-the-playground
+- assertVisible: '^Help$'
+- assertVisible: '^Navigation$'
+- takeScreenshot: local-webview-guide
+- tapOn:
+    id: button-close
+- assertVisible:
+    id: home-open-shop
+# Preserve explicit bug-query routing coverage and restore its switch before
+# the separate normal -> enabled -> disabled cart-total behavior checks.
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://shop?bug=cart-total
+- assertVisible: '^Deliberate bug: Quantity ignored in totals$'
+- tapOn: '^Test controls$'
+- assertVisible:
+    id: bug-shop-cart-total
+    checked: true
+- tapOn:
+    id: bug-shop-cart-total
+- assertVisible:
+    id: bug-shop-cart-total
+    checked: false
+- scrollUntilVisible:
+    element:
+      id: button-close-controls
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-close-controls
+- assertNotVisible: '^Deliberate bug: Quantity ignored in totals$'
+- assertVisible:
+    id: field-search-products
