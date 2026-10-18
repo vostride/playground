@@ -1,9 +1,37 @@
 appId: dev.vostride.playground
+env:
+  # A route-specific landmark prevents a warm link from returning while the old
+  # app screen is still visible. Keep this whitelist aligned with suite routes.
+  LINK_DESTINATION: >-
+    ${LINK.indexOf('playground://tasks/task/') === 0
+      ? 'Close ' + LINK.split('/').pop().split('?')[0]
+      : ({
+          'playground://home': 'Make yourself at home[.]',
+          'playground://shop': 'Search products',
+          'playground://shop/cart': 'Your bag [(][0-9]+[)]',
+          'playground://flights': 'A LITTLE FURTHER[.] A LITTLE FREER[.]',
+          'playground://flights/bookings': 'Find a booking',
+          'playground://tasks': 'Search tasks',
+          'playground://observability/logs': 'Log search query',
+          'playground://observability/monitors': 'New monitor'
+        })[LINK.split('?')[0]]}
 ---
 - openLink: '${LINK}'
-# The first custom-scheme launch may show an iOS system confirmation.
+# iOS can present its first custom-scheme confirmation after openLink returns.
+# Wait for a real destination or that dialog before checking which path occurred.
+- extendedWaitUntil:
+    visible: '(?:Open.*Playground.*)|(?:${LINK_DESTINATION})'
+    timeout: 30000
 - runFlow:
     when:
+      platform: iOS
       visible: 'Open.*Playground.*'
     commands:
-      - tapOn: 'Open'
+      - tapOn: '^Open$'
+      - extendedWaitUntil:
+          notVisible: 'Open.*Playground.*'
+          timeout: 10000
+# This remains mandatory on both platforms; dismissing a dialog is not success.
+- extendedWaitUntil:
+    visible: '${LINK_DESTINATION}'
+    timeout: 30000

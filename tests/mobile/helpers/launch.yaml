@@ -1,5 +1,17 @@
 appId: dev.vostride.playground
 ---
+# A failed prior scenario may leave the native deep-link dialog above the app.
+# Cancel only that known dialog before the normal clean-session launch; the
+# original scenario failure is retained in the suite report.
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Open.*Playground.*'
+    commands:
+      - tapOn: '^Cancel$'
+      - extendedWaitUntil:
+          notVisible: 'Open.*Playground.*'
+          timeout: 10000
 - launchApp:
     clearState: true
     permissions:
