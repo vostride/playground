@@ -12,7 +12,7 @@ One-time setup:
 4. Disable bot challenges, Access gates, and challenge rules for this hostname and preview URLs. Automated visitors are the intended users. Noindex is set in each document, `robots.txt`, and `_headers`.
 5. Enable Actions for the public repository. Push the verified source to `main`.
 
-The workflow deploys a preview, runs the complete registered sample flows against that preview, and uploads its report. **Site-check failure is advisory and does not block promotion to production.** Compilation failures remain build failures. Branch pushes create previews; main pushes also deploy production. If Cloudflare credentials have not been configured, the workflow warns and skips publication while retaining the tested build artifact.
+The workflow deploys a preview, runs the complete registered sample flows against that preview, and uploads its report. **Site-check failure is advisory and does not block promotion to production.** Compilation failures remain build failures. Branch pushes create previews; main pushes also deploy production. After configuring Cloudflare, the workflow can also be run manually on `main` to perform the same preview, report, and production steps without a source change. Manual runs on other branches create previews only. If Cloudflare credentials have not been configured, the workflow warns and skips publication while retaining the tested build artifact.
 
 Do not configure a second automatic production deployment in Cloudflare Git integration: it would bypass the preview/report ordering implemented by the workflow.
 
