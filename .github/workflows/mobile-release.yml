@@ -113,20 +113,20 @@ jobs:
       - run: npm ci
       - name: Build a standalone release APK
         id: build
-        working-directory: apps/mobile/android
+        working-directory: mobile/android
         run: ./gradlew assembleRelease --no-daemon
       - name: Preserve the compiled APK for diagnostic retests
         continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: diagnostic-android-apk-unverified
-          path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+          path: mobile/android/app/build/outputs/apk/release/app-release.apk
           compression-level: 0
           retention-days: 7
           if-no-files-found: error
 
       - name: Verify final APK permissions and native architectures
-        run: node tests/mobile/inspect-apk.mjs apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+        run: node tests/mobile/inspect-apk.mjs mobile/android/app/build/outputs/apk/release/app-release.apk
       - name: Install the pinned Maestro CLI
         run: |
           curl --fail --location --retry 3 --output "$RUNNER_TEMP/maestro.zip" \
@@ -154,7 +154,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: |
-            adb install apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+            adb install mobile/android/app/build/outputs/apk/release/app-release.apk
             mkdir -p maestro-reports/android
             maestro --device emulator-5554 test --format JUNIT --output maestro-reports/android/results.xml --debug-output maestro-reports/android/debug --test-output-dir maestro-reports/android/artifacts tests/mobile/flows/
             node tests/mobile/android-drag.mjs emulator-5554
@@ -169,7 +169,7 @@ jobs:
       - name: Stage the APK and its SHA-256 checksum
         run: |
           mkdir -p release
-          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk "release/playground-android-${PLAYGROUND_VERSION}.apk"
+          cp mobile/android/app/build/outputs/apk/release/app-release.apk "release/playground-android-${PLAYGROUND_VERSION}.apk"
           cd release
           sha256sum "playground-android-${PLAYGROUND_VERSION}.apk" > "playground-android-${PLAYGROUND_VERSION}.apk.sha256"
       - name: Attest Android build provenance
@@ -212,20 +212,20 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true
-          working-directory: apps/mobile
+          working-directory: mobile
       - run: npm ci
       - name: Install native iOS dependencies
-        working-directory: apps/mobile/ios
+        working-directory: mobile/ios
         run: bundle exec pod install
       - name: Pin the Node executable for Xcode script phases
         run: |
           node --input-type=module <<'NODE'
           import {writeFileSync} from 'node:fs';
-          writeFileSync('apps/mobile/ios/.xcode.env.local', `export NODE_BINARY="${process.execPath}"\n`);
+          writeFileSync('mobile/ios/.xcode.env.local', `export NODE_BINARY="${process.execPath}"\n`);
           NODE
       - name: Build the unsigned universal simulator app
         id: build
-        working-directory: apps/mobile/ios
+        working-directory: mobile/ios
         run: |
           xcodebuild \
             -workspace Playground.xcworkspace \
@@ -247,7 +247,7 @@ jobs:
         run: |
           mkdir -p diagnostics
           ditto -c -k --sequesterRsrc --keepParent \
-            apps/mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app \
+            mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app \
             "diagnostics/playground-ios-simulator-${PLAYGROUND_VERSION}-unverified.zip"
       - name: Preserve the unverified simulator app
         if: steps.diagnostic-package.outcome == 'success'
@@ -264,7 +264,7 @@ jobs:
           node --input-type=module <<'NODE'
           import {mkdirSync, writeFileSync} from 'node:fs';
           import {spawnSync} from 'node:child_process';
-          const result = spawnSync('xcrun', ['lipo', '-archs', 'apps/mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app/Playground'], {encoding: 'utf8'});
+          const result = spawnSync('xcrun', ['lipo', '-archs', 'mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app/Playground'], {encoding: 'utf8'});
           if (result.error || result.status !== 0) throw new Error(`Cannot inspect simulator architectures: ${result.error?.message || result.stderr}`);
           mkdirSync('maestro-reports/ios', {recursive: true});
           writeFileSync('maestro-reports/ios/app-architectures.txt', result.stdout);
@@ -297,7 +297,7 @@ jobs:
           echo "id=$PLAYGROUND_SIMULATOR_ID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$PLAYGROUND_SIMULATOR_ID"
           xcrun simctl bootstatus "$PLAYGROUND_SIMULATOR_ID" -b
-          xcrun simctl install "$PLAYGROUND_SIMULATOR_ID" apps/mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app
+          xcrun simctl install "$PLAYGROUND_SIMULATOR_ID" mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app
       - name: Verify product journeys on the simulator build
         env:
           PLAYGROUND_SIMULATOR_ID: ${{ steps.simulator.outputs.id }}
@@ -338,9 +338,9 @@ jobs:
       - name: Package the simulator app and checksum
         run: |
           mkdir -p release
-          test -d apps/mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app
+          test -d mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app
           ditto -c -k --sequesterRsrc --keepParent \
-            apps/mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app \
+            mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app \
             "release/playground-ios-simulator-${PLAYGROUND_VERSION}.zip"
           cd release
           shasum -a 256 "playground-ios-simulator-${PLAYGROUND_VERSION}.zip" > "playground-ios-simulator-${PLAYGROUND_VERSION}.zip.sha256"
@@ -360,7 +360,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-build-logs
-          path: apps/mobile/ios/build/Logs/
+          path: mobile/ios/build/Logs/
           retention-days: 7
           if-no-files-found: ignore
 

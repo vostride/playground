@@ -1,0 +1,25 @@
+appId: dev.vostride.playground
+---
+# Preserve the active booking screen and require the switch's real state change.
+- tapOn: '^Test controls$'
+- scrollUntilVisible:
+    element:
+      id: 'bug-flights-${BUG_ID}'
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: 'bug-flights-${BUG_ID}'
+    checked: false
+- tapOn:
+    id: 'bug-flights-${BUG_ID}'
+- assertVisible:
+    id: 'bug-flights-${BUG_ID}'
+    checked: true
+- scrollUntilVisible:
+    element:
+      id: button-close-controls
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-close-controls
+- assertVisible: '^Deliberate bug: ${BUG_LABEL}$'

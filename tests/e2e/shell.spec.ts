@@ -44,7 +44,7 @@ test('static hosting preserves application assets, noindex headers and missing-p
 
 for (const [path, name] of [
   ['shop', 'Komazon'],
-  ['flights', 'Looking.com'],
+  ['flights', 'Looking'],
   ['tasks', 'Brello'],
   ['observability', 'PepaPog'],
 ]) {

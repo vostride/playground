@@ -131,7 +131,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
       <Text style={s.cardTitle}>Order summary</Text>
       <Row>
         <Text>Subtotal</Text>
-        <Text>{money(totals.subtotal)}</Text>
+        <Text testID="shop-subtotal">{money(totals.subtotal)}</Text>
       </Row>
       <Row>
         <Text>Shipping</Text>
@@ -139,7 +139,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
       </Row>
       <Row>
         <Text style={s.bold}>Total</Text>
-        <Text style={s.bold}>{money(totals.total)}</Text>
+        <Text testID="shop-total" style={s.bold}>{money(totals.total)}</Text>
       </Row>
       <Text style={s.small}>Taxes included.</Text>
     </Card>
@@ -168,7 +168,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
       </Row>
       {notice ? (
         <Pressable onPress={() => setNotice('')} accessibilityLabel="Dismiss notification">
-          <Text accessibilityLiveRegion="polite" style={s.notice}>
+          <Text testID="shop-status-message" accessibilityLiveRegion="polite" style={s.notice}>
             {notice}
           </Text>
         </Pressable>
@@ -233,6 +233,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
     return (
       <View style={s.fill}>
         <FlatList
+          testID="shop-product-list"
           data={filtered}
           keyExtractor={(p) => p.id}
           numColumns={2}
@@ -255,7 +256,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
           ListHeaderComponent={
             <View style={s.listHeader}>
               {header}
-              <Heading title="Products" />
+              <Heading title="Products" testID="shop-products-heading" />
               <Field
                 label="Search products"
                 value={query}
@@ -303,6 +304,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
           renderItem={({ item: p }) => (
             <View style={s.product}>
               <Pressable
+                testID={`shop-product-${p.id}`}
                 accessibilityRole="button"
                 accessibilityLabel={`View ${p.name}`}
                 onPress={() => {

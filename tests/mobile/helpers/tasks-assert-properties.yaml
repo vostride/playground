@@ -1,0 +1,31 @@
+appId: dev.vostride.playground
+---
+# Run after closing/reopening the card, so these verify saved task state.
+- scrollUntilVisible:
+    element:
+      id: task-detail-assignee-maya
+    direction: UP
+    centerElement: true
+- assertVisible:
+    id: task-detail-assignee-maya
+    selected: true
+- assertVisible:
+    id: task-detail-assignee-alex
+    selected: false
+- scrollUntilVisible:
+    element:
+      id: task-detail-label-design
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: task-detail-label-design
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: task-detail-due-date
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: task-detail-due-date
+    text: '^Due Oct 28, 2026$'
+- takeScreenshot: brello-properties-persisted

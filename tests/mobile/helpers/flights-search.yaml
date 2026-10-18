@@ -1,0 +1,142 @@
+appId: dev.vostride.playground
+---
+# Change the origin through the actual autocomplete sheet.
+- tapOn:
+    id: flight-from-picker
+- runFlow:
+    file: fill.yaml
+    env:
+      FIELD: field-search-airports
+      VALUE: SFO
+- tapOn:
+    id: flight-airport-SFO
+- assertVisible:
+    id: flight-from-picker
+    text: '^From: San Francisco [(]SFO[)]$'
+# Choose both dates and check the return-date constraint before completing it.
+- tapOn:
+    id: flight-dates-picker
+- scrollUntilVisible:
+    element:
+      text: '^2026-11-12$'
+    direction: DOWN
+    centerElement: true
+- tapOn: '^2026-11-12$'
+- assertVisible:
+    text: '^2026-11-11$'
+    enabled: false
+- tapOn: '^2026-11-19$'
+- assertVisible:
+    id: flight-dates-picker
+    text: '^Travel dates: Nov 12 – Nov 19$'
+- tapOn:
+    id: flight-travelers-picker
+- assertVisible:
+    id: button-remove-traveler
+    enabled: false
+- tapOn:
+    id: button-add-traveler
+- assertVisible:
+    id: flight-traveler-count
+    text: '^2$'
+- assertVisible:
+    id: button-remove-traveler
+    enabled: true
+- tapOn:
+    id: button-done
+- assertVisible:
+    id: flight-travelers-picker
+    text: '^Travelers: 2 adults$'
+- scrollUntilVisible:
+    element:
+      id: button-search-flights
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-search-flights
+- assertVisible: '^San Francisco → London$'
+- assertVisible: '^Nov 12 · 2 travelers · Outbound flight$'
+- scrollUntilVisible:
+    element:
+      id: flight-results-count
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-results-count
+    text: '^12 flights found$'
+- scrollUntilVisible:
+    element:
+      text: '^Nonstop only$'
+    direction: UP
+    centerElement: true
+- tapOn:
+    text: '^Nonstop only$'
+    checked: false
+- assertVisible:
+    text: '^Nonstop only$'
+    checked: true
+- scrollUntilVisible:
+    element:
+      id: flight-results-count
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-results-count
+    text: '^5 flights found$'
+# Prove both sort orders by the resulting first flight, not only the chip state.
+- scrollUntilVisible:
+    element:
+      id: chip-earliest-departure
+    direction: UP
+    centerElement: true
+- tapOn:
+    id: chip-earliest-departure
+- scrollUntilVisible:
+    element:
+      id: flight-result-0-summary
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-result-0-summary
+    text: '^Meridian Air MD 177$'
+- scrollUntilVisible:
+    element:
+      id: chip-lowest-price
+    direction: UP
+    centerElement: true
+- tapOn:
+    id: chip-lowest-price
+- scrollUntilVisible:
+    element:
+      id: flight-result-0-price
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-result-0-summary
+    text: '^Atlas Pacific AP 180$'
+- assertVisible:
+    id: flight-result-0-price
+    text: '^\$465 / traveler$'
+# The visible earlier day changes the quote from $465 to $501.
+- scrollUntilVisible:
+    element:
+      id: flight-price-date-2026-11-11
+    direction: UP
+    centerElement: true
+- tapOn:
+    id: flight-price-date-2026-11-11
+- assertVisible:
+    id: flight-price-date-2026-11-11
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: flight-result-0-price
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-result-0-summary
+    text: '^Atlas Pacific AP 180$'
+- assertVisible:
+    id: flight-result-0-price
+    text: '^\$501 / traveler$'
+- takeScreenshot: looking-search-filter-sort-date-price

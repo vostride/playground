@@ -1,0 +1,18 @@
+appId: dev.vostride.playground
+---
+# Toggle only the named PepaPog switch through the visible Test controls UI.
+# Callers assert the labelled banner and actual product failure/recovery.
+- tapOn: '^Test controls$'
+- scrollUntilVisible:
+    element:
+      text: '${OBS_BUG_LABEL}'
+    direction: DOWN
+    centerElement: true
+- tapOn: '${OBS_BUG_LABEL}'
+- scrollUntilVisible:
+    element:
+      id: button-close-controls
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-close-controls

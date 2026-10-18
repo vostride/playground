@@ -1,0 +1,60 @@
+appId: dev.vostride.playground
+---
+# Choose a real board, then traverse all 30 tasks through the rendered list.
+- tapOn: '^Browse all boards$'
+- tapOn:
+    id: task-board-option-board-2
+- assertVisible:
+    id: task-board-title
+    text: 'Platform · Cycle 1'
+- tapOn:
+    id: task-view-list
+- assertVisible:
+    id: task-card-CKB-031
+- scrollUntilVisible:
+    element:
+      id: task-card-CKB-060
+    direction: DOWN
+    centerElement: true
+    timeout: 60000
+- assertVisible:
+    id: task-card-CKB-060
+- assertNotVisible:
+    id: task-card-CKB-031
+- takeScreenshot: brello-long-list-last-task
+- scrollUntilVisible:
+    element:
+      id: task-card-CKB-031
+    direction: UP
+    centerElement: true
+    timeout: 60000
+# Use the list viewport center; a cell reported visible can still be clipped
+# behind the fixed header. The first pull reaches the top, the second refreshes.
+# Both are moving swipes, separate from the held-finger drag companions.
+- swipe:
+    from:
+      id: task-list
+    direction: DOWN
+    duration: 800
+- swipe:
+    from:
+      id: task-list
+    direction: DOWN
+    duration: 800
+- extendedWaitUntil:
+    visible: '^Board is up to date$'
+    timeout: 10000
+- assertVisible:
+    id: task-card-CKB-031
+- takeScreenshot: brello-pull-to-refresh-complete
+- runFlow:
+    when:
+      visible: '^Dismiss notification$'
+    commands:
+      - tapOn: '^Dismiss notification$'
+- tapOn: '^Browse all boards$'
+- tapOn:
+    id: task-board-option-board-1
+- assertVisible:
+    id: task-board-title
+    text: Product launch

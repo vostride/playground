@@ -610,7 +610,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
           </Pressable>
         </View>
         <View style={styles.titleRow}>
-          <Text accessibilityRole="header" style={styles.boardTitle}>
+          <Text testID="task-board-title" accessibilityRole="header" style={styles.boardTitle}>
             {board.name}
           </Text>
           <Pressable
@@ -625,8 +625,18 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
         </View>
         <View style={styles.headerBottom}>
           <View style={styles.row}>
-            <Choice title="Board" selected={view === 'board'} onPress={() => setView('board')} />
-            <Choice title="List" selected={view === 'list'} onPress={() => setView('list')} />
+            <Choice
+              testID="task-view-board"
+              title="Board"
+              selected={view === 'board'}
+              onPress={() => setView('board')}
+            />
+            <Choice
+              testID="task-view-list"
+              title="List"
+              selected={view === 'list'}
+              onPress={() => setView('list')}
+            />
           </View>
           <Text style={styles.progressText}>
             {boardTasks.filter((task) => task.status === 'done').length} of {boardTasks.length}{' '}
@@ -636,6 +646,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
       </View>
       <View style={styles.toolbar}>
         <TextInput
+          testID="task-search"
           accessibilityLabel="Search tasks"
           placeholder="Search tasks…"
           placeholderTextColor="#a798b2"
@@ -695,10 +706,16 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
           <Text style={styles.emptyDetail}>
             Try another search or clear your filters to see the whole board.
           </Text>
-          <TaskButton title="Clear filters" secondary onPress={() => setFilters({})} />
+          <TaskButton
+            testID="task-clear-filters"
+            title="Clear filters"
+            secondary
+            onPress={() => setFilters({})}
+          />
         </ScrollView>
       ) : view === 'list' ? (
         <FlatList
+          testID="task-list"
           data={visible}
           keyExtractor={(task) => task.id}
           renderItem={({ item }) => renderTask(item)}
@@ -838,6 +855,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
             contentContainerStyle={styles.boardList}
             renderItem={({ item }) => (
               <Pressable
+                testID={`task-board-option-${item.id}`}
                 accessibilityRole="button"
                 onPress={() => {
                   setBoardId(item.id);
@@ -870,17 +888,20 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
           <Text style={styles.sectionLabel}>ASSIGNEE</Text>
           <View style={styles.choices}>
             <Choice
+              testID="task-filter-assignee-everyone"
               title="Everyone"
               selected={!filters.assignee}
               onPress={() => setFilters({ ...filters, assignee: '' })}
             />
             <Choice
+              testID="task-filter-assignee-unassigned"
               title="Unassigned"
               selected={filters.assignee === 'unassigned'}
               onPress={() => setFilters({ ...filters, assignee: 'unassigned' })}
             />
             {TASK_MEMBERS.map((member) => (
               <Choice
+                testID={`task-filter-assignee-${member.id}`}
                 key={member.id}
                 title={member.name}
                 selected={filters.assignee === member.id}
@@ -891,12 +912,14 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
           <Text style={styles.sectionLabel}>LABEL</Text>
           <View style={styles.choices}>
             <Choice
+              testID="task-filter-label-all"
               title="All labels"
               selected={!filters.label}
               onPress={() => setFilters({ ...filters, label: '' })}
             />
             {TASK_LABELS.map((label) => (
               <Choice
+                testID={`task-filter-label-${label.id}`}
                 key={label.id}
                 title={label.name}
                 selected={filters.label === label.id}
@@ -913,6 +936,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
             />
             {priorityOptions.map((priority) => (
               <Choice
+                testID={`task-filter-priority-${priority}`}
                 key={priority}
                 title={priority[0].toUpperCase() + priority.slice(1)}
                 selected={filters.priority === priority}
@@ -930,10 +954,16 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
             />
           </View>
           <TaskButton
+            testID="task-filter-apply"
             title={`Show ${visible.length} matching tasks`}
             onPress={() => setSheet(null)}
           />
-          <TaskButton title="Clear filters" secondary onPress={() => setFilters({})} />
+          <TaskButton
+            testID="task-clear-filters"
+            title="Clear filters"
+            secondary
+            onPress={() => setFilters({})}
+          />
         </Sheet>
       )}
       {sheet === 'new' && (
@@ -1171,6 +1201,7 @@ function TaskDetail({
       <View style={styles.choices}>
         {TASK_MEMBERS.map((member) => (
           <Choice
+            testID={`task-detail-assignee-${member.id}`}
             key={member.id}
             title={member.name}
             selected={task.assignees.includes(member.id)}
@@ -1188,6 +1219,7 @@ function TaskDetail({
       <View style={styles.choices}>
         {TASK_LABELS.map((label) => (
           <Choice
+            testID={`task-detail-label-${label.id}`}
             key={label.id}
             title={label.name}
             selected={task.labels.includes(label.id)}
@@ -1203,6 +1235,7 @@ function TaskDetail({
       </View>
       <Text style={styles.sectionLabel}>DUE DATE</Text>
       <TaskButton
+        testID="task-detail-due-date"
         title={
           task.dueDate
             ? `Due ${formatDate(task.dueDate)}, ${task.dueDate.slice(0, 4)}`
@@ -1332,7 +1365,7 @@ function TaskDetail({
           <Text style={styles.error}>Delete task</Text>
         </Pressable>
       )}
-      <TaskButton title="Done" onPress={close} />
+      <TaskButton testID="task-detail-done" title="Done" onPress={close} />
     </Sheet>
   );
 }
@@ -1482,14 +1515,14 @@ const styles = StyleSheet.create({
   statusDot: { width: 9, height: 9, borderRadius: 5 },
   columnTitle: { fontSize: 12, fontWeight: '600', color: theme.ink },
   columnCount: { fontSize: 11, color: theme.muted },
-  columnContent: { paddingBottom: 40, gap: 0 },
+  columnContent: { paddingBottom: 40, gap: 6 },
   taskCard: {
-    borderBottomWidth: 1,
+    borderWidth: 1,
     borderColor: theme.border,
-    backgroundColor: 'transparent',
-    borderRadius: 0,
+    backgroundColor: '#fff',
+    borderRadius: 2,
   },
-  cardPressable: { paddingHorizontal: 4, paddingVertical: 10, gap: 6 },
+  cardPressable: { paddingHorizontal: 10, paddingVertical: 10, gap: 6 },
   cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   taskId: { fontSize: 10, color: theme.muted, letterSpacing: 0.3 },
   pencil: { color: '#b4a5bf', fontSize: 16 },
@@ -1532,7 +1565,7 @@ const styles = StyleSheet.create({
   emptyDetail: { color: theme.muted, fontSize: 12, lineHeight: 19, textAlign: 'center' },
   emptyHint: { color: theme.muted, fontSize: 10, lineHeight: 16, textAlign: 'center' },
   center: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 30 },
-  listContent: { padding: 12, gap: 0 },
+  listContent: { padding: 12, gap: 6 },
   dragPreview: {
     position: 'absolute',
     top: 0,

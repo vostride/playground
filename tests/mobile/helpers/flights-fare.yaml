@@ -1,0 +1,57 @@
+appId: dev.vostride.playground
+---
+# $501 outbound + $456 return, for two adults. Standard adds $256 total.
+- scrollUntilVisible:
+    element:
+      id: flight-fare-total
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-fare-total
+    text: '^Total \$2,170$'
+- scrollUntilVisible:
+    element:
+      id: flight-fare-flex
+    direction: UP
+    centerElement: true
+- tapOn:
+    id: flight-fare-flex
+- assertVisible:
+    id: flight-fare-flex
+    text: '^Selected$'
+- scrollUntilVisible:
+    element:
+      id: flight-fare-total
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-fare-total
+    text: '^Total \$2,426$'
+# Normal → enabled → documented missing $512 upgrade → disabled → normal.
+- runFlow:
+    file: flights-enable-bug.yaml
+    env:
+      BUG_ID: fare-total
+      BUG_LABEL: Incorrect fare total
+- scrollUntilVisible:
+    element:
+      id: flight-fare-total
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-fare-total
+    text: '^Total \$1,914$'
+- takeScreenshot: looking-fare-upgrade-omitted
+- runFlow:
+    file: flights-disable-bug.yaml
+    env:
+      BUG_ID: fare-total
+      BUG_LABEL: Incorrect fare total
+- scrollUntilVisible:
+    element:
+      id: flight-fare-total
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-fare-total
+    text: '^Total \$2,426$'

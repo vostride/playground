@@ -34,12 +34,12 @@ final class NativeLinkTests: XCTestCase {
             self.requireElement(self.app.buttons["Open Komazon"], "Home product launcher")
         }
 
-        visit("playground://flights", named: "Looking.com search") {
+        visit("playground://flights", named: "Looking search") {
             self.requireText("Flight search")
-            self.requireElement(self.app.buttons["Flights"], "Looking.com navigation")
+            self.requireElement(self.app.buttons["Flights"], "Looking navigation")
         }
 
-        visit("playground://flights/bookings", named: "Looking.com bookings") {
+        visit("playground://flights/bookings", named: "Looking bookings") {
             self.requireElement(self.element("field-find-a-booking"), "Booking search field")
             self.requireText("Booking WL6P2K")
         }

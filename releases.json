@@ -21,7 +21,7 @@
       "id": "wayline-v1",
       "app": "flights",
       "path": "/flights/",
-      "name": "Looking.com",
+      "name": "Looking",
       "status": "candidate",
       "testFile": "tests/e2e/flights.spec.ts",
       "flows": [

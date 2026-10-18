@@ -1,0 +1,39 @@
+appId: dev.vostride.playground
+---
+# SFO-LHR-3 has occupied seat 1E. No seats are selected before this check.
+- assertVisible:
+    id: flight-seat-1E
+    text: '^Seat 1E, occupied$'
+    enabled: false
+- runFlow:
+    file: flights-enable-bug.yaml
+    env:
+      BUG_ID: seat-conflict
+      BUG_LABEL: Occupied seat selectable
+- assertVisible:
+    id: flight-seat-1E
+    enabled: true
+- tapOn:
+    id: flight-seat-1E
+- assertVisible:
+    id: flight-seat-1E
+    text: '^Seat 1E, occupied, selected$'
+    selected: true
+- takeScreenshot: looking-occupied-seat-selected
+# Undo the deliberately invalid selection before returning to normal booking.
+- tapOn:
+    id: flight-seat-1E
+- assertVisible:
+    id: flight-seat-1E
+    text: '^Seat 1E, occupied$'
+    selected: false
+- runFlow:
+    file: flights-disable-bug.yaml
+    env:
+      BUG_ID: seat-conflict
+      BUG_LABEL: Occupied seat selectable
+- assertVisible:
+    id: flight-seat-1E
+    text: '^Seat 1E, occupied$'
+    enabled: false
+    selected: false

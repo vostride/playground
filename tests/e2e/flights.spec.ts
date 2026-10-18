@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-test('Looking.com: search, filters, fare, seats, validated checkout, manage booking', async ({
+test('Looking: search, filters, fare, seats, validated checkout, manage booking', async ({
   page,
 }) => {
   await page.goto('/flights/');
@@ -43,7 +43,7 @@ test('Looking.com: search, filters, fare, seats, validated checkout, manage book
     .click();
   await expect(page.locator('.booking-card').first().locator('.status')).toHaveText('Cancelled');
 });
-test('Looking.com occupied seats are disabled by default', async ({ page }) => {
+test('Looking occupied seats are disabled by default', async ({ page }) => {
   await page.goto('/flights/');
   await page.getByLabel('One way', { exact: true }).check();
   await page.getByRole('button', { name: 'Search flights', exact: true }).click();
@@ -51,7 +51,7 @@ test('Looking.com occupied seats are disabled by default', async ({ page }) => {
   await page.getByRole('button', { name: 'Continue to seats' }).click();
   await expect(page.locator('.seat.occupied').first()).toBeDisabled();
 });
-test('Looking.com date range, traveler picker, price calendar and sorting change results', async ({
+test('Looking date range, traveler picker, price calendar and sorting change results', async ({
   page,
 }) => {
   await page.goto('/flights/');

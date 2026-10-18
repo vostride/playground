@@ -1,11 +1,12 @@
 appId: dev.vostride.playground
-name: Brello create, edit, move, undo, checklist, and persistence
+name: Brello boards, task properties, refresh, move, undo, and both bug switches
 ---
 - runFlow: ../helpers/launch.yaml
 - runFlow:
     file: ../helpers/open-link.yaml
     env:
       LINK: playground://tasks
+- runFlow: ../helpers/tasks-browse-refresh.yaml
 - tapOn:
     id: task-new-button
 - tapOn:
@@ -56,6 +57,8 @@ name: Brello create, edit, move, undo, checklist, and persistence
 - assertVisible:
     id: task-status-todo
     selected: true
+- runFlow: ../helpers/tasks-accessible-order.yaml
+- runFlow: ../helpers/tasks-edit-properties.yaml
 - runFlow:
     file: ../helpers/fill.yaml
     env:
@@ -71,9 +74,15 @@ name: Brello create, edit, move, undo, checklist, and persistence
 - scrollUntilVisible:
     centerElement: true
     element:
-      text: Done
+      id: task-detail-done
     direction: DOWN
-- tapOn: Done
+- tapOn:
+    id: task-detail-done
+- extendedWaitUntil:
+    notVisible: '^Close CKB-2401$'
+    timeout: 10000
+- assertVisible:
+    id: task-search
 - runFlow:
     file: ../helpers/open-link.yaml
     env:
@@ -90,3 +99,7 @@ name: Brello create, edit, move, undo, checklist, and persistence
     text: Confirm mobile flow
     checked: true
 - takeScreenshot: corkboard-task-persisted
+- runFlow: ../helpers/tasks-assert-properties.yaml
+- runFlow: ../helpers/tasks-filter-bug.yaml
+- runFlow: ../helpers/tasks-move-bug.yaml
+- takeScreenshot: brello-expanded-acceptance-complete

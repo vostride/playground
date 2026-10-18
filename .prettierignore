@@ -1,6 +1,6 @@
 SPEC.md
 package-lock.json
-apps/mobile/src/screens/ShopArt.ts
+mobile/src/screens/ShopArt.ts
 node_modules
 dist
 .cache

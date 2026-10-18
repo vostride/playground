@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Looking.com jumps to a distant leap year and preserves the chosen round trip dates', async ({
+test('Looking jumps to a distant leap year and preserves the chosen round trip dates', async ({
   page,
 }) => {
   await page.goto('/flights/');
@@ -30,7 +30,7 @@ test('Looking.com jumps to a distant leap year and preserves the chosen round tr
   await expect(page.locator('.flight-card')).toHaveCount(12);
 });
 
-test('Looking.com accepts exact past dates and rejects a return before departure', async ({
+test('Looking accepts exact past dates and rejects a return before departure', async ({
   page,
 }) => {
   await page.goto('/flights/');
@@ -51,7 +51,7 @@ test('Looking.com accepts exact past dates and rejects a return before departure
   await expect(page.locator('.results-heading')).toContainText('March 7');
 });
 
-test.describe('Looking.com calendar dates in Pacific/Apia', () => {
+test.describe('Looking calendar dates in Pacific/Apia', () => {
   test.use({ timezoneId: 'Pacific/Apia' });
 
   test('a locally skipped day keeps its actual calendar label and selected search date', async ({
@@ -74,7 +74,7 @@ for (const boundary of [
   { date: '0001-01-01', selectedIndex: 0, neighborIndex: 1, nextLabel: 'January 2, 1' },
   { date: '9999-12-31', selectedIndex: 6, neighborIndex: 5, nextLabel: 'December 30, 9999' },
 ]) {
-  test(`Looking.com has seven unique selectable prices at ${boundary.date}`, async ({ page }) => {
+  test(`Looking has seven unique selectable prices at ${boundary.date}`, async ({ page }) => {
     await page.goto('/flights/');
     await page.getByLabel('One way', { exact: true }).check();
     await page.locator('.date-field .picker-button').click();

@@ -573,7 +573,8 @@
     align-items: center;
     gap: 9px;
     min-height: 34px;
-    margin: 0 0 2px;
+    margin: 0 -10px 2px;
+    padding: 0 10px;
     border-bottom: 1px solid #344258;
   }
   .column-header h2 {
@@ -627,7 +628,8 @@
   .column-cards {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 8px;
+    padding-top: 8px;
   }
   .task-card {
     display: flex;
@@ -636,12 +638,11 @@
     cursor: grab;
     transition: background-color 0.15s;
     min-height: 120px;
-    border: 0;
-    border-bottom: 1px solid #263246;
-    border-radius: 0;
-    background: transparent;
+    border: 1px solid #2a3648;
+    border-radius: 2px;
+    background: #121b27;
     box-shadow: none;
-    padding: 10px 2px;
+    padding: 10px 12px;
   }
   .task-card:hover {
     background: #151f2e;

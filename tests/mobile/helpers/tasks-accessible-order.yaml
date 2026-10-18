@@ -1,0 +1,62 @@
+appId: dev.vostride.playground
+---
+# Six seeded To do tasks precede the new card. Exercise the visible ordering
+# buttons to the boundary, then prove Undo restores the preceding position.
+- assertVisible:
+    text: '^Move earlier$'
+    enabled: true
+- tapOn: '^Move earlier$'
+- assertVisible:
+    text: '^Move earlier$'
+    enabled: true
+- tapOn: '^Move earlier$'
+- assertVisible:
+    text: '^Move earlier$'
+    enabled: true
+- tapOn: '^Move earlier$'
+- assertVisible:
+    text: '^Move earlier$'
+    enabled: true
+- tapOn: '^Move earlier$'
+- assertVisible:
+    text: '^Move earlier$'
+    enabled: true
+- tapOn: '^Move earlier$'
+- assertVisible:
+    text: '^Move earlier$'
+    enabled: true
+- tapOn: '^Move earlier$'
+- assertVisible:
+    text: '^Move earlier$'
+    enabled: false
+- tapOn: '^Move later$'
+- assertVisible:
+    text: '^Move earlier$'
+    enabled: true
+# One earlier move must return from position one to the first-position boundary.
+- tapOn: '^Move earlier$'
+- assertVisible:
+    text: '^Move earlier$'
+    enabled: false
+- tapOn: '^Move later$'
+- assertVisible:
+    text: '^Move earlier$'
+    enabled: true
+- scrollUntilVisible:
+    element:
+      id: task-detail-undo
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: task-detail-undo
+- scrollUntilVisible:
+    element:
+      text: '^Move earlier$'
+    direction: UP
+    centerElement: true
+- assertVisible:
+    text: '^Move earlier$'
+    enabled: false
+- assertVisible:
+    id: task-status-todo
+    selected: true

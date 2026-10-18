@@ -45,7 +45,7 @@ const apps = [
   {
     id: 'flights' as const,
     logo: require('./assets/brands/flights.png'),
-    name: 'Looking.com',
+    name: 'Looking',
     symbol: '↗',
     color: '#1b5149',
     tint: '#dce8e0',
@@ -147,6 +147,7 @@ export default function App() {
 
         <View style={styles.header}>
           <TouchableOpacity
+            testID="navigation-back"
             accessibilityRole="button"
             accessibilityLabel={
               current.app === 'home' ? 'Playground home' : 'Back to previous screen'
@@ -183,6 +184,7 @@ export default function App() {
               {apps.map((app) => (
                 <TouchableOpacity
                   key={app.id}
+                  testID={`home-open-${app.id}`}
                   accessibilityRole="button"
                   accessibilityLabel={`Open ${app.name}`}
                   onPress={() => navigate(app.id)}
@@ -221,6 +223,7 @@ export default function App() {
         <View style={styles.tabs}>
           {[{ id: 'home' as const, name: 'Home', symbol: '⌂' }, ...apps].map((app) => (
             <TouchableOpacity
+              testID={`tab-${app.id}`}
               accessibilityRole="tab"
               accessibilityLabel={app.name}
               accessibilityState={{ selected: current.app === app.id }}
@@ -279,6 +282,7 @@ export default function App() {
                       <Row key={b.id}>
                         <Text style={{ flex: 1, fontSize: 12, color: colors.ink }}>{b.label}</Text>
                         <Switch
+                          testID={`bug-${app.id}-${b.id}`}
                           accessibilityLabel={`${app.name}: ${b.label}`}
                           value={bugs[app.id] === b.id}
                           onValueChange={(enabled) =>

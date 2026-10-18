@@ -1,5 +1,5 @@
 appId: dev.vostride.playground
-name: PepaPog log query, event trace, monitor creation, pause, and delete
+name: PepaPog range, live metrics, log facets and refresh, span inspection, monitor validation and persistence, both bug controls
 ---
 - runFlow: ../helpers/launch.yaml
 - runFlow:
@@ -8,72 +8,12 @@ name: PepaPog log query, event trace, monitor creation, pause, and delete
       LINK: playground://observability/logs
 - assertVisible:
     id: vigil-field-log-search-query
-- runFlow:
-    file: ../helpers/fill.yaml
-    env:
-      FIELD: vigil-field-log-search-query
-      VALUE: 'service:checkout status:error'
-- tapOn: Search
-- scrollUntilVisible:
-    centerElement: true
-    element:
-      text: 'error checkout .*'
-    direction: DOWN
-- tapOn:
-    text: 'error checkout .*'
-    index: 0
-- assertVisible: Log event
-- scrollUntilVisible:
-    centerElement: true
-    element:
-      text: View trace
-    direction: DOWN
-- tapOn: View trace
-- assertVisible: Trace details
-- assertVisible: Trace waterfall
-- tapOn: Close
+- runFlow: ../helpers/obs-logs-and-live.yaml
 - runFlow:
     file: ../helpers/open-link.yaml
     env:
       LINK: playground://observability/monitors
-- tapOn: New monitor
-- assertVisible: New metric monitor
-- runFlow:
-    file: ../helpers/fill.yaml
-    env:
-      FIELD: vigil-field-monitor-name
-      VALUE: Native regression monitor
-- runFlow:
-    file: ../helpers/fill.yaml
-    env:
-      FIELD: vigil-field-notify
-      VALUE: oncall@example.test
-- scrollUntilVisible:
-    centerElement: true
-    element:
-      text: Create monitor
-    direction: DOWN
-- tapOn: Create monitor
-- runFlow:
-    file: ../helpers/fill.yaml
-    env:
-      FIELD: vigil-field-search-monitors
-      VALUE: Native regression monitor
-- scrollUntilVisible:
-    centerElement: true
-    element:
-      text: Edit Native regression monitor
-    direction: DOWN
-- assertVisible: Edit Native regression monitor
-- assertVisible: 'Error rate > 2 % · 5 minutes'
-- tapOn: Pause Native regression monitor
-- assertVisible: Resume Native regression monitor
-- takeScreenshot: vigil-monitor-paused
-- scrollUntilVisible:
-    centerElement: true
-    element:
-      text: Delete
-    direction: DOWN
-- tapOn: Delete
-- tapOn: Delete monitor
-- assertVisible: No matching monitors
+- runFlow: ../helpers/obs-monitors.yaml
+- assertVisible: '^No matching monitors$'
+- assertNotVisible: '^Deliberate bug:.*'
+- takeScreenshot: pepapog-monitor-deleted-bugs-disabled

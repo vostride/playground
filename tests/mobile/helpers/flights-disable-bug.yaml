@@ -1,0 +1,24 @@
+appId: dev.vostride.playground
+---
+- tapOn: '^Test controls$'
+- scrollUntilVisible:
+    element:
+      id: 'bug-flights-${BUG_ID}'
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: 'bug-flights-${BUG_ID}'
+    checked: true
+- tapOn:
+    id: 'bug-flights-${BUG_ID}'
+- assertVisible:
+    id: 'bug-flights-${BUG_ID}'
+    checked: false
+- scrollUntilVisible:
+    element:
+      id: button-close-controls
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-close-controls
+- assertNotVisible: '^Deliberate bug:.*'

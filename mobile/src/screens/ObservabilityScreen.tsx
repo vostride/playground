@@ -103,7 +103,7 @@ function Action({
 function Panel({ children, style }: { children: ReactNode; style?: object }) {
   return <View style={[s.panel, style]}>{children}</View>;
 }
-function Badge({ value }: { value: string }) {
+function Badge({ value, testID }: { value: string; testID?: string }) {
   const color =
     value === 'ok' || value === 'info'
       ? '#527d6d'
@@ -115,7 +115,7 @@ function Badge({ value }: { value: string }) {
   return (
     <View style={[s.badge, { backgroundColor: `${color}12`, borderColor: `${color}28` }]}>
       <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color }} />
-      <Text style={{ fontSize: 10, color, fontWeight: '500' }}>
+      <Text testID={testID} style={{ fontSize: 10, color, fontWeight: '500' }}>
         {value === 'ok' ? 'Healthy' : value.charAt(0).toUpperCase() + value.slice(1)}
       </Text>
     </View>
@@ -233,6 +233,7 @@ function Select({
     <View style={s.field}>
       <Text style={s.label}>{label}</Text>
       <Pressable
+        testID={`vigil-select-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${options.find((option) => option.value === value)?.label ?? value}`}
         onPress={() => setOpen(true)}
@@ -248,6 +249,7 @@ function Select({
           <ScrollView contentContainerStyle={s.sheetContent}>
             {options.map((option) => (
               <Pressable
+                testID={`vigil-option-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${option.value}`}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: option.value === value }}
                 key={option.value}
@@ -380,6 +382,7 @@ export default function ObservabilityScreen({ route, bug, navigate }: MobileScre
           {pages.map((item) => (
             <Pressable
               key={item.key}
+              testID={`vigil-tab-${item.key}`}
               accessibilityRole="tab"
               accessibilityState={{ selected: page === item.key }}
               onPress={() => navigate('observability', item.key)}
@@ -403,6 +406,7 @@ export default function ObservabilityScreen({ route, bug, navigate }: MobileScre
           <View style={s.liveControl}>
             <Text style={s.label}>{live ? 'Live' : 'Paused'}</Text>
             <Switch
+              testID="vigil-live-updates"
               accessibilityLabel="Live updates"
               value={live}
               onValueChange={setLive}
@@ -538,7 +542,10 @@ function MobileOverview({
         ].map((metric) => (
           <Panel key={metric.label} style={s.metricCard}>
             <Text style={s.smallLabel}>{metric.label}</Text>
-            <Text style={s.metricValue}>
+            <Text
+              testID={`vigil-metric-${metric.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+              style={s.metricValue}
+            >
               {metric.value}
               <Text style={s.metricUnit}> {metric.unit}</Text>
             </Text>
@@ -650,6 +657,7 @@ function MobileLogs({
   return (
     <>
       <FlatList
+        testID="vigil-log-list"
         data={filtered}
         keyExtractor={(log) => log.id}
         initialNumToRender={18}
@@ -684,13 +692,16 @@ function MobileLogs({
               Try status:error, service:checkout, or "payment provider".
             </Text>
             <View style={s.resultCount}>
-              <Text style={s.resultCountText}>{formatNumber(filtered.length)} logs found</Text>
+              <Text testID="vigil-log-count" style={s.resultCountText}>
+                {formatNumber(filtered.length)} logs found
+              </Text>
               <Text style={s.smallLabel}>{environment} · UTC</Text>
             </View>
           </View>
         }
         renderItem={({ item }) => (
           <Pressable
+            testID={`vigil-${item.id}`}
             accessibilityRole="button"
             accessibilityLabel={`${item.level} ${item.service} ${item.message}`}
             onPress={() => setSelected(item)}
@@ -732,6 +743,7 @@ function MobileLogs({
               <View style={s.switchRow} key={level}>
                 <Badge value={level} />
                 <Switch
+                  testID={`vigil-filter-level-${level}`}
                   accessibilityLabel={`Filter ${level} logs`}
                   value={levels.includes(level)}
                   onValueChange={() => setLevels(toggle(levels, level))}
@@ -744,6 +756,7 @@ function MobileLogs({
               <View key={service} style={s.switchRow}>
                 <Text style={s.serviceName}>{service}</Text>
                 <Switch
+                  testID={`vigil-filter-service-${service}`}
                   accessibilityLabel={`Filter ${service} logs`}
                   value={services.includes(service)}
                   onValueChange={() => setServices(toggle(services, service))}
@@ -767,7 +780,9 @@ function MobileLogs({
           <ScrollView contentContainerStyle={s.sheetContent}>
             <View style={s.row}>
               <Badge value={selected.level} />
-              <Text style={s.time}>{selected.id}</Text>
+              <Text testID="vigil-selected-event-id" style={s.time}>
+                {selected.id}
+              </Text>
             </View>
             <Title title={selected.message} />
             <Panel>
@@ -941,7 +956,9 @@ function MobileTraces({
               {selected.spans.map((item) => (
                 <Pressable
                   key={item.id}
+                  testID={`vigil-${item.id}`}
                   accessibilityRole="button"
+                  accessibilityState={{ selected: span?.id === item.id }}
                   accessibilityLabel={`Inspect ${item.name}, ${item.duration} milliseconds`}
                   onPress={() => setSpan(item)}
                   style={[s.spanRow, span?.id === item.id && { backgroundColor: '#f8f4ed' }]}
@@ -999,7 +1016,11 @@ function MobileTraces({
                 }).map(([key, value]) => (
                   <View key={key} style={s.detailRow}>
                     <Text style={s.smallLabel}>{key}</Text>
-                    <Text selectable style={s.detailValue}>
+                    <Text
+                      testID={`vigil-span-detail-${key.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                      selectable
+                      style={s.detailValue}
+                    >
                       {value}
                     </Text>
                   </View>
@@ -1141,7 +1162,10 @@ function MobileMonitors({
         renderItem={({ item }) => (
           <Panel style={{ marginBottom: 12 }}>
             <View style={s.logMeta}>
-              <Badge value={evaluateAlert(item, metricValues[item.metric])} />
+              <Badge
+                testID={`vigil-${item.id}-status`}
+                value={evaluateAlert(item, metricValues[item.metric])}
+              />
               <Switch
                 accessibilityLabel={`${item.enabled ? 'Pause' : 'Resume'} ${item.name}`}
                 value={item.enabled}
@@ -1161,7 +1185,7 @@ function MobileMonitors({
             >
               <Text style={s.monitorTitle}>{item.name}</Text>
             </Pressable>
-            <Text style={s.description}>
+            <Text testID={`vigil-${item.id}-condition`} style={s.description}>
               {METRICS[item.metric].label} {item.operator === 'above' ? '>' : '<'} {item.threshold}{' '}
               {METRICS[item.metric].unit} · {item.window} minutes
             </Text>

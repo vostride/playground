@@ -351,6 +351,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
               </Row>
               {(['from', 'to'] as const).map((key) => (
                 <TouchableOpacity
+                  testID={`flight-${key}-picker`}
                   accessibilityRole="button"
                   accessibilityLabel={`${key === 'from' ? 'From' : 'To'}: ${airport(search[key]).city} (${search[key]})`}
                   key={key}
@@ -377,8 +378,9 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                 onPress={() => setSearch({ ...search, from: search.to, to: search.from })}
               />
               <TouchableOpacity
+                testID="flight-dates-picker"
                 accessibilityRole="button"
-                accessibilityLabel="Travel dates"
+                accessibilityLabel={`Travel dates: ${shortDate(search.departure)}${search.roundTrip ? ` – ${shortDate(search.returnDate)}` : ''}`}
                 style={styles.searchField}
                 onPress={() => {
                   setPicker('dates');
@@ -393,8 +395,9 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
+                testID="flight-travelers-picker"
                 accessibilityRole="button"
-                accessibilityLabel="Travelers"
+                accessibilityLabel={`Travelers: ${search.passengers} adult${search.passengers > 1 ? 's' : ''}`}
                 style={styles.searchField}
                 onPress={() => setPicker('passengers')}
               >
@@ -433,7 +436,9 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                   return (
                     <TouchableOpacity
                       key={next}
+                      testID={`flight-price-date-${next}`}
                       accessibilityRole="button"
+                      accessibilityState={{ selected: next === date }}
                       disabled={leg === 'return' && next < search.departure}
                       accessibilityLabel={`${shortDate(next)}, from ${money(Math.min(...searchFlights(from, to, next).map((f) => f.price)))}`}
                       style={[styles.datePrice, next === date && styles.datePriceSelected]}
@@ -538,13 +543,15 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                 ))}
               </Row>
             </Card>
-            <Text style={styles.small}>{results.length} flights found</Text>
+            <Text testID="flight-results-count" style={styles.small}>
+              {results.length} flights found
+            </Text>
             {loading ? (
               <ActivityIndicator color={colors.primary} accessibilityLabel="Finding your way" />
             ) : results.length ? (
-              results.map((f) => (
+              results.map((f, index) => (
                 <Card key={f.id}>
-                  <Text style={styles.medium}>
+                  <Text testID={`flight-result-${index}-summary`} style={styles.medium}>
                     {f.airline} <Text style={styles.small}>{f.number}</Text>
                   </Text>
                   <Row style={{ justifyContent: 'space-between' }}>
@@ -566,7 +573,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                   </Row>
                   <Text style={styles.small}>Carry-on included · Economy · {f.aircraft}</Text>
                   <Row style={{ justifyContent: 'space-between' }}>
-                    <Text style={styles.price}>
+                    <Text testID={`flight-result-${index}-price`} style={styles.price}>
                       {money(f.price)}
                       <Text style={styles.small}> / traveler</Text>
                     </Text>
@@ -609,13 +616,16 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                   </Text>
                 ))}
                 <Button
+                  testID={`flight-fare-${f.id}`}
                   title={fare === f.id ? 'Selected' : `Choose ${f.name}`}
                   variant={fare === f.id ? 'primary' : 'secondary'}
                   onPress={() => setFare(f.id)}
                 />
               </Card>
             ))}
-            <Text style={styles.price}>Total {money(total)}</Text>
+            <Text testID="flight-fare-total" style={styles.price}>
+              Total {money(total)}
+            </Text>
             <Button
               title="Continue to seats"
               onPress={() => {
@@ -666,6 +676,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                     return (
                       <TouchableOpacity
                         key={seat}
+                        testID={`flight-seat-${seat}`}
                         accessibilityRole="button"
                         accessibilityLabel={`Seat ${seat}${occupied ? ', occupied' : ''}${selected ? ', selected' : ''}`}
                         accessibilityState={{
@@ -775,6 +786,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                     <Text style={styles.medium}>Traveler {i + 1} · Adult</Text>
                     <Field
                       label="First name"
+                      testID={i === 0 ? 'field-first-name' : `flight-traveler-${i + 1}-first-name`}
                       value={p.firstName}
                       onChangeText={(value) =>
                         setTravelers(
@@ -784,6 +796,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                     />
                     <Field
                       label="Last name"
+                      testID={i === 0 ? 'field-last-name' : `flight-traveler-${i + 1}-last-name`}
                       value={p.lastName}
                       onChangeText={(value) =>
                         setTravelers(
@@ -793,6 +806,9 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                     />
                     <Field
                       label="Date of birth"
+                      testID={
+                        i === 0 ? 'field-date-of-birth' : `flight-traveler-${i + 1}-birth-date`
+                      }
                       placeholder="YYYY-MM-DD"
                       value={p.birthDate}
                       onChangeText={(value) =>
@@ -950,7 +966,9 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                 {confirmed.passengers.length} traveler{confirmed.passengers.length > 1 ? 's' : ''} ·
                 Seats {confirmed.seats.join(', ')}
               </Text>
-              <Text style={styles.price}>Total {money(confirmed.total)}</Text>
+              <Text testID="flight-confirmation-total" style={styles.price}>
+                Total {money(confirmed.total)}
+              </Text>
             </Card>
             <Button title="Manage your booking" onPress={() => go('bookings')} />
           </>
@@ -988,6 +1006,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                 <Card key={b.reference}>
                   <Row>
                     <Text
+                      testID={`flight-booking-${b.reference}-status`}
                       style={[
                         styles.status,
                         { color: b.status === 'confirmed' ? colors.primary : colors.danger },
@@ -1010,7 +1029,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                   <Text style={styles.body}>
                     {b.passengers.map((p) => `${p.firstName} ${p.lastName}`).join(', ')}
                   </Text>
-                  <Text style={styles.small}>
+                  <Text testID={`flight-booking-${b.reference}-seats`} style={styles.small}>
                     Seats {b.seats.join(', ')}
                     {b.inbound &&
                       ` · Return ${shortDate(b.returnDate)}, seats ${b.returnSeats.join(', ')}`}
@@ -1040,7 +1059,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                       <Button title="Cancel booking" variant="danger" onPress={() => cancel(b)} />
                     </>
                   ) : (
-                    <Text style={styles.small}>
+                    <Text testID={`flight-booking-${b.reference}-refund`} style={styles.small}>
                       {b.fare === 'flex'
                         ? `Refund of ${money(b.total)} recorded.`
                         : b.fare === 'standard'
@@ -1067,7 +1086,12 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
         )}
         {Boolean(error) && (
           <View accessibilityRole="alert" style={styles.error}>
-            <Text style={{ fontSize: 12, color: colors.danger, lineHeight: 19 }}>{error}</Text>
+            <Text
+              testID="flight-error"
+              style={{ fontSize: 12, color: colors.danger, lineHeight: 19 }}
+            >
+              {error}
+            </Text>
           </View>
         )}
       </Screen>
@@ -1110,7 +1134,9 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                 }
                 renderItem={({ item: a }) => (
                   <TouchableOpacity
+                    testID={`flight-airport-${a.code}`}
                     accessibilityRole="button"
+                    accessibilityLabel={`${a.city} (${a.code}), ${a.name}`}
                     style={styles.airportOption}
                     onPress={() => {
                       setSearch({ ...search, [picker]: a.code });
@@ -1235,7 +1261,9 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                     disabled={search.passengers === 1}
                     onPress={() => setSearch({ ...search, passengers: search.passengers - 1 })}
                   />
-                  <Text style={styles.price}>{search.passengers}</Text>
+                  <Text testID="flight-traveler-count" style={styles.price}>
+                    {search.passengers}
+                  </Text>
                   <Button
                     title="Add traveler"
                     variant="secondary"

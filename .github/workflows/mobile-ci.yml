@@ -4,7 +4,7 @@ on:
   push:
     branches: ['**']
     paths:
-      - 'apps/mobile/**'
+      - 'mobile/**'
       - 'packages/core/**'
       - 'tests/mobile/**'
       - 'package.json'
@@ -12,7 +12,7 @@ on:
       - '.github/workflows/mobile-ci.yml'
   pull_request:
     paths:
-      - 'apps/mobile/**'
+      - 'mobile/**'
       - 'packages/core/**'
       - 'tests/mobile/**'
       - 'package.json'
@@ -47,14 +47,14 @@ jobs:
       - run: node --test tests/mobile/android-drag.test.mjs tests/mobile/inspect-apk.test.mjs tests/mobile/run-diagnostic.test.mjs
       - run: npm run typecheck --workspace @playground/mobile
       - name: Prepare bundle directories
-        run: mkdir -p apps/mobile/.bundle/android apps/mobile/.bundle/ios
+        run: mkdir -p mobile/.bundle/android mobile/.bundle/ios
       - run: npm run bundle:android --workspace @playground/mobile
       - run: npm run bundle:ios --workspace @playground/mobile
       - name: Save JavaScript bundles for inspection
         uses: actions/upload-artifact@v4
         with:
           name: mobile-js-bundles
-          path: apps/mobile/.bundle/
+          path: mobile/.bundle/
           include-hidden-files: true
           retention-days: 7
           if-no-files-found: error

@@ -1,0 +1,49 @@
+appId: dev.vostride.playground
+---
+- scrollUntilVisible:
+    element:
+      id: task-detail-assignee-maya
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: task-detail-assignee-maya
+    selected: false
+- tapOn:
+    id: task-detail-assignee-maya
+- assertVisible:
+    id: task-detail-assignee-maya
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: task-detail-label-design
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: task-detail-label-design
+    selected: false
+- tapOn:
+    id: task-detail-label-design
+- assertVisible:
+    id: task-detail-label-design
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: task-detail-due-date
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: task-detail-due-date
+- scrollUntilVisible:
+    element:
+      text: '^2026-10-28$'
+    direction: DOWN
+    centerElement: true
+- tapOn: '^2026-10-28$'
+- scrollUntilVisible:
+    element:
+      id: task-detail-due-date
+    direction: UP
+    centerElement: true
+- assertVisible:
+    id: task-detail-due-date
+    text: '^Due Oct 28, 2026$'

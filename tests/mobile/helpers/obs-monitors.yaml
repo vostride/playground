@@ -1,0 +1,192 @@
+appId: dev.vostride.playground
+---
+- tapOn: '^New monitor$'
+- assertVisible: '^New metric monitor$'
+# Reject a zero threshold plus the blank name/recipient fields. The form must
+# remain open and explain each invalid value before any monitor can be saved.
+- runFlow:
+    file: fill.yaml
+    env:
+      FIELD: vigil-field-alert-threshold
+      VALUE: '0'
+- scrollUntilVisible:
+    element:
+      text: '^Create monitor$'
+    direction: DOWN
+    centerElement: true
+- tapOn: '^Create monitor$'
+- assertVisible: '^New metric monitor$'
+- assertVisible: '^Review the highlighted fields before creating your monitor\.$'
+- scrollUntilVisible:
+    element:
+      text: '^Enter a threshold greater than 0 and at most 100\.$'
+    direction: DOWN
+    centerElement: true
+- assertVisible: '^Enter a threshold greater than 0 and at most 100\.$'
+- runFlow:
+    file: fill.yaml
+    env:
+      FIELD: vigil-field-alert-threshold
+      VALUE: '2'
+- scrollUntilVisible:
+    element:
+      text: '^Enter a monitor name with at least 3 characters\.$'
+    direction: DOWN
+    centerElement: true
+- assertVisible: '^Enter a monitor name with at least 3 characters\.$'
+- runFlow:
+    file: fill.yaml
+    env:
+      FIELD: vigil-field-monitor-name
+      VALUE: Native regression monitor
+- scrollUntilVisible:
+    element:
+      text: '^Enter email addresses separated by commas\.$'
+    direction: DOWN
+    centerElement: true
+- assertVisible: '^Enter email addresses separated by commas\.$'
+- runFlow:
+    file: fill.yaml
+    env:
+      FIELD: vigil-field-notify
+      VALUE: oncall@example.test
+- scrollUntilVisible:
+    element:
+      text: '^Create monitor$'
+    direction: DOWN
+    centerElement: true
+- tapOn: '^Create monitor$'
+- runFlow:
+    file: fill.yaml
+    env:
+      FIELD: vigil-field-search-monitors
+      VALUE: Native regression monitor
+- scrollUntilVisible:
+    element:
+      text: '^Edit Native regression monitor$'
+    direction: DOWN
+    centerElement: true
+- assertVisible: '^Edit Native regression monitor$'
+- assertVisible:
+    id: vigil-monitor-4-condition
+    text: '^Error rate > 2 % · 5 minutes$'
+- tapOn: '^Pause Native regression monitor$'
+- assertVisible: '^Resume Native regression monitor$'
+- assertVisible:
+    id: vigil-monitor-4-status
+    text: '^Paused$'
+- takeScreenshot: vigil-monitor-paused
+- tapOn: '^Resume Native regression monitor$'
+- tapOn: '^Edit Native regression monitor$'
+- assertVisible: '^Edit monitor$'
+- runFlow:
+    file: fill.yaml
+    env:
+      FIELD: vigil-field-alert-threshold
+      VALUE: '3'
+- runFlow:
+    file: fill.yaml
+    env:
+      FIELD: vigil-field-monitor-name
+      VALUE: Native regression monitor edited
+- runFlow:
+    file: fill.yaml
+    env:
+      FIELD: vigil-field-notify
+      VALUE: sre@example.test
+- scrollUntilVisible:
+    element:
+      text: '^Save changes$'
+    direction: DOWN
+    centerElement: true
+- tapOn: '^Save changes$'
+# Leave the product view and re-enter; the saved name, threshold, and recipient
+# must persist. These assertions read UI only and do not touch the session Map.
+- tapOn:
+    id: vigil-tab-overview
+- tapOn:
+    id: vigil-tab-monitors
+- runFlow:
+    file: fill.yaml
+    env:
+      FIELD: vigil-field-search-monitors
+      VALUE: Native regression monitor edited
+- scrollUntilVisible:
+    element:
+      text: '^Edit Native regression monitor edited$'
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: vigil-monitor-4-condition
+    text: '^Error rate > 3 % · 5 minutes$'
+- assertVisible:
+    id: vigil-monitor-4-status
+    text: '^Healthy$'
+- tapOn: '^Edit Native regression monitor edited$'
+- scrollUntilVisible:
+    element:
+      id: vigil-field-notify
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: vigil-field-notify
+    text: '^sre@example\.test$'
+- tapOn: '^Close$'
+# Normal -> enabled -> inverted comparison -> disabled -> explicit repair.
+# Disabling a saving defect does not rewrite previously saved data. Re-select
+# Above and save after disabling to prove intended comparisons work again.
+- runFlow:
+    file: obs-toggle-bug.yaml
+    env:
+      OBS_BUG_LABEL: '^PepaPog: Inverted monitor threshold$'
+- assertVisible: '^Deliberate bug: Inverted monitor threshold$'
+- tapOn: '^Edit Native regression monitor edited$'
+- scrollUntilVisible:
+    element:
+      text: '^Save changes$'
+    direction: DOWN
+    centerElement: true
+- tapOn: '^Save changes$'
+- assertVisible:
+    id: vigil-monitor-4-condition
+    text: '^Error rate < 3 % · 5 minutes$'
+- assertVisible:
+    id: vigil-monitor-4-status
+    text: '^Alert$'
+- takeScreenshot: pepapog-threshold-bug-enabled
+- runFlow:
+    file: obs-toggle-bug.yaml
+    env:
+      OBS_BUG_LABEL: '^PepaPog: Inverted monitor threshold$'
+- assertNotVisible: '^Deliberate bug: Inverted monitor threshold$'
+- tapOn: '^Edit Native regression monitor edited$'
+- scrollUntilVisible:
+    element:
+      id: vigil-select-trigger-when-value-is
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: vigil-select-trigger-when-value-is
+- tapOn:
+    id: vigil-option-trigger-when-value-is-above
+- scrollUntilVisible:
+    element:
+      text: '^Save changes$'
+    direction: DOWN
+    centerElement: true
+- tapOn: '^Save changes$'
+- assertVisible:
+    id: vigil-monitor-4-condition
+    text: '^Error rate > 3 % · 5 minutes$'
+- assertVisible:
+    id: vigil-monitor-4-status
+    text: '^Healthy$'
+- takeScreenshot: pepapog-threshold-bug-disabled
+- scrollUntilVisible:
+    element:
+      text: '^Delete$'
+    direction: DOWN
+    centerElement: true
+- tapOn: '^Delete$'
+- tapOn: '^Delete monitor$'
+- assertVisible: '^No matching monitors$'

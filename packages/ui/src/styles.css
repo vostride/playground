@@ -6,10 +6,10 @@
 @import 'tw-animate-css';
 
 @source "./";
-@source "../../../apps/shop/src";
-@source "../../../apps/flights/src";
-@source "../../../apps/tasks/src";
-@source "../../../apps/observability/src";
+@source "../../../web/shop/src";
+@source "../../../web/flights/src";
+@source "../../../web/tasks/src";
+@source "../../../web/observability/src";
 
 @custom-variant dark (&:is(.dark *));
 

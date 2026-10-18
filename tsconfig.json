@@ -14,10 +14,10 @@
     "types": ["node", "vite/client"]
   },
   "include": [
-    "apps/shop/src",
-    "apps/flights/src",
-    "apps/tasks/src",
-    "apps/observability/src",
+    "web/shop/src",
+    "web/flights/src",
+    "web/tasks/src",
+    "web/observability/src",
     "packages",
     "tests",
     "playwright.config.ts"

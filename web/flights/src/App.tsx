@@ -563,7 +563,7 @@ export default function App() {
       confirmation: 'Booking confirmed',
       bookings: 'My trips',
     };
-    document.title = `${titles[view]} · Looking.com`;
+    document.title = `${titles[view]} · Looking`;
     window.scrollTo(0, 0);
   }, [view, leg]);
   useEffect(() => {
@@ -844,14 +844,14 @@ export default function App() {
   const seatCount = editingSeat ? editingSeat.passengers.length : search.passengers;
   return (
     <>
-      <PlaygroundBanner app="Looking.com" bugs={bugs} />
+      <PlaygroundBanner app="Looking" bugs={bugs} />
       <header className="site-header">
         <div className="header-inner">
-          <button className="wordmark" aria-label="Looking.com home" onClick={() => go('home')}>
+          <button className="wordmark" aria-label="Looking home" onClick={() => go('home')}>
             <span className="brand-mark">
               <BrandMark app="flights" size={24} className="size-6" />
             </span>
-            Looking<span className="brand-dot">.com</span>
+            Looking
           </button>
           <nav aria-label="Main navigation">
             <button className={view !== 'bookings' ? 'nav-active' : ''} onClick={() => go('home')}>

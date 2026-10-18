@@ -4,7 +4,7 @@ env:
   UI_TASK_ID: '${LINK.split("/").pop().split("?")[0]}'
   # The native tab buttons expose their product names as explicit labels.
   UI_TAB: >-
-    ${({home:'^Home$',shop:'^Komazon$',flights:'^Looking\\.com$',tasks:'^Brello$',observability:'^PepaPog$'})[LINK.replace('playground://','').split('/')[0].split('?')[0]]}
+    ${({home:'^Home$',shop:'^Komazon$',flights:'^Looking$',tasks:'^Brello$',observability:'^PepaPog$'})[LINK.replace('playground://','').split('/')[0].split('?')[0]]}
 ---
 # Tapping the current product's tab changes its route without unmounting the
 # screen, preserving Brello's component-local undo stack and task filters.

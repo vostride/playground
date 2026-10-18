@@ -1,0 +1,82 @@
+appId: dev.vostride.playground
+---
+# The created task has only Maya assigned and the Design label. Searching its
+# ID makes the expected result independent of scroll position and other cards.
+- tapOn: '^Close CKB-2401$'
+- tapOn:
+    id: task-search
+- eraseText
+- inputText: CKB-2401
+- runFlow: dismiss-keyboard.yaml
+- tapOn: '^Filter tasks$'
+- tapOn:
+    id: task-filter-assignee-maya
+- scrollUntilVisible:
+    element:
+      id: task-filter-label-design
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: task-filter-label-design
+- scrollUntilVisible:
+    element:
+      id: task-filter-apply
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: task-filter-apply
+    text: '^Show 1 matching tasks$'
+- tapOn:
+    id: task-filter-apply
+- assertVisible:
+    id: task-card-CKB-2401
+# Normal behavior excludes a task assigned to someone else.
+- tapOn: '^Filter tasks$'
+- tapOn:
+    id: task-filter-assignee-alex
+- scrollUntilVisible:
+    element:
+      id: task-filter-apply
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: task-filter-apply
+    text: '^Show 0 matching tasks$'
+- tapOn:
+    id: task-filter-apply
+- assertVisible: '^No tasks match your filters$'
+- assertNotVisible:
+    id: task-card-CKB-2401
+- runFlow:
+    file: tasks-enable-bug.yaml
+    env:
+      BUG_LABEL: Assignee filter is ignored
+# The same search/label/assignee filter wrongly admits Maya's card.
+- assertVisible:
+    id: task-card-CKB-2401
+- assertNotVisible: '^No tasks match your filters$'
+- tapOn: '^Filter tasks$'
+- assertVisible:
+    id: task-filter-assignee-alex
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: task-filter-apply
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: task-filter-apply
+    text: '^Show 1 matching tasks$'
+- tapOn:
+    id: task-filter-apply
+- takeScreenshot: brello-assignee-bug-reproduced
+- runFlow:
+    file: tasks-disable-bug.yaml
+    env:
+      BUG_LABEL: Assignee filter is ignored
+- assertVisible: '^No tasks match your filters$'
+- assertNotVisible:
+    id: task-card-CKB-2401
+- takeScreenshot: brello-assignee-filter-restored
+- tapOn:
+    id: task-clear-filters

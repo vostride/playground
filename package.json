@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "apps/*",
+    "web/*",
+    "mobile",
     "packages/*"
   ],
   "engines": {
@@ -22,7 +23,7 @@
     "check:site": "node scripts/site-check.mjs",
     "check:releases": "node scripts/check-release-registry.mjs",
     "typecheck:mobile": "npm run typecheck -w @playground/mobile",
-    "format": "prettier --write \"apps/*/src/**/*.{ts,tsx,css}\" \"packages/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,yaml}\" \"scripts/*.{mjs,tsx}\" \"*.{json,ts,md}\" \".github/workflows/*.yml\"",
+    "format": "prettier --write \"web/*/src/**/*.{ts,tsx,css}\" \"mobile/src/**/*.{ts,tsx,css}\" \"packages/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,yaml}\" \"scripts/*.{mjs,tsx}\" \"*.{json,ts,md}\" \".github/workflows/*.yml\"",
     "test:mobile:flows": "node tests/mobile/validate.mjs"
   },
   "dependencies": {

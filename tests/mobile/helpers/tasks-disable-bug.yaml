@@ -1,0 +1,23 @@
+appId: dev.vostride.playground
+---
+- tapOn: '^Test controls$'
+- scrollUntilVisible:
+    element:
+      text: '^Brello: ${BUG_LABEL}$'
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    text: '^Brello: ${BUG_LABEL}$'
+    checked: true
+- tapOn: '^Brello: ${BUG_LABEL}$'
+- assertVisible:
+    text: '^Brello: ${BUG_LABEL}$'
+    checked: false
+- scrollUntilVisible:
+    element:
+      id: button-close-controls
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-close-controls
+- assertNotVisible: '^Deliberate bug:.*'

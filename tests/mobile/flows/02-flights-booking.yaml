@@ -1,70 +1,94 @@
 appId: dev.vostride.playground
-name: Looking.com round trip, both seat maps, validated checkout, and booking
+name: Looking search controls, two travelers, bug recovery, checkout, seat changes, cancellation
 ---
 - runFlow: ../helpers/launch.yaml
 - runFlow:
     file: ../helpers/open-link.yaml
     env:
       LINK: playground://flights
+- runFlow: ../helpers/flights-search.yaml
 - scrollUntilVisible:
-    centerElement: true
-    element:
-      id: button-search-flights
-    direction: DOWN
-- tapOn:
-    id: button-search-flights
-- assertVisible: 'New York → London'
-- scrollUntilVisible:
-    centerElement: true
     element:
       id: button-select-flight
     direction: DOWN
+    centerElement: true
 - tapOn:
     id: button-select-flight
     index: 0
-- assertVisible: 'London → New York'
+- assertVisible: '^London → San Francisco$'
+- assertVisible: '^Outbound selected: Atlas Pacific · 09:30 · \$501$'
 - scrollUntilVisible:
+    element:
+      id: flight-result-0-price
+    direction: DOWN
     centerElement: true
+- assertVisible:
+    id: flight-result-0-summary
+    text: '^Meridian Air MD 316$'
+- assertVisible:
+    id: flight-result-0-price
+    text: '^\$456 / traveler$'
+- scrollUntilVisible:
     element:
       id: button-select-flight
     direction: DOWN
+    centerElement: true
 - tapOn:
     id: button-select-flight
     index: 0
-- assertVisible: 'Choose your fare'
+- assertVisible: '^Choose your fare$'
+- runFlow: ../helpers/flights-fare.yaml
 - scrollUntilVisible:
-    centerElement: true
     element:
       id: button-continue-to-seats
     direction: DOWN
+    centerElement: true
 - tapOn:
     id: button-continue-to-seats
-- assertVisible: 'Choose your seats'
-- assertVisible:
-    text: 'Seat 1[A-F], occupied'
-    enabled: false
+- assertVisible: '^Choose your seats$'
+- runFlow: ../helpers/flights-seat-bug.yaml
+# Book only available seats after both deliberate failures have been disabled.
 - tapOn:
-    text: 'Seat 1[A-F]'
-    enabled: true
-    index: 0
-- assertVisible: 'Seat 1[A-F], selected'
+    id: flight-seat-1A
+- tapOn:
+    id: flight-seat-1B
+- assertVisible:
+    id: flight-seat-1A
+    text: '^Seat 1A, selected$'
+    selected: true
+- assertVisible:
+    id: flight-seat-1B
+    text: '^Seat 1B, selected$'
+    selected: true
 - scrollUntilVisible:
-    centerElement: true
     element:
       id: button-choose-return-seats
     direction: DOWN
+    centerElement: true
+- assertVisible: '^Your seats: 1A, 1B$'
 - tapOn:
     id: button-choose-return-seats
-- assertVisible: 'Return · LHR to JFK.*'
+- assertVisible: '^Return · LHR to SFO.*'
+- assertVisible:
+    id: flight-seat-1B
+    text: '^Seat 1B, occupied$'
+    enabled: false
 - tapOn:
-    text: 'Seat 1[A-F]'
-    enabled: true
-    index: 0
+    id: flight-seat-1A
+- tapOn:
+    id: flight-seat-1C
+- assertVisible:
+    id: flight-seat-1A
+    selected: true
+- assertVisible:
+    id: flight-seat-1C
+    selected: true
 - scrollUntilVisible:
-    centerElement: true
     element:
       id: button-continue-to-checkout
     direction: DOWN
+    centerElement: true
+- assertVisible: '^Your seats: 1A, 1C$'
 - tapOn:
     id: button-continue-to-checkout
 # Empty traveler fields must not advance.
@@ -82,7 +106,7 @@ name: Looking.com round trip, both seat maps, validated checkout, and booking
       id: field-first-name
     direction: UP
 # The field is already centered by the upward return from validation. A second
-# downward centering gesture can move it behind Looking.com's pinned subnavigation.
+# downward centering gesture can move it behind Looking's pinned subnavigation.
 - takeScreenshot: wayline-first-name-before-entry
 - tapOn:
     id: field-first-name
@@ -107,6 +131,21 @@ name: Looking.com round trip, both seat maps, validated checkout, and booking
 - runFlow:
     file: ../helpers/fill.yaml
     env:
+      FIELD: flight-traveler-2-first-name
+      VALUE: Sam
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: flight-traveler-2-last-name
+      VALUE: Taylor
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: flight-traveler-2-birth-date
+      VALUE: '1990-03-20'
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
       FIELD: field-email-address
       VALUE: alex@example.com
 - scrollUntilVisible:
@@ -116,26 +155,30 @@ name: Looking.com round trip, both seat maps, validated checkout, and booking
     direction: DOWN
 - tapOn:
     id: button-continue-to-payment
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - scrollUntilVisible:
-          centerElement: true
-          element:
-            id: button-use-sample
-          direction: DOWN
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      # The button already fits the content viewport on iOS. Maestro's extra
-      # centering swipe moves it behind Looking.com's pinned navigation (run39138069470).
-      - scrollUntilVisible:
-          centerElement: false
-          element:
-            id: button-use-sample
-          direction: DOWN
+# Empty payment data must stay on Payment and expose the actual validation error.
+- scrollUntilVisible:
+    element:
+      id: button-review-booking
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-review-booking
+- scrollUntilVisible:
+    element:
+      id: flight-error
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-error
+    text: '^Use the sample card: 4242 4242 4242 4242, expiry 12/30, security code 123, and enter a cardholder name[.]$'
+- assertNotVisible:
+    id: flight-review-heading
+# Return upward from the error to the printed sample-card action.
+- scrollUntilVisible:
+    element:
+      id: button-use-sample
+    direction: UP
+    centerElement: true
 - takeScreenshot: wayline-sample-card-before-tap
 - tapOn:
     id: button-use-sample
@@ -165,28 +208,167 @@ name: Looking.com round trip, both seat maps, validated checkout, and booking
 - assertVisible:
     id: flight-review-heading
     text: '^Review booking$'
+- assertVisible: '^Alex Morgan$'
+- assertVisible: '^Sam Taylor$'
 - scrollUntilVisible:
-    centerElement: true
     element:
       id: flight-accept-terms
     direction: DOWN
+    centerElement: true
 - tapOn:
     id: flight-accept-terms
 - scrollUntilVisible:
-    centerElement: true
     element:
-      text: 'Confirm booking · .*'
+      text: '^Confirm booking · \$2,426$'
     direction: DOWN
-- tapOn: 'Confirm booking · .*'
-- assertVisible: 'Booking confirmed'
-- assertVisible: 'WL006Q'
-- scrollUntilVisible:
     centerElement: true
+- tapOn: '^Confirm booking · \$2,426$'
+- assertVisible: '^Booking confirmed$'
+- assertVisible: '^WL006Q$'
+- assertVisible: '^Departure Nov 11 · 09:30$'
+- assertVisible: '^Return Nov 19 · 05:45$'
+- scrollUntilVisible:
+    element:
+      id: flight-confirmation-total
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-confirmation-total
+    text: '^Total \$2,426$'
+- scrollUntilVisible:
     element:
       id: button-manage-your-booking
     direction: DOWN
+    centerElement: true
 - tapOn:
     id: button-manage-your-booking
-- assertVisible: 'Booking WL006Q'
-- assertVisible: 'Alex Morgan'
-- takeScreenshot: wayline-round-trip-confirmed
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: field-find-a-booking
+      VALUE: WL006Q
+- scrollUntilVisible:
+    element:
+      id: flight-booking-WL006Q-seats
+    direction: DOWN
+    centerElement: true
+- assertVisible: '^Booking WL006Q$'
+- assertVisible: '^Alex Morgan, Sam Taylor$'
+- assertVisible:
+    id: flight-booking-WL006Q-seats
+    text: '^Seats 1A, 1B · Return Nov 19, seats 1A, 1C$'
+- takeScreenshot: looking-round-trip-confirmed
+# Open the saved booking, then return to its management actions.
+- scrollUntilVisible:
+    element:
+      id: button-view-booking
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-view-booking
+- assertVisible: '^WL006Q$'
+- scrollUntilVisible:
+    element:
+      id: flight-confirmation-total
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-confirmation-total
+    text: '^Total \$2,426$'
+- scrollUntilVisible:
+    element:
+      id: button-manage-your-booking
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-manage-your-booking
+- scrollUntilVisible:
+    element:
+      id: button-change-seats
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-change-seats
+# Replace one seat on each leg and verify the saved booking, not just the map.
+- assertVisible:
+    id: flight-seat-1B
+    selected: true
+- tapOn:
+    id: flight-seat-1B
+- tapOn:
+    id: flight-seat-1C
+- assertVisible:
+    id: flight-seat-1C
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: button-choose-return-seats
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-choose-return-seats
+- assertVisible:
+    id: flight-seat-1C
+    selected: true
+- tapOn:
+    id: flight-seat-1C
+- tapOn:
+    id: flight-seat-1E
+- assertVisible:
+    id: flight-seat-1E
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: button-save-seats
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-save-seats
+- scrollUntilVisible:
+    element:
+      id: flight-booking-WL006Q-seats
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-booking-WL006Q-seats
+    text: '^Seats 1A, 1C · Return Nov 19, seats 1A, 1E$'
+- takeScreenshot: looking-both-seat-changes-saved
+- scrollUntilVisible:
+    element:
+      id: button-cancel-booking
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: button-cancel-booking
+- assertVisible: '^Cancel this trip[?]$'
+- assertVisible: '^Booking WL006Q will be cancelled for every traveler[.] Your Flex fare is fully refundable[.]$'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: android:id/button1
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: '^Cancel booking$'
+- scrollUntilVisible:
+    element:
+      id: flight-booking-WL006Q-status
+    direction: UP
+    centerElement: true
+- assertVisible:
+    id: flight-booking-WL006Q-status
+    text: '^Cancelled$'
+- scrollUntilVisible:
+    element:
+      id: flight-booking-WL006Q-refund
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-booking-WL006Q-refund
+    text: '^Refund of \$2,426 recorded[.]$'
+- assertNotVisible:
+    id: button-change-seats
+- takeScreenshot: looking-flex-booking-cancelled

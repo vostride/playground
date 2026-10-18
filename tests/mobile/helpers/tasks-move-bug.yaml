@@ -1,0 +1,94 @@
+appId: dev.vostride.playground
+---
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://tasks/task/CKB-2401
+- assertVisible:
+    id: task-status-todo
+    selected: true
+# First prove that an ordinary cross-column move preserves the saved label.
+- tapOn:
+    id: task-status-progress
+- assertVisible:
+    id: task-status-progress
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: task-detail-label-design
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: task-detail-label-design
+    selected: true
+- tapOn: '^Close CKB-2401$'
+- runFlow:
+    file: tasks-enable-bug.yaml
+    env:
+      BUG_LABEL: Moving removes labels
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://tasks/task/CKB-2401
+- tapOn:
+    id: task-status-review
+- assertVisible:
+    id: task-status-review
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: task-detail-label-design
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: task-detail-label-design
+    selected: false
+- takeScreenshot: brello-move-label-bug-reproduced
+- tapOn: '^Close CKB-2401$'
+- runFlow:
+    file: tasks-disable-bug.yaml
+    env:
+      BUG_LABEL: Moving removes labels
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://tasks/task/CKB-2401
+# Repair the intentionally removed label through its normal field, then repeat
+# the move with the switch off. Disabling a bug must not silently repair data.
+- scrollUntilVisible:
+    element:
+      id: task-detail-label-design
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: task-detail-label-design
+    selected: false
+- tapOn:
+    id: task-detail-label-design
+- scrollUntilVisible:
+    element:
+      id: task-status-done
+    direction: UP
+    centerElement: true
+- tapOn:
+    id: task-status-done
+- assertVisible:
+    id: task-status-done
+    selected: true
+- tapOn: '^Close CKB-2401$'
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://tasks/task/CKB-2401
+- assertVisible:
+    id: task-status-done
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: task-detail-label-design
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: task-detail-label-design
+    selected: true
+- takeScreenshot: brello-move-label-preserved-after-disable

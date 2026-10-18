@@ -105,9 +105,9 @@ jobs:
           import {createHash} from 'node:crypto';
           const platform = process.env.CANDIDATE_PLATFORM;
           if (!['android', 'ios'].includes(platform)) throw new Error('Unsupported candidate platform.');
-          const paths = ['apps/mobile', 'packages/core', 'package.json', 'package-lock.json'];
-          const excludedNativeProject = `apps/mobile/${platform === 'ios' ? 'android' : 'ios'}`;
-          const excludedDocumentation = ['apps/mobile/README.md'];
+          const paths = ['mobile', 'packages/core', 'package.json', 'package-lock.json'];
+          const excludedNativeProject = `mobile/${platform === 'ios' ? 'android' : 'ios'}`;
+          const excludedDocumentation = ['mobile/README.md'];
           const tree = (directory) => {
             const entries = execFileSync('git', ['-C', directory, 'ls-tree', '-r', '-z', '--full-tree', 'HEAD', '--', ...paths], {encoding: 'utf8'});
             return Object.fromEntries(entries.split('\0').filter(Boolean).map((entry) => {
@@ -119,6 +119,10 @@ jobs:
           };
           const candidate = tree('candidate-source');
           const current = tree('.');
+          const requiredFiles = ['mobile/src/App.tsx', 'mobile/package.json', platform === 'android' ? 'mobile/android/app/build.gradle' : 'mobile/ios/Podfile'];
+          for (const [label, files] of [['candidate', candidate], ['current', current]]) {
+            for (const path of requiredFiles) if (!files[path]) throw new Error(`${label} source tree is missing ${path}. Build a fresh candidate for the current repository layout.`);
+          }
           const changed = [...new Set([...Object.keys(candidate), ...Object.keys(current)])].sort().filter((path) => JSON.stringify(candidate[path]) !== JSON.stringify(current[path]));
           const file = `maestro-reports/${platform}/provenance.json`;
           const provenance = JSON.parse(readFileSync(file, 'utf8'));
