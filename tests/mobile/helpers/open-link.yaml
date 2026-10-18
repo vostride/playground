@@ -16,6 +16,15 @@ env:
           'playground://observability/monitors': 'New monitor'
         })[LINK.split('?')[0]]}
 ---
+# GHA runs showed delayed custom-scheme confirmation while the app stayed
+# foregrounded. Exercise the external-link path from SpringBoard
+# while preserving the running app session. This is an activation-race
+# workaround under test; the mandatory destination checks remain below.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - pressKey: home
 - openLink: '${LINK}'
 # iOS can present its first custom-scheme confirmation after openLink returns.
 # Wait for a real destination or that dialog before checking which path occurred.

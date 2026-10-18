@@ -81,11 +81,17 @@ name: Wayline round trip, both seat maps, validated checkout, and booking
     element:
       id: field-first-name
     direction: UP
-- runFlow:
-    file: ../helpers/fill.yaml
-    env:
-      FIELD: field-first-name
-      VALUE: Alex
+# The field is already centered by the upward return from validation. A second
+# downward centering gesture can move it behind Wayline's pinned subnavigation.
+- takeScreenshot: wayline-first-name-before-entry
+- tapOn:
+    id: field-first-name
+- eraseText
+- inputText: Alex
+- assertVisible:
+    id: field-first-name
+    text: '^Alex$'
+- runFlow: ../helpers/dismiss-keyboard.yaml
 - runFlow:
     file: ../helpers/fill.yaml
     env:

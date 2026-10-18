@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {parseAllDocuments} from 'yaml';
 
 const root=path.dirname(fileURLToPath(import.meta.url));
-const commands=new Set(['launchApp','extendedWaitUntil','assertVisible','assertNotVisible','tapOn','longPressOn','scrollUntilVisible','runFlow','openLink','eraseText','inputText','hideKeyboard','takeScreenshot']);
+const commands=new Set(['launchApp','extendedWaitUntil','assertVisible','assertNotVisible','tapOn','longPressOn','scrollUntilVisible','runFlow','openLink','pressKey','eraseText','inputText','hideKeyboard','takeScreenshot']);
 const files=['flows','helpers','expected-failure'].flatMap(directory=>fs.readdirSync(path.join(root,directory)).filter(file=>file.endsWith('.yaml')).map(file=>path.join(root,directory,file)));
 const dependencies=new Map();
 function checkSteps(steps,file){
@@ -23,6 +23,7 @@ function checkSteps(steps,file){
   if(name==='scrollUntilVisible')assert.ok(value.element&&['DOWN','UP','LEFT','RIGHT'].includes(value.direction),`${file}: scroll needs a selector and direction`);
   if(name==='launchApp')assert.equal(value.permissions?.all,'deny',`${file}: native smoke must run without granting permissions`);
   if(name==='openLink')assert.match(value,/^(playground:\/\/|\$\{LINK\})/,`${file}: test must not navigate to an external service`);
+  if(name==='pressKey')assert.equal(value,'home',`${file}: only the documented home key is used by this suite`);
   if(name==='tapOn'||name==='longPressOn'||name.startsWith('assert')){
    assert.ok(typeof value==='string'||(value&&(value.id||value.text)),`${file}: selector needs stable text or id`);
    assert.ok(!value?.point,`${file}: coordinate-only selectors are not allowed`);
