@@ -99,7 +99,19 @@ name: Looking search controls, two travelers, bug recovery, checkout, seat chang
     direction: DOWN
 - tapOn:
     id: button-continue-to-payment
-- assertVisible: 'Enter the passenger.*first and last name\.'
+# Android candidate 39146156938 rendered the alert below Back to seats, clipped
+# by the fixed bottom tabs. Scroll to the actual error before checking it.
+- scrollUntilVisible:
+    element:
+      id: flight-error
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: flight-error
+    text: '^Enter the passenger’s first and last name[.]$'
+- assertNotVisible:
+    id: button-review-booking
+- takeScreenshot: looking-traveler-validation
 - scrollUntilVisible:
     centerElement: true
     element:

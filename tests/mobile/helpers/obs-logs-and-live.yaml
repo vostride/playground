@@ -12,12 +12,14 @@ appId: dev.vostride.playground
     id: vigil-log-count
     text: '^5,187 logs found$'
 # This is the 45th production event, beyond initialNumToRender=18.
+# Android run 39146156938 found it at 28.8s; the final centering swipe exceeded
+# the old 30s limit. Allow 45s for this traversal and its return to the header.
 - scrollUntilVisible:
     element:
       id: vigil-log-000049
     direction: DOWN
     centerElement: true
-    timeout: 30000
+    timeout: 45000
 - tapOn:
     id: vigil-log-000049
 - assertVisible: '^Log event$'
@@ -30,7 +32,7 @@ appId: dev.vostride.playground
       id: vigil-field-log-search-query
     direction: UP
     centerElement: false
-    timeout: 30000
+    timeout: 45000
 # Pull the actual list; the completion notice is emitted only by onRefresh.
 - swipe:
     from:
