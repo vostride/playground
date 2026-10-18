@@ -28,6 +28,8 @@ Focused iOS diagnostics below reuse the older `d73e4c4` binary with a verified i
 
 The Android harness now prepares only its disposable GitHub-hosted Linux emulator, disabling and verifying the exact SDK setup package before offline/product checks. It records evidence and rejects unknown/local targets; it never dismisses product ANRs. All 47 pure helper tests and 39 YAML validations pass after this change. A diagnostic rerun on the preserved current-source APK is required to establish runtime acceptance.
 
+Focused iOS diagnostic [39171492711](https://github.com/vostride/playground/actions/runs/39171492711) subsequently passed the full Brello journey and all three native URL/drag XCTest cases on the preserved current-source ZIP above. Provenance reports no application-source differences; JUnit records zero failures and both Maestro/drag statuses are zero. Report artifact `12153056939` is retained in `test-results/native-audit/ios-tasks-39171492711/ios/ios/`. This closes the focused task-sheet correction, while full current-source platform acceptance remains separate.
+
 | Diagnostic run | Result | Evidence |
 | --- | --- | --- |
 | [39169054673](https://github.com/vostride/playground/actions/runs/39169054673), Looking | Pass, 714.580 s; exact fare totals, both bugs and recovery, traveler validation, persisted seat changes, cancellation and $2,426 refund | Artifact `12152102788`; `test-results/native-audit/ios-flights-39169054673/ios/evidence-summary.json` |

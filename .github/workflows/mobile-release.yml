@@ -1,17 +1,13 @@
-name: Mobile candidate checks and immutable release
+name: Mobile CI build and release
+run-name: Mobile ${{ github.event_name == 'push' && 'release' || 'candidate' }} · ${{ github.sha }}
 
 on:
   push:
-    tags: ['mobile-v*']
+    branches: [main]
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Candidate semantic version to build and test. This run never publishes a release.'
-        type: string
-        required: true
-        default: '0.1.0'
       platform:
-        description: 'Native candidate platform to verify.'
+        description: 'Candidate platform to verify. Manual runs never publish a release.'
         type: choice
         required: true
         default: all
@@ -20,9 +16,10 @@ on:
 permissions:
   contents: read
 
-# A tag gets one release. A rerun cannot replace an existing release or its assets.
+# Each pushed tip gets its own run; a later push cannot cancel an older pending build.
+# Published commit releases are immutable; reruns skip an existing verified release.
 concurrency:
-  group: mobile-release-${{ github.event_name }}-${{ github.ref }}-${{ inputs.version || github.ref_name }}-${{ inputs.platform || 'all' }}
+  group: mobile-release-${{ github.event_name }}-${{ github.sha }}-${{ inputs.platform || 'all' }}
   cancel-in-progress: false
 
 env:
@@ -34,12 +31,20 @@ env:
 
 jobs:
   prepare:
-    name: Validate the candidate or release version
+    name: Prepare the commit version and publication guard
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    # Draft releases are visible only with repository push access. This job only reads them.
+    permissions:
+      contents: write
     outputs:
       version: ${{ steps.version.outputs.version }}
+      native-version: ${{ steps.version.outputs.native-version }}
       build-number: ${{ steps.version.outputs.build-number }}
+      ios-build-number: ${{ steps.version.outputs.ios-build-number }}
+      tag: ${{ steps.version.outputs.tag }}
+      build: ${{ steps.version.outputs.build }}
+      publish: ${{ steps.version.outputs.publish }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,30 +53,11 @@ jobs:
         with:
           node-version: '24.15.0'
           cache: npm
-      - name: Validate semantic version and protect existing releases
+      - name: Derive the commit version and protect existing releases
         id: version
         env:
-          GH_TOKEN: ${{ github.token }}
-          MOBILE_TAG: ${{ github.event_name == 'push' && github.ref_name || format('mobile-v{0}', inputs.version) }}
-          PUBLICATION_REQUESTED: ${{ github.event_name == 'push' }}
-        run: |
-          node --input-type=module <<'NODE'
-          import {appendFileSync} from 'node:fs';
-          const tag = process.env.MOBILE_TAG;
-          const match = /^mobile-v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(tag);
-          if (!match) throw new Error('Release tags must use mobile-vMAJOR.MINOR.PATCH.');
-          const [major, minor, patch] = match.slice(1).map(Number);
-          const build = major * 1000000 + minor * 1000 + patch + 1;
-          if (minor > 999 || patch > 999 || build > 2100000000) throw new Error('Version cannot be encoded as an Android versionCode.');
-          if (process.env.PUBLICATION_REQUESTED === 'true') {
-            const response = await fetch(`${process.env.GITHUB_API_URL}/repos/${process.env.GITHUB_REPOSITORY}/releases/tags/${tag}`, {headers: {Accept: 'application/vnd.github+json', Authorization: `Bearer ${process.env.GH_TOKEN}`}});
-            if (response.status === 200) throw new Error('This release already exists. Existing releases are never modified; use a new version.');
-            if (response.status !== 404) throw new Error(`Could not verify release absence: HTTP ${response.status}.`);
-          } else {
-            appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Candidate verification for ${tag}: native builds, acceptance tests, checksums, and attestations only. No GitHub release will be published.\n`);
-          }
-          appendFileSync(process.env.GITHUB_OUTPUT, `version=${major}.${minor}.${patch}\nbuild-number=${build}\n`);
-          NODE
+          GH_TOKEN: ${{ secrets.MOBILE_RELEASE_TOKEN || github.token }}
+        run: node scripts/mobile-release.mjs prepare
       - run: npm ci
       - run: npm test
       - run: npm run test:mobile:flows
@@ -81,7 +67,7 @@ jobs:
   android:
     name: Build and attest the Android APK
     needs: prepare
-    if: github.event_name == 'push' || inputs.platform != 'ios'
+    if: needs.prepare.outputs.build == 'true' && (github.event_name == 'push' || inputs.platform != 'ios')
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     permissions:
@@ -186,7 +172,7 @@ jobs:
   ios:
     name: Build and attest the iOS simulator app
     needs: prepare
-    if: github.event_name == 'push' || inputs.platform != 'android'
+    if: needs.prepare.outputs.build == 'true' && (github.event_name == 'push' || inputs.platform != 'android')
     runs-on: macos-15
     timeout-minutes: 90
     permissions:
@@ -196,7 +182,8 @@ jobs:
       artifact-metadata: write
     env:
       PLAYGROUND_VERSION: ${{ needs.prepare.outputs.version }}
-      PLAYGROUND_BUILD_NUMBER: ${{ needs.prepare.outputs.build-number }}
+      PLAYGROUND_NATIVE_VERSION: ${{ needs.prepare.outputs.native-version }}
+      PLAYGROUND_BUILD_NUMBER: ${{ needs.prepare.outputs.ios-build-number }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -237,7 +224,7 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             ONLY_ACTIVE_ARCH=NO \
             'ARCHS=arm64 x86_64' \
-            MARKETING_VERSION="$PLAYGROUND_VERSION" \
+            MARKETING_VERSION="$PLAYGROUND_NATIVE_VERSION" \
             CURRENT_PROJECT_VERSION="$PLAYGROUND_BUILD_NUMBER" \
             build
       - name: Package the compiled simulator app for diagnostic retests
@@ -349,15 +336,18 @@ jobs:
   publish:
     name: Publish both artifacts once
     needs: [prepare, android, ios]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/mobile-v') && needs.android.result == 'success' && needs.ios.result == 'success'
+    if: needs.prepare.outputs.publish == 'true' && needs.android.result == 'success' && needs.ios.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: write
     env:
-      GH_TOKEN: ${{ github.token }}
-      MOBILE_TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ secrets.MOBILE_RELEASE_TOKEN || github.token }}
+      MOBILE_TAG: ${{ needs.prepare.outputs.tag }}
       PLAYGROUND_VERSION: ${{ needs.prepare.outputs.version }}
+      PLAYGROUND_NATIVE_VERSION: ${{ needs.prepare.outputs.native-version }}
+      PLAYGROUND_BUILD_NUMBER: ${{ needs.prepare.outputs.build-number }}
+      PLAYGROUND_IOS_BUILD_NUMBER: ${{ needs.prepare.outputs.ios-build-number }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -377,23 +367,7 @@ jobs:
           test -s "playground-ios-simulator-${PLAYGROUND_VERSION}.zip"
           sha256sum --check "playground-android-${PLAYGROUND_VERSION}.apk.sha256"
           sha256sum --check "playground-ios-simulator-${PLAYGROUND_VERSION}.zip.sha256"
-      - name: Recheck immutability guard and prepare release notes
-        run: |
-          node --input-type=module <<'NODE'
-          import {writeFileSync} from 'node:fs';
-          const response = await fetch(`${process.env.GITHUB_API_URL}/repos/${process.env.GITHUB_REPOSITORY}/releases/tags/${process.env.MOBILE_TAG}`, {headers: {Accept: 'application/vnd.github+json', Authorization: `Bearer ${process.env.GH_TOKEN}`}});
-          if (response.status !== 404) throw new Error(response.status === 200 ? 'Release already exists. Refusing to replace it.' : `Release guard failed: HTTP ${response.status}.`);
-          writeFileSync('release-notes.md', `Playground ${process.env.PLAYGROUND_VERSION}\n\nStandalone Android APK and unsigned iOS simulator app. The iOS archive contains Playground.app for arm64 and x86_64 simulators; it is not an IPA and does not run on a physical iPhone.\n\nEach archive has a SHA-256 checksum and GitHub build provenance attestation. Verify an artifact with: gh attestation verify <artifact> --repo ${process.env.GITHUB_REPOSITORY}\n\nThese files are immutable. Corrections ship under a new version. All product data is simulated and stays on the device.\n`);
-          NODE
-      - name: Create the release with all assets attached
+      - name: Publish this commit with both binaries, checksums and manifest
         # gh stages a draft, uploads all assets, then publishes. No upload --clobber
         # or release edit operation is used. Enable repository release immutability.
-        run: |
-          gh release create "$MOBILE_TAG" \
-            "release/playground-android-${PLAYGROUND_VERSION}.apk" \
-            "release/playground-android-${PLAYGROUND_VERSION}.apk.sha256" \
-            "release/playground-ios-simulator-${PLAYGROUND_VERSION}.zip" \
-            "release/playground-ios-simulator-${PLAYGROUND_VERSION}.zip.sha256" \
-            --verify-tag \
-            --title "Playground ${PLAYGROUND_VERSION}" \
-            --notes-file release-notes.md
+        run: node scripts/mobile-release.mjs publish

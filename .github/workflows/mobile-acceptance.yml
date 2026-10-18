@@ -151,7 +151,7 @@ jobs:
           import {createHash} from 'node:crypto';
           const platform = process.env.CANDIDATE_PLATFORM;
           const files = readdirSync('candidate-artifact');
-          const pattern = platform === 'android' ? /^app-release\.apk$/ : /^playground-ios-simulator-\d+\.\d+\.\d+-unverified\.zip$/;
+          const pattern = platform === 'android' ? /^app-release\.apk$/ : /^playground-ios-simulator-\d+\.\d+\.\d+(?:-[a-f0-9]{7})?-unverified\.zip$/;
           if (files.length !== 1 || !pattern.test(files[0]) || !lstatSync(`candidate-artifact/${files[0]}`).isFile()) throw new Error('The diagnostic artifact does not contain the expected standalone binary.');
           const path = `candidate-artifact/${files[0]}`;
           const sha256 = createHash('sha256').update(readFileSync(path)).digest('hex');
