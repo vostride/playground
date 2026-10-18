@@ -47,11 +47,11 @@ appId: dev.vostride.playground
 - assertVisible:
     id: task-card-CKB-031
 - takeScreenshot: brello-pull-to-refresh-complete
-- runFlow:
-    when:
-      visible: '^Dismiss notification$'
-    commands:
-      - tapOn: '^Dismiss notification$'
+# The six-second toast can expire while Maestro settles a tap, opening a row beneath it.
+# Refresh was proved above; wait for the notification to leave before choosing another board.
+- extendedWaitUntil:
+    notVisible: '^Dismiss notification$'
+    timeout: 10000
 - tapOn: '^Browse all boards$'
 - tapOn:
     id: task-board-option-board-1

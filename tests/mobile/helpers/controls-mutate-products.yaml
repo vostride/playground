@@ -27,7 +27,11 @@ appId: dev.vostride.playground
     when:
       platform: iOS
     commands:
-      - tapOn: '^Cancel booking$'
+      # The underlying app button has the same label. Only the native alert action
+      # is above Keep my trip; childOf the duplicate title would select its text leaf.
+      - tapOn:
+          text: '^Cancel booking$'
+          above: '^Keep my trip$'
 - scrollUntilVisible:
     element:
       id: flight-booking-WL6P2K-status

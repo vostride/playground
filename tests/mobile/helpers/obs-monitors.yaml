@@ -17,11 +17,14 @@ appId: dev.vostride.playground
 - tapOn: '^Create monitor$'
 - assertVisible: '^New metric monitor$'
 - assertVisible: '^Review the highlighted fields before creating your monitor\.$'
+# Read validation messages without centering before filling their preceding
+# inputs. On iOS, centering the threshold error flicked its input behind the
+# fixed sheet header; name and recipient errors use the same form layout.
 - scrollUntilVisible:
     element:
       text: '^Enter a threshold greater than 0 and at most 100\.$'
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - assertVisible: '^Enter a threshold greater than 0 and at most 100\.$'
 - runFlow:
     file: fill.yaml
@@ -32,7 +35,7 @@ appId: dev.vostride.playground
     element:
       text: '^Enter a monitor name with at least 3 characters\.$'
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - assertVisible: '^Enter a monitor name with at least 3 characters\.$'
 - runFlow:
     file: fill.yaml
@@ -43,7 +46,7 @@ appId: dev.vostride.playground
     element:
       text: '^Enter email addresses separated by commas\.$'
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - assertVisible: '^Enter email addresses separated by commas\.$'
 - runFlow:
     file: fill.yaml
