@@ -45,11 +45,68 @@ function stringAttribute(element, name) {
   return match[1];
 }
 
-export function validateApkMetadata({ permissions, badging, xmltree }) {
+function badgingAttribute(line, name) {
+  const matches = [...line.matchAll(new RegExp(`(?:^|\\s)${name}='([^']*)'(?=\\s|$)`, 'g'))];
+  assert.equal(matches.length, 1, `Missing or ambiguous APK ${name}.`);
+  return matches[0][1];
+}
+
+function parseVersionCode(value) {
+  assert.match(String(value), /^[1-9]\d*$/, 'APK versionCode must be a positive decimal integer.');
+  const number = Number(value);
+  assert.ok(
+    Number.isSafeInteger(number) && number <= 2100000000,
+    'APK versionCode is out of range.',
+  );
+  return number;
+}
+
+export function validateApkMetadata({ permissions, badging, xmltree }, expected) {
   const elements = manifestElements(xmltree);
   assert.equal(stringAttribute(elements[0], 'package'), appId, 'Unexpected manifest app ID.');
-  assert.equal(badging.match(/^package: name='([^']+)'/m)?.[1], appId, 'Unexpected APK app ID.');
+  const packageLines = badging.split(/\r?\n/).filter((line) => line.startsWith('package:'));
+  assert.equal(packageLines.length, 1, 'Missing or ambiguous APK package metadata.');
+  assert.equal(badgingAttribute(packageLines[0], 'name'), appId, 'Unexpected APK app ID.');
   assert.equal(permissions.match(/^package: (\S+)$/m)?.[1], appId, 'Unexpected permission app ID.');
+  const versionName = badgingAttribute(packageLines[0], 'versionName');
+  assert.ok(versionName.length > 0, 'APK versionName is empty.');
+  const versionCode = parseVersionCode(badgingAttribute(packageLines[0], 'versionCode'));
+  const labels = {};
+  for (const line of badging
+    .split(/\r?\n/)
+    .filter((line) => line.startsWith('application-label'))) {
+    const match = /^application-label(?:-([^:]+))?:'([^']*)'$/.exec(line);
+    assert.ok(match, 'Cannot read resolved APK application label.');
+    const locale = match[1] || 'default';
+    assert.ok(!Object.hasOwn(labels, locale), 'Duplicate APK application label.');
+    labels[locale] = match[2];
+  }
+  assert.ok(labels.default, 'Missing resolved APK application label.');
+  const launcherLines = badging
+    .split(/\r?\n/)
+    .filter((line) => line.startsWith('launchable-activity:'));
+  assert.equal(launcherLines.length, 1, 'Missing or ambiguous APK launcher metadata.');
+  const launcherLabel = badgingAttribute(launcherLines[0], 'label');
+  if (expected !== undefined) {
+    assert.ok(
+      typeof expected?.versionName === 'string' && expected.versionName.length > 0,
+      'Expected APK versionName is required.',
+    );
+    const expectedCode = parseVersionCode(expected?.versionCode);
+    assert.equal(
+      versionName,
+      expected.versionName,
+      'APK versionName differs from the derived release version.',
+    );
+    assert.equal(
+      versionCode,
+      expectedCode,
+      'APK versionCode differs from the derived release build number.',
+    );
+    for (const label of Object.values(labels))
+      assert.equal(label, 'Playground', 'Unexpected APK application label.');
+    assert.equal(launcherLabel, 'Playground', 'Unexpected APK launcher label.');
+  }
 
   const declarations = elements.filter((element) => element.name === 'permission');
   const requests = elements.filter((element) => element.name.startsWith('uses-permission'));
@@ -130,6 +187,11 @@ export function validateApkMetadata({ permissions, badging, xmltree }) {
   }
   return {
     appId,
+    applicationLabel: labels.default,
+    localizedLabels: labels,
+    launcherLabel,
+    versionName,
+    versionCode,
     architectures,
     requestedPermissions: requests.length ? [receiverPermission] : [],
     receiverPermissionProtection: requests.length ? 'signature (0x2)' : null,
@@ -137,9 +199,9 @@ export function validateApkMetadata({ permissions, badging, xmltree }) {
   };
 }
 
-export function inspectApk(apk, output = 'maestro-reports/android') {
+export function inspectApk(apk, output = 'maestro-reports/android', expected) {
   mkdirSync(output, { recursive: true });
-  const report = { apk: resolve(apk), passed: false };
+  const report = { apk: resolve(apk), expected, passed: false };
   try {
     const sdk = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
     assert.ok(process.env.AAPT || sdk, 'Android SDK location is unavailable.');
@@ -156,8 +218,13 @@ export function inspectApk(apk, output = 'maestro-reports/android') {
     const permissions = dump('permissions', 'apk-permissions.txt');
     const badging = dump('badging', 'apk-metadata.txt');
     const xmltree = dump('xmltree', 'apk-manifest.txt', ['AndroidManifest.xml']);
-    Object.assign(report, validateApkMetadata({ permissions, badging, xmltree }), { passed: true });
+    Object.assign(report, validateApkMetadata({ permissions, badging, xmltree }, expected), {
+      passed: true,
+    });
     console.log(`APK identity: ${report.appId}`);
+    console.log(
+      `APK label: ${report.applicationLabel}; version: ${report.versionName} (${report.versionCode})`,
+    );
     console.log(`APK native architectures: ${report.architectures.join(', ')}`);
     console.log(
       `APK system permissions: none; AndroidX receiver protection: ${report.receiverPermissionProtection || 'absent'}`,

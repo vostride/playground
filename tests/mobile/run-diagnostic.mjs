@@ -48,6 +48,10 @@ export function diagnosticCommands({ platform, device, scenario }) {
     commands.push({
       name: 'maestro',
       command: 'maestro',
+      // GitHub macOS evidence shows a cold XCTest driver taking over seven
+      // minutes to become ready. This affects startup only, not flow assertions
+      // or the independent offline watchdog, and does not retry a failed run.
+      ...(platform === 'ios' ? { env: { MAESTRO_DRIVER_STARTUP_TIMEOUT: '600000' } } : {}),
       args: [
         '--device',
         device,
@@ -132,7 +136,10 @@ export function runDiagnostics(options, { execute = spawnSync, save = saveReport
     const startedAt = new Date().toISOString();
     let result;
     try {
-      result = execute(command.command, command.args, { stdio: 'inherit' });
+      result = execute(command.command, command.args, {
+        stdio: 'inherit',
+        ...(command.env ? { env: { ...process.env, ...command.env } } : {}),
+      });
     } catch (error) {
       result = { status: null, error };
     }

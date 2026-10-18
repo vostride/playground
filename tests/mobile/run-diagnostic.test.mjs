@@ -83,6 +83,45 @@ test('a process killed by a signal cannot pass', () => {
   assert.equal(result.exitCode, 1);
 });
 
+test('iOS cold driver startup has one bounded attempt without changing other checks or environment', () => {
+  const inheritedTimeout = process.env.MAESTRO_DRIVER_STARTUP_TIMEOUT;
+  const calls = [];
+  let final;
+  const exitCode = runDiagnostics(
+    { platform: 'ios', device: 'test-device', scenario: 'all' },
+    {
+      execute(command, args, options) {
+        calls.push({ command, args, options });
+        return { status: command === 'maestro' ? 1 : 0 };
+      },
+      save(report) {
+        final = structuredClone(report);
+      },
+    },
+  );
+  assert.equal(calls.filter(({ command }) => command === 'maestro').length, 1);
+  assert.equal(calls[0].options.env.MAESTRO_DRIVER_STARTUP_TIMEOUT, '600000');
+  assert.equal(calls[0].options.env.CI, process.env.CI);
+  assert.equal(calls[0].options.env.GITHUB_ACTIONS, process.env.GITHUB_ACTIONS);
+  assert.equal(calls[0].options.env.PATH, process.env.PATH);
+  assert.equal(process.env.MAESTRO_DRIVER_STARTUP_TIMEOUT, inheritedTimeout);
+  assert.deepEqual(final.commands[0].env, { MAESTRO_DRIVER_STARTUP_TIMEOUT: '600000' });
+  assert.deepEqual(
+    final.commands.map(({ name }) => name),
+    ['maestro', 'drag', 'offline'],
+  );
+  assert.ok(calls.slice(1).every(({ options }) => !Object.hasOwn(options, 'env')));
+  assert.ok(final.commands.slice(1).every((command) => !Object.hasOwn(command, 'env')));
+  assert.equal(exitCode, 1);
+  assert.equal(final.passed, false);
+  const android = diagnosticCommands({
+    platform: 'android',
+    device: 'emulator-5554',
+    scenario: 'all',
+  });
+  assert.ok(android.every((command) => !Object.hasOwn(command, 'env')));
+});
+
 test('an invalid scenario cannot execute commands or create a passing report', () => {
   for (const scenario of ['../flows/other.yaml', '__proto__']) {
     let executions = 0;

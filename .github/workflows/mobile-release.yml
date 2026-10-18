@@ -111,8 +111,15 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-      - name: Verify final APK permissions and native architectures
-        run: node tests/mobile/inspect-apk.mjs mobile/android/app/build/outputs/apk/release/app-release.apk
+      - name: Verify final APK identity, release version, permissions and architectures
+        run: |
+          node --input-type=module <<'NODE'
+          import {inspectApk} from './tests/mobile/inspect-apk.mjs';
+          inspectApk('mobile/android/app/build/outputs/apk/release/app-release.apk', undefined, {
+            versionName: process.env.PLAYGROUND_VERSION,
+            versionCode: process.env.PLAYGROUND_BUILD_NUMBER,
+          });
+          NODE
       - name: Install the pinned Maestro CLI
         run: |
           curl --fail --location --retry 3 --output "$RUNNER_TEMP/maestro.zip" \
@@ -245,20 +252,14 @@ jobs:
           compression-level: 0
           retention-days: 7
           if-no-files-found: error
-      - name: Verify the simulator binary contains both architectures
+      - name: Verify simulator identity, release version and architectures
         run: |
           node --input-type=module <<'NODE'
-          import {mkdirSync, writeFileSync} from 'node:fs';
-          import {spawnSync} from 'node:child_process';
-          const result = spawnSync('xcrun', ['lipo', '-archs', 'mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app/Playground'], {encoding: 'utf8'});
-          if (result.error || result.status !== 0) throw new Error(`Cannot inspect simulator architectures: ${result.error?.message || result.stderr}`);
-          mkdirSync('maestro-reports/ios', {recursive: true});
-          writeFileSync('maestro-reports/ios/app-architectures.txt', result.stdout);
-          console.log(`Simulator binary architectures: ${result.stdout.trim()}`);
-          const architectures = result.stdout.trim().split(/\s+/);
-          for (const required of ['arm64', 'x86_64']) {
-            if (!architectures.includes(required)) throw new Error(`Simulator app is missing required architecture ${required}.`);
-          }
+          import {inspectIosApp} from './tests/mobile/inspect-ios.mjs';
+          inspectIosApp('mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app', undefined, {
+            shortVersion: process.env.PLAYGROUND_NATIVE_VERSION,
+            bundleVersion: process.env.PLAYGROUND_BUILD_NUMBER,
+          });
           NODE
       - uses: actions/setup-java@v4
         with:

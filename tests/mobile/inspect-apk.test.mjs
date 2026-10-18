@@ -13,7 +13,7 @@ const request = `    E: uses-permission (line=27)
 // Reduced from the aapt 36.0.0 dumps of GitHub candidate 39134005393.
 const fixture = () => ({
   permissions: `package: ${app}\npermission: ${permission}\nuses-permission: name='${permission}'\n`,
-  badging: `package: name='${app}' versionCode='1001' versionName='0.1.0'\nsdkVersion:'24'\ntargetSdkVersion:'36'\nnative-code: 'arm64-v8a' 'armeabi-v7a' 'x86' 'x86_64'\n`,
+  badging: `package: name='${app}' versionCode='1001' versionName='0.1.0'\nsdkVersion:'24'\ntargetSdkVersion:'36'\napplication-label:'Playground'\napplication-label-en:'Playground'\nlaunchable-activity: name='${app}.MainActivity' label='Playground' icon=''\nnative-code: 'arm64-v8a' 'armeabi-v7a' 'x86' 'x86_64'\n`,
   xmltree: `N: android=http://schemas.android.com/apk/res/android
   E: manifest (line=2)
     A: package="${app}" (Raw: "${app}")
@@ -137,4 +137,81 @@ test('rejects malformed manifest structure and duplicate security attributes', (
     `${declaration}\n      A: android:protectionLevel(0x01010009)=(type 0x11)0x1`,
   );
   assert.throws(() => validateApkMetadata(duplicate), /Duplicate/);
+});
+
+test('release inspection matches the embedded version name, code and every resolved label', () => {
+  const data = fixture();
+  data.badging = data.badging.replace("versionName='0.1.0'", "versionName='26.10.19-abcdef0'");
+  const expected = { versionName: '26.10.19-abcdef0', versionCode: '1001' };
+  const result = validateApkMetadata(data, expected);
+  assert.equal(result.versionName, expected.versionName);
+  assert.equal(result.versionCode, 1001);
+  assert.equal(result.applicationLabel, 'Playground');
+  assert.equal(result.launcherLabel, 'Playground');
+  assert.deepEqual(result.localizedLabels, { default: 'Playground', en: 'Playground' });
+  for (const [from, to, error] of [
+    ["versionName='26.10.19-abcdef0'", "versionName='0.1.0'", /versionName differs/],
+    ["versionCode='1001'", "versionCode='1'", /versionCode differs/],
+    ["application-label:'Playground'", "application-label:'Stale template'", /application label/],
+    [
+      "application-label-en:'Playground'",
+      "application-label-en:'Stale translation'",
+      /application label/,
+    ],
+    [" label='Playground'", " label='Stale launcher'", /launcher label/],
+  ]) {
+    assert.throws(
+      () => validateApkMetadata({ ...data, badging: data.badging.replace(from, to) }, expected),
+      error,
+    );
+  }
+});
+
+test('diagnostic inspection records older metadata without inferring the current release version', () => {
+  const data = fixture();
+  data.badging = data.badging.replaceAll('Playground', 'Hello App Display Name');
+  const result = validateApkMetadata(data);
+  assert.equal(result.applicationLabel, 'Hello App Display Name');
+  assert.equal(result.versionName, '0.1.0');
+  assert.equal(result.versionCode, 1001);
+  assert.throws(
+    () => validateApkMetadata(data, { versionName: '0.1.0', versionCode: 1001 }),
+    /application label/,
+  );
+});
+
+test('release expectations cannot silently omit either expected version field', () => {
+  for (const expected of [
+    null,
+    {},
+    { versionName: '0.1.0' },
+    { versionCode: 1001 },
+    { versionName: '', versionCode: 1001 },
+    { versionName: '0.1.0', versionCode: '1001x' },
+  ]) {
+    assert.throws(() => validateApkMetadata(fixture(), expected));
+  }
+});
+
+test('missing, malformed or ambiguous packaged metadata fails inspection', () => {
+  const data = fixture();
+  for (const [from, to] of [
+    [" versionName='0.1.0'", ''],
+    ["versionName='0.1.0'", "versionName=''"],
+    [" versionCode='1001'", ''],
+    ["versionCode='1001'", "versionCode='0'"],
+    ["versionCode='1001'", "versionCode='1001x'"],
+    ["versionCode='1001'", "versionCode='2100000001'"],
+    ["versionCode='1001'", "versionCode='1001' versionCode='2'"],
+    ["application-label:'Playground'\n", ''],
+    ["application-label:'Playground'", "application-label:'Playground'\napplication-label:'Other'"],
+    [" label='Playground'", ''],
+  ]) {
+    assert.throws(() => validateApkMetadata({ ...data, badging: data.badging.replace(from, to) }));
+  }
+  assert.throws(
+    () =>
+      validateApkMetadata({ ...data, badging: `${data.badging}${data.badging.split('\n')[0]}\n` }),
+    /ambiguous APK package/,
+  );
 });
