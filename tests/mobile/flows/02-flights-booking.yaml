@@ -364,7 +364,10 @@ name: Looking search controls, two travelers, bug recovery, checkout, seat chang
     when:
       platform: iOS
     commands:
-      - tapOn: '^Cancel booking$'
+      # Exclude the app button behind the alert, which has the same accessible label.
+      - tapOn:
+          text: '^Cancel booking$'
+          above: '^Keep my trip$'
 - scrollUntilVisible:
     element:
       id: flight-booking-WL006Q-status

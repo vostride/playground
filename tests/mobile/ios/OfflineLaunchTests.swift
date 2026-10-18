@@ -16,7 +16,8 @@ final class OfflineLaunchTests: XCTestCase {
         hierarchy.name = "Offline accessibility hierarchy"
         hierarchy.lifetime = .keepAlways
         add(hierarchy)
-        app.terminate()
+        // Leave candidate cleanup to the workflow's simulator shutdown after PF
+        // restoration; synchronous termination here consumed the blocked interval.
     }
 
     func testFreshLaunchEveryProductAndLocalWebViewWithoutNetwork() async throws {
