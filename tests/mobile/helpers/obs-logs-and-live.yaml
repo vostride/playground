@@ -25,12 +25,36 @@ appId: dev.vostride.playground
 # This is the 45th production event, beyond initialNumToRender=18.
 # Android run 39146156938 found it at 28.8s; the final centering swipe exceeded
 # the old 30s limit. Allow 45s for this traversal and its return to the header.
-- scrollUntilVisible:
-    element:
-      id: vigil-log-000049
-    direction: DOWN
-    centerElement: true
-    timeout: 45000
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: vigil-log-000049
+          direction: DOWN
+          centerElement: true
+          timeout: 45000
+# iOS run 39148819893 first found row 49 at y743–829, below the list's
+# y755 bottom. Whole-screen centering moved it behind the time picker.
+# Stop without centering, then make one slow, shorter swipe from 5% down
+# the actual list viewport. Exact modal/event assertions below must still pass.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: vigil-log-000049
+          direction: DOWN
+          centerElement: false
+          timeout: 45000
+      - swipe:
+          from:
+            id: vigil-log-list
+            point: '50%, 5%'
+          direction: UP
+          duration: 2000
 - tapOn:
     id: vigil-log-000049
 - assertVisible: '^Log event$'
