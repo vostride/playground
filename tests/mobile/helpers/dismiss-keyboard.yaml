@@ -1,5 +1,18 @@
 appId: dev.vostride.playground
 ---
+# A fresh iOS simulator presents QuickPath onboarding above its first keyboard.
+# That native overlay hides the app's Done typing control from accessibility.
+- runFlow:
+    when:
+      platform: iOS
+      visible:
+        id: UIContinuousPathIntroductionView
+    commands:
+      - tapOn: '^Continue$'
+      - extendedWaitUntil:
+          notVisible:
+            id: UIContinuousPathIntroductionView
+          timeout: 10000
 - tapOn:
     id: keyboard-dismiss-button
 - assertNotVisible:
