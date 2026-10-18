@@ -38,7 +38,7 @@ The trace-view follow-up fixes clipped modal headers, duration labels drawn over
 
 The historical CI records below retain the product names used by those runs: Fernwood is now Komazon, Wayline is Looking, Vigil is PepaPog, and Corkboard is Brello. Prior binary results do not automatically verify the renamed source.
 
-The web and native Home launchers now include the requested compact agent-qa banner with “Your AI QA engineer” and “by vostride” attribution. Both use locally bundled branding and open `https://vostride.com/` only when selected. No network request is required to render the launchers. The launcher placements were added in `d73e4c4`; the revised subtitle, lowercase attribution and explicit calendar range selection await the next native build.
+The web and native Home launchers now include the requested compact agent-qa banner with “Your AI QA engineer” and “by vostride” attribution. Both use locally bundled branding. Selecting the banner opens `https://github.com/vostride/agent-qa`; selecting the footer opens `https://vostride.com/`. No network request is required to render the launchers. The launcher placements were added in `d73e4c4`; the revised subtitle, lowercase attribution and explicit calendar range selection await the next native build.
 
 ## Platform layout and expanded native acceptance
 

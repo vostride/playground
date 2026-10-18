@@ -37,9 +37,9 @@ import {
   Screen,
   type AppId,
 } from './ui';
-function openVostride() {
-  void Linking.openURL('https://vostride.com/').catch(() =>
-    Alert.alert('Unable to open browser', 'Visit vostride.com in your browser.'),
+function openExternalLink(url: string) {
+  void Linking.openURL(url).catch(() =>
+    Alert.alert('Unable to open browser', `Visit ${url} in your browser.`),
   );
 }
 const apps = [
@@ -234,7 +234,7 @@ export default function App() {
                 testID="home-agent-qa"
                 accessibilityRole="link"
                 accessibilityLabel="agent-qa. Your AI QA engineer. Opens in your browser."
-                onPress={openVostride}
+                onPress={() => openExternalLink('https://github.com/vostride/agent-qa')}
                 style={styles.agentBanner}
               >
                 <View style={styles.agentBannerContent}>
@@ -258,7 +258,7 @@ export default function App() {
                 testID="home-by-vostride"
                 accessibilityRole="link"
                 accessibilityLabel="by vostride. Opens in your browser."
-                onPress={openVostride}
+                onPress={() => openExternalLink('https://vostride.com/')}
                 style={styles.attribution}
               >
                 <Text style={styles.attributionText}>
