@@ -28,15 +28,15 @@ try {
     <title>Playground by vostride</title><style>
     @font-face{font-family:GeistMono;src:url('${font}') format('truetype');font-weight:400}
     *{box-sizing:border-box}html,body{margin:0;width:1200px;height:630px;overflow:hidden}
-    body{position:relative;background:#191c20;color:#42c4d3}
+    body{position:relative;background:#191c20;color:#1DB8CC}
     .background{position:absolute;inset:0;width:1200px;height:630px}
     .wordmark{position:absolute;left:64px;top:56px;width:179.16px;height:32px}
-    main{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:24px}
-    .mark{width:84px;height:101px;flex:none}
+    main{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+    .mark{width:50px;height:60px;flex:none}
     h1{margin:0;font:400 80px/1.2 GeistMono,monospace;letter-spacing:-5.2px}
     </style></head><body><img class="background" src="${background}" alt="">
     <img class="wordmark" src="${wordmark}" alt="vostride">
-    <main><img class="mark" src="${mark}" alt=""><h1>Playground</h1></main>
+    <main><img class="mark" src="${mark}" alt=""><h1 aria-label="Playground">layground</h1></main>
     </body></html>`);
   await page.evaluate(async () => {
     await document.fonts.ready;
