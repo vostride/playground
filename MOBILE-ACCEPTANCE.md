@@ -2,7 +2,7 @@
 
 Run on the GitHub-built APK and zipped iOS simulator app. TypeScript/Metro checks do not prove native runtime behavior. These checks are required before declaring a mobile release verified.
 
-- Fresh launch: Playground opens without a network connection, permission prompt or sign-in requirement. Screens open on product functions without promotional or simulation notices.
+- Fresh launch: Playground opens without a network connection, permission prompt or sign-in requirement. Product screens open on their functions without promotional or simulation notices; Home retains the requested agent-qa banner and Vostride attribution.
 - Navigation: open each of Komazon, Looking, Brello and PepaPog from Home. Switch products with the header app chooser. Exercise each product’s dedicated bottom tabs, back navigation, Android hardware back and the offline WebView guide.
 - Deep links: open `playground://shop`, `playground://flights`, `playground://tasks`, `playground://observability`; also open each app's nested routes and an explicit `?bug=<id>` link.
 - Komazon: sign in with the printed demo credentials, find Everyday Ceramic Mug, add two, verify $48 subtotal/$53 standard total. Reject incomplete shipping. Complete delivery/review, place order, view orders, cancel. Pull to refresh the catalog, scroll through the long list, operate detail sheets and fields with the keyboard open.
@@ -16,9 +16,19 @@ Record device/OS, artifact hash, result and any failure evidence before promotin
 
 ## Native interface redesign
 
-The October 19 native redesign replaces the light interface and global product tabs with local React Native Reusables adaptations, a dark zinc theme, and dedicated product navigation. An earlier redesign candidate compiled and received the limited visual review below. Subsequent source changes add Playground’s P mark, built from the exact supplied Vostride spiral plus a stem, to web/native headers and platform app-icon exports, including Android adaptive and monochrome icons. Komazon now avoids duplicate current-route history entries and retains its originating tab during sign-in. Native TypeScript, all four Vite builds, both Metro bundles with six local assets each, and icon source/render review pass after these changes. The launcher banner passes four web viewport checks with no background external requests; CI and complete device acceptance on fresh binaries remain pending.
+The October 19 native redesign replaces the light interface and global product tabs with local React Native Reusables adaptations, a dark zinc theme, and dedicated product navigation. An earlier redesign candidate compiled and received the limited visual review below. Subsequent source changes add Playground’s P mark, built from the exact supplied Vostride spiral plus a stem, to web/native headers and platform app-icon exports, including Android adaptive and monochrome icons. Komazon now avoids duplicate current-route history entries and retains its originating tab during sign-in. Native TypeScript, all four Vite builds, both Metro bundles with six local assets each, and icon source/render review pass after these changes. The launcher banner passes four web viewport checks with no background external requests. CI for the branding checkpoint passes; complete device acceptance remains pending.
 
-The web and native Home launchers now include the requested compact agent-qa banner and “by Vostride” attribution. Both use locally bundled branding and open `https://vostride.com/` only when selected. No network request is required to render the launchers. These additions are part of the next native source fingerprint.
+The web and native Home launchers now include the requested compact agent-qa banner and “by Vostride” attribution. Both use locally bundled branding and open `https://vostride.com/` only when selected. No network request is required to render the launchers. These additions are included in branding checkpoint `d73e4c4`.
+
+## Branding candidate checkpoint
+
+[Candidate 39162778135](https://github.com/vostride/playground/actions/runs/39162778135) builds `d73e4c49a51bba845340970a23cb0ad20c2f535f`. [Web CI 39162767311](https://github.com/vostride/playground/actions/runs/39162767311) and [mobile source CI 39162767341](https://github.com/vostride/playground/actions/runs/39162767341) pass on that source. Pages deployment and the deployed-preview site check were skipped.
+
+Android compilation and the merged-manifest/ABI gate pass. Artifact `12149591603` has APK SHA-256 `cb05d0f2c5e876c4779a4fa8904c7bbeee1b1a1a78eb1eda14bc6116782a7454`. Independent inspection confirms all six packaged brand images match their source RGBA pixels and verifies the legacy, adaptive and monochrome launcher resources; evidence is `test-results/mobile-preview/branding-39162778135/android/asset-audit.json`.
+
+As of 20:31 UTC on 2026-10-18, Android journeys were running and iOS was compiling. These are build and asset checks, not a complete native acceptance gate, attestation or published release.
+
+Isolated Android review found that this APK’s launcher label is still `Hello App Display Name`, although Home shows the correct banner and footer. The Android string is corrected to `Playground` in source and requires a fresh Android build. The iOS source and fingerprint are unchanged.
 
 ## Earlier redesign candidate
 
@@ -26,7 +36,9 @@ The web and native Home launchers now include the requested compact agent-qa ban
 
 The APK installed successfully and launched on the existing `Pixel_10_Pro` AVD, serial `emulator-5554`. The observed Brello screen has readable dark task cards and Board/List footer controls; a move notification does not obscure the footer. The user then interacted with the app, so further navigation checks were stopped. The OS/API version was not captured and is not inferred from the AVD name. Screenshots and hierarchies are retained in `test-results/mobile-preview/redesign-39160983278/android/`, including `03-user-current.png`. This limited visual check does not establish other product journeys or full acceptance.
 
-At this recorded checkpoint, Android CI journeys were running and the iOS build was compiling. [Mobile source CI 39161332636](https://github.com/vostride/playground/actions/runs/39161332636) and [web CI 39161332824](https://github.com/vostride/playground/actions/runs/39161332824) passed on `41f020d`, whose only change was the native URL test’s Looking navigation selector. Validation at that checkpoint covered 32 browser tests, 27 core tests, 39 native helper tests and 39 Maestro YAML files. The later icon and Komazon navigation changes alter the application fingerprint: this `881c893` binary is historical evidence and cannot be reused to verify current source. The next candidate must include those source changes and the corrected `NativeLinkTests` selector. Source checks remain distinct from native runtime acceptance.
+This run was intentionally canceled after preserving both compiled previews to allow current-source builds to proceed. Retained Android command reports contain 194 completed/11 skipped commands for Komazon and 288 completed/17 skipped commands for Brello, with no failed command recorded in those reports. There is no final JUnit or post-suite offline/touch result, so no full gate pass is inferred. Four additional screenshots show readable shipping-validation errors, canceled-order details, persisted task properties and checklist controls without overlap. Evidence is `test-results/native-audit/redesign-39160983278/review-summary.json` and its adjacent artifacts.
+
+The preserved iOS simulator ZIP, artifact `12149770822`, has SHA-256 `e50d3c25f382c8e3824f64e56c3206c98942d71f65f845581e4db61bb38f2549`. It launched Home locally; route preview was blocked at the system Open consent, so that preview does not establish route acceptance. Both `881c893` binaries precede the current icon/banner/navigation source and cannot verify `d73e4c4`.
 
 ## Historical logo candidate Android evidence
 
