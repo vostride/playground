@@ -14,7 +14,15 @@ Run on the GitHub-built APK and zipped iOS simulator app. TypeScript/Metro check
 
 Record device/OS, artifact hash, result and any failure evidence before promoting a mobile entry in the registry. Do not mark these checks complete solely from successful source compilation or JS bundling.
 
-## Native interface redesign
+## Current release status
+
+At 2026-10-18 23:39 UTC, GitHub Releases was empty. Automatic release run `39173155632` (`bcc02ad`) passed Android, but iOS Maestro failed its 120-second driver-startup deadline before any business journey. Its three independent native URL/drag XCTests and offline check passed. The driver eventually became ready about seven minutes after CLI launch; the shared runner now permits one bounded ten-minute iOS startup attempt while retaining all assertion and offline deadlines. This change still needs CI runtime evidence.
+
+Later automatic runs for `fd8e7f9`, `cebe9bb`, `dbd8571`, `07936eb` and `9cde842` were active at that check. No passing result or published asset is inferred from their progress. The [implementation audit](IMPLEMENTATION-AUDIT.md#latest-verification-checkpoint) records the latest checkpoint; retained results below describe older, explicitly identified binaries.
+
+Release gates now additionally compare compiled Android/iOS labels and versions with the derived release metadata, before device tests and attestation. All 81 pure native helper tests and 39 YAML checks pass; these prove harness behavior, not device acceptance.
+
+## Interface redesign and historical checkpoints
 
 The October 19 native redesign replaces the light interface and global product tabs with local React Native Reusables adaptations, a dark zinc theme, and dedicated product navigation. An earlier redesign candidate compiled and received the limited visual review below. Subsequent source changes add Playground’s P mark, built from the exact supplied Vostride spiral plus a stem, to web/native headers and platform app-icon exports, including Android adaptive and monochrome icons. Komazon now avoids duplicate current-route history entries and retains its originating tab during sign-in. Native TypeScript, all four Vite builds, both Metro bundles with six local assets each, and icon source/render review pass after these changes. The launcher banner passes four web viewport checks with no background external requests. CI and complete Android device acceptance for `bd2628e` pass; iOS acceptance remains incomplete.
 
