@@ -1,0 +1,17 @@
+appId: dev.vostride.playground
+name: Deliberate cart total bug is detected by the normal price assertion
+---
+- runFlow: ../helpers/launch.yaml
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://shop?bug=cart-total
+- assertVisible: 'Deliberate bug: Quantity ignored in totals'
+- runFlow: ../helpers/add-two-mugs.yaml
+- scrollUntilVisible:
+    element:
+      text: '\$29\.00'
+    direction: DOWN
+- assertVisible: '\$29\.00'
+# Intentionally fails only after the defective total has been reached and observed.
+- assertVisible: '\$53\.00'

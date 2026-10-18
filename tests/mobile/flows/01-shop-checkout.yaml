@@ -1,0 +1,107 @@
+appId: dev.vostride.playground
+name: Fernwood sign-in, quantity, validated checkout, and cancellation
+---
+- runFlow: ../helpers/launch.yaml
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://shop
+- runFlow: ../helpers/add-two-mugs.yaml
+- scrollUntilVisible:
+    element:
+      text: '\$53\.00'
+    direction: DOWN
+- assertVisible: '\$53\.00'
+- scrollUntilVisible:
+    element:
+      id: button-continue-to-checkout
+    direction: DOWN
+- tapOn:
+    id: button-continue-to-checkout
+- assertVisible: 'Welcome back\.'
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: field-email-address
+      VALUE: alex@example.com
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: field-password
+      VALUE: fernwood123
+- scrollUntilVisible:
+    element:
+      id: shop-submit-signin
+    direction: DOWN
+- tapOn:
+    id: shop-submit-signin
+- assertVisible: 'Where should we send it\?'
+# Verify a blank address cannot advance to delivery.
+- scrollUntilVisible:
+    element:
+      id: button-continue-to-delivery
+    direction: DOWN
+- tapOn:
+    id: button-continue-to-delivery
+- scrollUntilVisible:
+    element:
+      text: 'Enter a street address\.[\s\S]*'
+    direction: UP
+- assertVisible: 'Enter a street address\.[\s\S]*'
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: field-street-address
+      VALUE: 12 Demo Street
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: field-city
+      VALUE: Portland
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: field-postal-code
+      VALUE: '97205'
+- scrollUntilVisible:
+    element:
+      id: button-continue-to-delivery
+    direction: DOWN
+- tapOn:
+    id: button-continue-to-delivery
+- assertVisible: 'A good thing is on its way\.'
+- scrollUntilVisible:
+    element:
+      id: button-review-order
+    direction: DOWN
+- tapOn:
+    id: button-review-order
+- assertVisible: 'One last look\.'
+- scrollUntilVisible:
+    element:
+      text: 'Everyday Ceramic Mug × 2'
+    direction: DOWN
+- assertVisible: 'Everyday Ceramic Mug × 2'
+- scrollUntilVisible:
+    element:
+      id: button-place-order-53-00
+    direction: DOWN
+- tapOn:
+    id: button-place-order-53-00
+- assertVisible: 'Good things are on their way\.'
+- assertVisible: 'Your order FW-1001 is confirmed\.'
+- tapOn:
+    id: button-view-orders
+- assertVisible: 'Order FW-1001'
+- assertVisible: 'Total \$53\.00'
+- scrollUntilVisible:
+    element:
+      id: button-cancel-order
+    direction: DOWN
+- tapOn:
+    id: button-cancel-order
+- assertVisible: 'Cancel order FW-1001\?'
+- tapOn:
+    id: button-confirm-cancellation
+- assertVisible: 'Cancelled'
+- takeScreenshot: fernwood-order-cancelled

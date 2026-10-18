@@ -1,0 +1,74 @@
+appId: dev.vostride.playground
+name: Vigil log query, event trace, monitor creation, pause, and delete
+---
+- runFlow: ../helpers/launch.yaml
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://observability/logs
+- assertVisible:
+    id: vigil-field-log-search-query
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: vigil-field-log-search-query
+      VALUE: 'service:checkout status:error'
+- tapOn: Search
+- scrollUntilVisible:
+    element:
+      text: 'error checkout .*'
+    direction: DOWN
+- tapOn:
+    text: 'error checkout .*'
+    index: 0
+- assertVisible: Log event
+- scrollUntilVisible:
+    element:
+      text: View trace
+    direction: DOWN
+- tapOn: View trace
+- assertVisible: Trace details
+- assertVisible: Trace waterfall
+- tapOn: Close
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://observability/monitors
+- tapOn: New monitor
+- assertVisible: New metric monitor
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: vigil-field-monitor-name
+      VALUE: Native regression monitor
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: vigil-field-notify
+      VALUE: oncall@example.test
+- scrollUntilVisible:
+    element:
+      text: Create monitor
+    direction: DOWN
+- tapOn: Create monitor
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: vigil-field-search-monitors
+      VALUE: Native regression monitor
+- scrollUntilVisible:
+    element:
+      text: Edit Native regression monitor
+    direction: DOWN
+- assertVisible: Edit Native regression monitor
+- assertVisible: 'Error rate > 2 % · 5 minutes'
+- tapOn: Pause Native regression monitor
+- assertVisible: Resume Native regression monitor
+- takeScreenshot: vigil-monitor-paused
+- scrollUntilVisible:
+    element:
+      text: Delete
+    direction: DOWN
+- tapOn: Delete
+- tapOn: Delete monitor
+- assertVisible: No matching monitors

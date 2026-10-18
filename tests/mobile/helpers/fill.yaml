@@ -1,0 +1,12 @@
+appId: dev.vostride.playground
+---
+- scrollUntilVisible:
+    element:
+      id: '${FIELD}'
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: '${FIELD}'
+- eraseText
+- inputText: '${VALUE}'
+- hideKeyboard

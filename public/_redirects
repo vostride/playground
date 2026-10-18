@@ -1,0 +1,5 @@
+# Views use hash routes. Restrict redirects to app roots so asset URLs stay intact.
+/shop /shop/ 301
+/flights /flights/ 301
+/observability /observability/ 301
+/tasks /tasks/ 301

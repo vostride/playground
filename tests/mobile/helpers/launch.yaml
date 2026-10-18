@@ -1,0 +1,10 @@
+appId: dev.vostride.playground
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: deny
+- extendedWaitUntil:
+    visible: 'Make yourself at home\.'
+    timeout: 30000
+- assertVisible: 'PLAYGROUND.*Simulated data.*'

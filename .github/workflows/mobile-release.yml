@@ -1,0 +1,354 @@
+name: Mobile candidate checks and immutable release
+
+on:
+  push:
+    tags: ['mobile-v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Candidate semantic version to build and test. This run never publishes a release.'
+        type: string
+        required: true
+        default: '0.1.0'
+
+permissions:
+  contents: read
+
+# A tag gets one release. A rerun cannot replace an existing release or its assets.
+concurrency:
+  group: mobile-release-${{ github.event_name }}-${{ github.ref }}-${{ inputs.version || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  CI: 'true'
+  MAESTRO_CLI_NO_ANALYTICS: 'true'
+  MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED: 'true'
+  MAESTRO_DISABLE_UPDATE_CHECK: 'true'
+  MAESTRO_DRIVER_STARTUP_TIMEOUT: '120000'
+
+jobs:
+  prepare:
+    name: Validate the candidate or release version
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build-number: ${{ steps.version.outputs.build-number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: npm
+      - name: Validate semantic version and protect existing releases
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MOBILE_TAG: ${{ github.event_name == 'push' && github.ref_name || format('mobile-v{0}', inputs.version) }}
+          PUBLICATION_REQUESTED: ${{ github.event_name == 'push' }}
+        run: |
+          node --input-type=module <<'NODE'
+          import {appendFileSync} from 'node:fs';
+          const tag = process.env.MOBILE_TAG;
+          const match = /^mobile-v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(tag);
+          if (!match) throw new Error('Release tags must use mobile-vMAJOR.MINOR.PATCH.');
+          const [major, minor, patch] = match.slice(1).map(Number);
+          const build = major * 1000000 + minor * 1000 + patch + 1;
+          if (minor > 999 || patch > 999 || build > 2100000000) throw new Error('Version cannot be encoded as an Android versionCode.');
+          if (process.env.PUBLICATION_REQUESTED === 'true') {
+            const response = await fetch(`${process.env.GITHUB_API_URL}/repos/${process.env.GITHUB_REPOSITORY}/releases/tags/${tag}`, {headers: {Accept: 'application/vnd.github+json', Authorization: `Bearer ${process.env.GH_TOKEN}`}});
+            if (response.status === 200) throw new Error('This release already exists. Existing releases are never modified; use a new version.');
+            if (response.status !== 404) throw new Error(`Could not verify release absence: HTTP ${response.status}.`);
+          } else {
+            appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Candidate verification for ${tag}: native builds, acceptance tests, checksums, and attestations only. No GitHub release will be published.\n`);
+          }
+          appendFileSync(process.env.GITHUB_OUTPUT, `version=${major}.${minor}.${patch}\nbuild-number=${build}\n`);
+          NODE
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:mobile:flows
+      - run: npm run typecheck --workspace @playground/mobile
+
+  android:
+    name: Build and attest the Android APK
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    env:
+      PLAYGROUND_VERSION: ${{ needs.prepare.outputs.version }}
+      PLAYGROUND_BUILD_NUMBER: ${{ needs.prepare.outputs.build-number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install the pinned Android toolchain
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;27.1.12297006'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci
+      - name: Build a standalone release APK
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease --no-daemon
+      - name: Verify the final APK requests no permissions
+        run: |
+          node --input-type=module <<'NODE'
+          import {mkdirSync, writeFileSync} from 'node:fs';
+          import {spawnSync} from 'node:child_process';
+          const sdk = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
+          if (!sdk) throw new Error('Android SDK location is unavailable.');
+          const result = spawnSync(`${sdk}/build-tools/36.0.0/aapt`, ['dump', 'permissions', 'apps/mobile/android/app/build/outputs/apk/release/app-release.apk'], {encoding: 'utf8'});
+          if (result.error || result.status !== 0) throw new Error(`Cannot inspect APK permissions: ${result.error?.message || result.stderr}`);
+          mkdirSync('maestro-reports/android', {recursive: true});
+          writeFileSync('maestro-reports/android/apk-permissions.txt', result.stdout);
+          console.log(result.stdout);
+          if (/^uses-permission/m.test(result.stdout)) throw new Error('The final merged APK requests permissions. Playground release apps must request none.');
+          NODE
+      - name: Install the pinned Maestro CLI
+        run: |
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/maestro.zip" \
+            https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.11.0/maestro.zip
+          node --input-type=module <<'NODE'
+          import {readFileSync, appendFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const digest = createHash('sha256').update(readFileSync(`${process.env.RUNNER_TEMP}/maestro.zip`)).digest('hex');
+          if (digest !== '5384593cb4e7a106489e75a821d157dd43f4e438df6bc308b72e82c685e1283a') throw new Error('Maestro archive checksum mismatch.');
+          appendFileSync(process.env.GITHUB_PATH, `${process.env.RUNNER_TEMP}/maestro/bin\n`);
+          NODE
+          unzip -q "$RUNNER_TEMP/maestro.zip" -d "$RUNNER_TEMP"
+      - name: Enable Android emulator hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Verify product journeys on the release APK
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7_pro
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+            mkdir -p maestro-reports/android
+            maestro --device emulator-5554 test --format JUNIT --output maestro-reports/android/results.xml --debug-output maestro-reports/android/debug --test-output-dir maestro-reports/android/artifacts tests/mobile/flows/
+      - name: Preserve Android acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-acceptance-report
+          path: maestro-reports/android/
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Stage the APK and its SHA-256 checksum
+        run: |
+          mkdir -p release
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk "release/playground-android-${PLAYGROUND_VERSION}.apk"
+          cd release
+          sha256sum "playground-android-${PLAYGROUND_VERSION}.apk" > "playground-android-${PLAYGROUND_VERSION}.apk.sha256"
+      - name: Attest Android build provenance
+        uses: actions/attest@v4
+        with:
+          subject-path: release/*.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile-android-release
+          path: release/
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+
+  ios:
+    name: Build and attest the iOS simulator app
+    needs: prepare
+    runs-on: macos-15
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    env:
+      PLAYGROUND_VERSION: ${{ needs.prepare.outputs.version }}
+      PLAYGROUND_BUILD_NUMBER: ${{ needs.prepare.outputs.build-number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: npm
+      - name: Select Xcode 16.4
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: apps/mobile
+      - run: npm ci
+      - name: Install native iOS dependencies
+        working-directory: apps/mobile/ios
+        run: bundle exec pod install
+      - name: Pin the Node executable for Xcode script phases
+        run: |
+          node --input-type=module <<'NODE'
+          import {writeFileSync} from 'node:fs';
+          writeFileSync('apps/mobile/ios/.xcode.env.local', `export NODE_BINARY="${process.execPath}"\n`);
+          NODE
+      - name: Build the unsigned universal simulator app
+        working-directory: apps/mobile/ios
+        run: |
+          xcodebuild \
+            -workspace Playground.xcworkspace \
+            -scheme Playground \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            ONLY_ACTIVE_ARCH=NO \
+            'ARCHS=arm64 x86_64' \
+            MARKETING_VERSION="$PLAYGROUND_VERSION" \
+            CURRENT_PROJECT_VERSION="$PLAYGROUND_BUILD_NUMBER" \
+            build
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install the pinned Maestro CLI
+        run: |
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/maestro.zip" \
+            https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.11.0/maestro.zip
+          node --input-type=module <<'NODE'
+          import {readFileSync, appendFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const digest = createHash('sha256').update(readFileSync(`${process.env.RUNNER_TEMP}/maestro.zip`)).digest('hex');
+          if (digest !== '5384593cb4e7a106489e75a821d157dd43f4e438df6bc308b72e82c685e1283a') throw new Error('Maestro archive checksum mismatch.');
+          appendFileSync(process.env.GITHUB_PATH, `${process.env.RUNNER_TEMP}/maestro/bin\n`);
+          NODE
+          unzip -q "$RUNNER_TEMP/maestro.zip" -d "$RUNNER_TEMP"
+      - name: Boot an iOS 18.5 simulator and install the release app
+        id: simulator
+        run: |
+          PLAYGROUND_SIMULATOR_ID=$(xcrun simctl create 'Playground CI' 'com.apple.CoreSimulator.SimDeviceType.iPhone-16' 'com.apple.CoreSimulator.SimRuntime.iOS-18-5')
+          echo "id=$PLAYGROUND_SIMULATOR_ID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$PLAYGROUND_SIMULATOR_ID"
+          xcrun simctl bootstatus "$PLAYGROUND_SIMULATOR_ID" -b
+          xcrun simctl install "$PLAYGROUND_SIMULATOR_ID" apps/mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app
+      - name: Verify product journeys on the simulator build
+        env:
+          PLAYGROUND_SIMULATOR_ID: ${{ steps.simulator.outputs.id }}
+        run: |
+          mkdir -p maestro-reports/ios
+          maestro --device "$PLAYGROUND_SIMULATOR_ID" test --format JUNIT --output maestro-reports/ios/results.xml --debug-output maestro-reports/ios/debug --test-output-dir maestro-reports/ios/artifacts tests/mobile/flows/
+      - name: Preserve iOS acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-acceptance-report
+          path: maestro-reports/ios/
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Shut down the test simulator
+        if: always() && steps.simulator.outputs.id != ''
+        env:
+          PLAYGROUND_SIMULATOR_ID: ${{ steps.simulator.outputs.id }}
+        run: xcrun simctl shutdown "$PLAYGROUND_SIMULATOR_ID"
+      - name: Package the simulator app and checksum
+        run: |
+          mkdir -p release
+          test -d apps/mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app
+          ditto -c -k --sequesterRsrc --keepParent \
+            apps/mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app \
+            "release/playground-ios-simulator-${PLAYGROUND_VERSION}.zip"
+          cd release
+          shasum -a 256 "playground-ios-simulator-${PLAYGROUND_VERSION}.zip" > "playground-ios-simulator-${PLAYGROUND_VERSION}.zip.sha256"
+      - name: Attest iOS build provenance
+        uses: actions/attest@v4
+        with:
+          subject-path: release/*.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile-ios-release
+          path: release/
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+      - name: Preserve native build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-logs
+          path: apps/mobile/ios/build/Logs/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  publish:
+    name: Publish both artifacts once
+    needs: [prepare, android, ios]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/mobile-v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MOBILE_TAG: ${{ github.ref_name }}
+      PLAYGROUND_VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: mobile-*-release
+          merge-multiple: true
+          path: release
+      - name: Verify both checksums before publication
+        working-directory: release
+        run: |
+          test -s "playground-android-${PLAYGROUND_VERSION}.apk"
+          test -s "playground-ios-simulator-${PLAYGROUND_VERSION}.zip"
+          sha256sum --check "playground-android-${PLAYGROUND_VERSION}.apk.sha256"
+          sha256sum --check "playground-ios-simulator-${PLAYGROUND_VERSION}.zip.sha256"
+      - name: Recheck immutability guard and prepare release notes
+        run: |
+          node --input-type=module <<'NODE'
+          import {writeFileSync} from 'node:fs';
+          const response = await fetch(`${process.env.GITHUB_API_URL}/repos/${process.env.GITHUB_REPOSITORY}/releases/tags/${process.env.MOBILE_TAG}`, {headers: {Accept: 'application/vnd.github+json', Authorization: `Bearer ${process.env.GH_TOKEN}`}});
+          if (response.status !== 404) throw new Error(response.status === 200 ? 'Release already exists. Refusing to replace it.' : `Release guard failed: HTTP ${response.status}.`);
+          writeFileSync('release-notes.md', `Playground ${process.env.PLAYGROUND_VERSION}\n\nStandalone Android APK and unsigned iOS simulator app. The iOS archive contains Playground.app for arm64 and x86_64 simulators; it is not an IPA and does not run on a physical iPhone.\n\nEach archive has a SHA-256 checksum and GitHub build provenance attestation. Verify an artifact with: gh attestation verify <artifact> --repo ${process.env.GITHUB_REPOSITORY}\n\nThese files are immutable. Corrections ship under a new version. All product data is simulated and stays on the device.\n`);
+          NODE
+      - name: Create the release with all assets attached
+        # gh stages a draft, uploads all assets, then publishes. No upload --clobber
+        # or release edit operation is used. Enable repository release immutability.
+        run: |
+          gh release create "$MOBILE_TAG" \
+            "release/playground-android-${PLAYGROUND_VERSION}.apk" \
+            "release/playground-android-${PLAYGROUND_VERSION}.apk.sha256" \
+            "release/playground-ios-simulator-${PLAYGROUND_VERSION}.zip" \
+            "release/playground-ios-simulator-${PLAYGROUND_VERSION}.zip.sha256" \
+            --verify-tag \
+            --title "Playground ${PLAYGROUND_VERSION}" \
+            --notes-file release-notes.md

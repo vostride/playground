@@ -1,0 +1,135 @@
+appId: dev.vostride.playground
+name: Wayline round trip, both seat maps, validated checkout, and booking
+---
+- runFlow: ../helpers/launch.yaml
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://flights
+- scrollUntilVisible:
+    element:
+      id: button-search-flights
+    direction: DOWN
+- tapOn:
+    id: button-search-flights
+- assertVisible: 'New York → London'
+- scrollUntilVisible:
+    element:
+      id: button-select-flight
+    direction: DOWN
+- tapOn:
+    id: button-select-flight
+    index: 0
+- assertVisible: 'London → New York'
+- scrollUntilVisible:
+    element:
+      id: button-select-flight
+    direction: DOWN
+- tapOn:
+    id: button-select-flight
+    index: 0
+- assertVisible: 'A fare that fits your plans'
+- scrollUntilVisible:
+    element:
+      id: button-continue-to-seats
+    direction: DOWN
+- tapOn:
+    id: button-continue-to-seats
+- assertVisible: 'Find your favorite seat'
+- assertVisible:
+    text: 'Seat 1[A-F], occupied'
+    enabled: false
+- tapOn:
+    text: 'Seat 1[A-F]'
+    enabled: true
+    index: 0
+- assertVisible: 'Seat 1[A-F], selected'
+- scrollUntilVisible:
+    element:
+      id: button-choose-return-seats
+    direction: DOWN
+- tapOn:
+    id: button-choose-return-seats
+- assertVisible: 'Return · LHR to JFK.*'
+- tapOn:
+    text: 'Seat 1[A-F]'
+    enabled: true
+    index: 0
+- scrollUntilVisible:
+    element:
+      id: button-continue-to-checkout
+    direction: DOWN
+- tapOn:
+    id: button-continue-to-checkout
+# Empty traveler fields must not advance.
+- scrollUntilVisible:
+    element:
+      id: button-continue-to-payment
+    direction: DOWN
+- tapOn:
+    id: button-continue-to-payment
+- assertVisible: 'Enter the passenger.*first and last name\.'
+- scrollUntilVisible:
+    element:
+      id: field-first-name
+    direction: UP
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: field-first-name
+      VALUE: Alex
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: field-last-name
+      VALUE: Morgan
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: field-date-of-birth
+      VALUE: '1992-06-15'
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: field-email-address
+      VALUE: alex@example.com
+- scrollUntilVisible:
+    element:
+      id: button-continue-to-payment
+    direction: DOWN
+- tapOn:
+    id: button-continue-to-payment
+- scrollUntilVisible:
+    element:
+      id: button-use-sample
+    direction: DOWN
+- tapOn:
+    id: button-use-sample
+- scrollUntilVisible:
+    element:
+      id: button-review-booking
+    direction: DOWN
+- tapOn:
+    id: button-review-booking
+- scrollUntilVisible:
+    element:
+      id: flight-accept-terms
+    direction: DOWN
+- tapOn:
+    id: flight-accept-terms
+- scrollUntilVisible:
+    element:
+      text: 'Confirm booking · .*'
+    direction: DOWN
+- tapOn: 'Confirm booking · .*'
+- assertVisible: 'You’re going to London\.'
+- assertVisible: 'WL006Q'
+- scrollUntilVisible:
+    element:
+      id: button-manage-your-booking
+    direction: DOWN
+- tapOn:
+    id: button-manage-your-booking
+- assertVisible: 'Booking WL006Q'
+- assertVisible: 'Alex Morgan'
+- takeScreenshot: wayline-round-trip-confirmed

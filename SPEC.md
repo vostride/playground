@@ -1,0 +1,120 @@
+# Playground
+
+Apps to test agent-qa against, built like real products rather than toy samples. After
+`agent-qa init`, a new user's sample tests run on the playground, so everyone starts from the same
+apps and the same result.
+
+The repo is public under the MIT license, so people can see exactly what they're testing, and GitHub
+Actions is free for it.
+
+The playground is not agent-qa's sample tests (those live in agent-qa's `init` scaffold), not a
+demo of agent-qa, and not part of agent-qa's evaluations.
+
+## What it contains
+
+### Web apps
+
+Static sites under `playground.vostride.dev`, one path per app. Each app has its own made-up name,
+shown on its pages and in its page titles (`<page> · <name>`, for example `Cart · Fernwood`). Paths
+stay plain words.
+
+| App | Path | Inspired by | What it exercises |
+|---|---|---|---|
+| Wayline, flight booking | `/flights` | booking.com | Search with airport autocomplete and date-range and passenger pickers; results with filters, sorting and a price calendar; fare choice; a seat map; a multi-step checkout with validation; managing a booking |
+| Vigil, observability | `/observability` | Datadog | Dashboards of time-series charts with a time-range picker and live-updating widgets; a log explorer with a query bar, facets and a virtualized table; trace waterfalls; an alert builder with complex forms |
+| Corkboard, task boards | `/tasks` | Trello, Jira | Boards with drag and drop between and within columns, by mouse and keyboard; inline editing; a card panel with labels, assignees, checklists and due dates; filters and undo |
+| Fernwood, a shop | `/shop` | a small store | The starter app: sign-in, catalog, cart, checkout and orders. agent-qa v2's `init` samples use it |
+
+### Mobile app
+
+One bare React Native app called Playground: a super app whose home screen opens mobile versions of
+Wayline, Corkboard, Vigil and Fernwood. Together they cover tab and stack navigation, forms with the
+keyboard, date and option pickers, switches, bottom sheets and modals, long lists, pull to refresh,
+drag and drop by touch, gestures, a WebView screen, and a deep link into each flow.
+
+| Platform | Form | Where |
+|---|---|---|
+| Android | An APK | A release asset of this repo |
+| iOS | A simulator build (a zipped `.app`) | A release asset of this repo |
+
+- **Same flows on web and mobile.** Where a flow exists on both, it matches, so one plain-English
+  test runs on web, Android and iOS.
+- **iOS ships as a simulator build, not an `.ipa`.** An `.ipa` only runs on real iPhones and must be
+  signed per device or team. Real iPhones are out of scope, and simulator builds need no signing.
+- **More apps later.** A new product gets its own name, its own path on the web and its own sub-app in
+  the mobile app.
+
+## Stack
+
+- **Web:** React and TypeScript, built with Vite into static files and served by Cloudflare Pages.
+  Every app, Fernwood included, is its own build under its own path, so changing one app never
+  touches another's files. No server framework is needed, because the apps have no server by design.
+- **Mobile:** bare React Native (the React Native CLI, no Expo).
+- **Shared:** one repo with workspaces for the web apps, the mobile app and shared TypeScript packages
+  for seeded data and product logic, so web and mobile show the same data and behave the same way.
+
+## Rules
+
+1. **Realistic.** Each app is built like a real product, with real-looking data in realistic volumes
+   (thousands of rows), loading, empty and error states, and the rough edges real apps have, such as
+   canvas charts, icon-only buttons and custom widgets. agent-qa has to handle them.
+2. **Original.** Inspired by well-known products, but with its own names, design and assets. Never
+   their branding.
+3. **Self-contained and repeatable.** The apps run entirely in the browser or on the device. Data is
+   generated in the app from a fixed seed, so every fresh session shows the same data, and anything
+   "live" is simulated. There's no backend, no real accounts, no personal data and no payments.
+   Login credentials are printed on the page.
+4. **Nothing hidden.** Everything the apps need ships with them: fonts, icons, images and data. No
+   analytics, trackers or outside network calls. The mobile app asks for no permissions.
+5. **Clearly a playground.** Every page and screen shows a banner saying so. Web pages are `noindex`.
+   Bot challenges are off, because automated agents are the intended visitors.
+6. **Stable.** Released names, paths, texts and flows never change in place, because people's tests
+   depend on them. The repo keeps a list of what has been released, and the site check walks it. A
+   redesign ships under a new path or a new app version, and released mobile builds are never
+   replaced.
+7. **Deliberate bugs are opt-in and labelled.** Each app has a few. Each sits behind its own switch
+   (`?bug=<name>` on the web, a deep link or debug menu in the mobile app), is listed in the app, and
+   never affects the passing samples. A failing sample test shows agent-qa catching one.
+8. **Independent.** The playground knows nothing about agent-qa or its evaluations. agent-qa's private
+   evaluations may pin a playground version and add their own checks around it.
+
+## Distribution
+
+- **Web:** Cloudflare Pages builds and deploys `main` to `playground.vostride.dev`. Branches get
+  preview deploys. Before a deploy, a site check walks every released sample flow on the preview and
+  reports anything broken. It reports; it never blocks.
+- **Mobile:** each version of the super app is a GitHub Release of this repo with two files: the APK
+  and the zipped iOS simulator app, each with a SHA-256 checksum. CI builds and publishes them on
+  GitHub's runners (macOS for the iOS build), with build attestations. Release builds never happen on
+  a developer's machine. A release is never edited; a new build is a new release. agent-qa pins one
+  release and its checksums, and `agent-qa init` downloads both files from it, so users get exactly
+  the build agent-qa was tested with.
+
+## Starting point
+
+- **Built fresh.** Every app, Fernwood included, is built here from scratch. Nothing is copied from
+  agent-qa's private evaluation repo, which keeps its own simple shop for its own checks.
+- **Fernwood comes first.** It's the smallest app and the one agent-qa v2's `init` samples use:
+  sign-in, catalog, cart, checkout and orders, with at least one labelled bug for the failing sample
+  test.
+- **Afterwards,** agent-qa's spec points to the playground for the hosted site, and the evaluation
+  repo's shop stays a private test fixture that's never deployed.
+- **For reference only,** the evaluation repo's mobile test app has a working Android build setup that
+  can guide the super app's, which is a new app.
+
+## Timeline
+
+- **Now, for agent-qa v2:** Fernwood, built in React and TypeScript and live at
+  `playground.vostride.dev/shop`. agent-qa's `init` points its web sample tests at it. The v2 release
+  waits on it, so it comes before the bigger apps.
+- **Next:** Wayline, Vigil and Corkboard on the web, released one at a time. They don't block
+  agent-qa.
+- **For agent-qa v3:** the Playground mobile app, built in CI and released from this repo for Android
+  and the iOS simulator. `agent-qa init` downloads the pinned release and adds mobile sample tests,
+  which run on agent-qa's mobile runtime. New sample tests can use the bigger apps, and a released
+  sample path never changes.
+
+## Open questions
+
+- How a deliberate bug is switched on in the mobile app: a deep link or a debug menu.
+- Which sub-apps the first mobile release includes.

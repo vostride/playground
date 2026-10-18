@@ -1,0 +1,112 @@
+.pg-banner {
+  position: relative;
+  z-index: 100;
+  font:
+    11px/1.5 -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  letter-spacing: 0.02em;
+  color: #5c665e;
+  background: #edf1e9;
+  border-bottom: 1px solid #dbe2d7;
+  padding: 7px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.pg-dot {
+  display: inline-block;
+  background: #5f785d;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 7px;
+}
+.pg-tools {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.pg-banner a {
+  color: inherit;
+  text-decoration: none;
+}
+.pg-banner button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+.pg-banner button:focus-visible,
+.pg-banner a:focus-visible {
+  outline: 2px solid #3f634b;
+  outline-offset: 4px;
+}
+.pg-menu {
+  position: absolute;
+  right: 25px;
+  top: 38px;
+  background: #fff;
+  border: 1px solid #d8ddd7;
+  box-shadow: 0 12px 40px #18211e22;
+  border-radius: 8px;
+  width: min(360px, calc(100vw - 32px));
+  padding: 20px;
+  color: #26372c;
+  z-index: 200;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+.pg-menu p {
+  line-height: 1.6;
+  color: #6f766f;
+}
+.pg-menu label {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+}
+.pg-menu select {
+  max-width: 100%;
+  padding: 10px;
+  background: white;
+  border: 1px solid #c8d1c9;
+  border-radius: 4px;
+}
+.pg-menu > div {
+  padding: 12px 0;
+  border-top: 1px solid #eee;
+}
+.pg-menu code {
+  display: block;
+  font-size: 11px;
+  margin-top: 5px;
+}
+.pg-bug {
+  flex-basis: 100%;
+  color: #935817;
+  display: flex;
+  gap: 14px;
+}
+.pg-bug button {
+  text-decoration: underline;
+}
+@media (max-width: 600px) {
+  .pg-banner {
+    padding: 7px 16px;
+  }
+  .pg-muted {
+    display: none;
+  }
+  .pg-tools {
+    gap: 12px;
+  }
+}

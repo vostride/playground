@@ -1,0 +1,9 @@
+appId: dev.vostride.playground
+---
+- openLink: '${LINK}'
+# The first custom-scheme launch may show an iOS system confirmation.
+- runFlow:
+    when:
+      visible: 'Open.*Playground.*'
+    commands:
+      - tapOn: 'Open'

@@ -1,0 +1,1 @@
+{"name":"@playground/flights","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"vite --host 127.0.0.1","build":"vite build"},"dependencies":{"@playground/core":"*","@playground/ui":"*","react":"*","react-dom":"*","lucide-react":"*"},"devDependencies":{"vite":"*","typescript":"*","@vitejs/plugin-react":"*","@types/react":"*","@types/react-dom":"*"}}

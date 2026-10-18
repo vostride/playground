@@ -1,0 +1,75 @@
+appId: dev.vostride.playground
+name: Warm deep links, local WebView, opt-in defect, and session reset
+---
+- runFlow: ../helpers/launch.yaml
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://flights
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://flights/bookings
+- assertVisible: My trips
+- assertVisible: Booking WL6P2K
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://observability/logs
+- assertVisible:
+    id: vigil-field-log-search-query
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://observability/monitors
+- assertVisible: New monitor
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://tasks/task/CKB-001
+- assertVisible:
+    id: task-detail-title
+- tapOn: Close CKB-001
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://home
+- scrollUntilVisible:
+    element:
+      id: button-a-quick-guide-to-the-playground
+    direction: DOWN
+- tapOn:
+    id: button-a-quick-guide-to-the-playground
+- assertVisible: 'A place to try things\.'
+- tapOn:
+    id: button-close
+# The labelled opt-in bug changes two $24 mugs from $53 to $29 including shipping.
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://shop?bug=cart-total
+- assertVisible: 'Deliberate bug: Quantity ignored in totals'
+- runFlow: ../helpers/add-two-mugs.yaml
+- scrollUntilVisible:
+    element:
+      text: '\$29\.00'
+    direction: DOWN
+- assertVisible: '\$29\.00'
+- assertNotVisible: '\$53\.00'
+- takeScreenshot: labelled-cart-total-bug
+- tapOn: Test controls
+- scrollUntilVisible:
+    element:
+      id: button-reset-playground-session
+    direction: DOWN
+- tapOn:
+    id: button-reset-playground-session
+- assertVisible: 'Make yourself at home\.'
+- assertNotVisible: 'Deliberate bug:.*'
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://shop/cart
+- assertVisible: 'Your bag \(0\)'
+- assertVisible: 'A little room for something good\.'
+- takeScreenshot: session-reset-empty-bag

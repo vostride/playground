@@ -1,0 +1,36 @@
+{
+  "name": "@playground/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "react-native start",
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "typecheck": "tsc --noEmit",
+    "bundle:android": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output .bundle/index.android.bundle --assets-dest .bundle/android",
+    "bundle:ios": "react-native bundle --platform ios --dev false --entry-file index.js --bundle-output .bundle/main.jsbundle --assets-dest .bundle/ios"
+  },
+  "dependencies": {
+    "@playground/core": "*",
+    "react": "19.2.0",
+    "react-native": "0.83.1",
+    "react-native-safe-area-context": "5.6.2",
+    "react-native-svg": "15.15.1",
+    "react-native-webview": "13.16.0"
+  },
+  "devDependencies": {
+    "@babel/core": "7.28.5",
+    "@babel/runtime": "7.28.4",
+    "@react-native-community/cli": "20.0.0",
+    "@react-native-community/cli-platform-android": "20.0.0",
+    "@react-native-community/cli-platform-ios": "20.0.0",
+    "@react-native/babel-preset": "0.83.1",
+    "@react-native/metro-config": "0.83.1",
+    "@react-native/typescript-config": "0.83.1",
+    "@types/react": "19.2.2",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}

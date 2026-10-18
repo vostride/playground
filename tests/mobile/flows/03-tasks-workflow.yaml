@@ -1,0 +1,82 @@
+appId: dev.vostride.playground
+name: Corkboard create, edit, move, undo, checklist, and persistence
+---
+- runFlow: ../helpers/launch.yaml
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://tasks
+- tapOn:
+    id: task-new-button
+- tapOn:
+    id: task-create-title
+- inputText: Native regression task
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: task-create-submit
+    direction: DOWN
+- tapOn:
+    id: task-create-submit
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://tasks/task/CKB-2401
+- assertVisible:
+    id: task-detail-title
+    text: Native regression task
+- tapOn:
+    id: task-detail-title
+- eraseText
+- inputText: Native regression task edited
+- hideKeyboard
+- tapOn:
+    id: task-status-progress
+- assertVisible:
+    id: task-status-progress
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: task-detail-undo
+    direction: DOWN
+- tapOn:
+    id: task-detail-undo
+- scrollUntilVisible:
+    element:
+      id: task-status-todo
+    direction: UP
+- assertVisible:
+    id: task-status-todo
+    selected: true
+- runFlow:
+    file: ../helpers/fill.yaml
+    env:
+      FIELD: task-checklist-new
+      VALUE: Confirm mobile flow
+- tapOn:
+    id: task-checklist-add
+- assertVisible: Confirm mobile flow
+- tapOn: Confirm mobile flow
+- assertVisible:
+    text: Confirm mobile flow
+    checked: true
+- scrollUntilVisible:
+    element:
+      text: Done
+    direction: DOWN
+- tapOn: Done
+- runFlow:
+    file: ../helpers/open-link.yaml
+    env:
+      LINK: playground://tasks/task/CKB-2401
+- assertVisible:
+    id: task-detail-title
+    text: Native regression task edited
+- scrollUntilVisible:
+    element:
+      text: Confirm mobile flow
+    direction: DOWN
+- assertVisible:
+    text: Confirm mobile flow
+    checked: true
+- takeScreenshot: corkboard-task-persisted

@@ -1,0 +1,45 @@
+{
+  "name": "vostride-playground",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @playground/shop",
+    "build": "node scripts/build.mjs",
+    "build:shop": "npm run build -w @playground/shop",
+    "preview": "node scripts/serve.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test packages/core/src/*.test.ts",
+    "test:e2e": "playwright test",
+    "check": "npm run typecheck && npm run typecheck:mobile && npm test && npm run check:releases && npm run build && npm run test:e2e",
+    "check:site": "node scripts/site-check.mjs",
+    "check:releases": "node scripts/check-release-registry.mjs",
+    "typecheck:mobile": "npm run typecheck -w @playground/mobile",
+    "format": "prettier --write \"apps/*/src/**/*.{ts,tsx,css}\" \"packages/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,yaml}\" \"scripts/*.{mjs,tsx}\" \"*.{json,ts,md}\" \".github/workflows/*.yml\"",
+    "test:mobile:flows": "node tests/mobile/validate.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "0.468.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "22.18.12",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "@vitejs/plugin-react": "5.0.4",
+    "prettier": "3.6.2",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vite": "7.3.5",
+    "yaml": "2.9.1"
+  }
+}

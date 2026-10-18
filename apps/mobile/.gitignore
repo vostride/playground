@@ -1,0 +1,13 @@
+node_modules/
+.template/
+.npm-cache/
+.bundle/
+ios/Pods/
+ios/build/
+ios/.xcode.env.local
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+.bundle-vendor/
+.metro-cache/

@@ -1,0 +1,30 @@
+appId: dev.vostride.playground
+---
+- runFlow:
+    file: fill.yaml
+    env:
+      FIELD: field-search-products
+      VALUE: Everyday Ceramic Mug
+- scrollUntilVisible:
+    element:
+      text: 'View Everyday Ceramic Mug'
+    direction: DOWN
+- tapOn: 'View Everyday Ceramic Mug'
+- assertVisible: 'PLAYGROUND.*Simulated data.*'
+- scrollUntilVisible:
+    element:
+      text: '\+'
+    direction: DOWN
+- tapOn: '\+'
+- scrollUntilVisible:
+    element:
+      id: button-add-to-bag
+    direction: DOWN
+- tapOn:
+    id: button-add-to-bag
+- runFlow:
+    file: open-link.yaml
+    env:
+      LINK: playground://shop/cart
+- assertVisible: 'Your bag \(2\)'
+- assertVisible: 'Everyday Ceramic Mug'

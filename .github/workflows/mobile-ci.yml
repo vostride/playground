@@ -1,0 +1,59 @@
+name: Mobile source and bundle checks
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/core/**'
+      - 'tests/mobile/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/mobile-ci.yml'
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/core/**'
+      - 'tests/mobile/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/mobile-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:mobile:flows
+      - run: npm run typecheck --workspace @playground/mobile
+      - name: Prepare bundle directories
+        run: mkdir -p apps/mobile/.bundle/android apps/mobile/.bundle/ios
+      - run: npm run bundle:android --workspace @playground/mobile
+      - run: npm run bundle:ios --workspace @playground/mobile
+      - name: Save JavaScript bundles for inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-js-bundles
+          path: apps/mobile/.bundle/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error

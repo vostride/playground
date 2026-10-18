@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "web": [
+    {
+      "id": "fernwood-v1",
+      "app": "shop",
+      "path": "/shop/",
+      "name": "Fernwood",
+      "status": "candidate",
+      "testFile": "tests/e2e/shop.spec.ts",
+      "flows": [
+        "Sign in with alex@example.com / fernwood123",
+        "Search and filter the collection",
+        "Add Everyday Ceramic Mug to bag and increase quantity",
+        "Validate shipping, choose delivery, review and place order",
+        "View orders and cancel an order",
+        "Enable cart-total for the labelled failing scenario"
+      ]
+    },
+    {
+      "id": "wayline-v1",
+      "app": "flights",
+      "path": "/flights/",
+      "name": "Wayline",
+      "status": "candidate",
+      "testFile": "tests/e2e/flights.spec.ts",
+      "flows": [
+        "Search JFK to LHR using airport autocomplete",
+        "Filter nonstop flights, choose outbound and return",
+        "Choose fare, select seats, complete validated checkout",
+        "Manage and cancel the booking"
+      ]
+    },
+    {
+      "id": "vigil-v1",
+      "app": "observability",
+      "path": "/observability/",
+      "name": "Vigil",
+      "status": "candidate",
+      "testFile": "tests/e2e/observability.spec.ts",
+      "flows": [
+        "Inspect dashboard charts and simulated live telemetry",
+        "Query and filter virtualized logs",
+        "Open a log and inspect its trace waterfall",
+        "Create, pause, and delete a validated monitor"
+      ]
+    },
+    {
+      "id": "corkboard-v1",
+      "app": "tasks",
+      "path": "/tasks/",
+      "name": "Corkboard",
+      "status": "candidate",
+      "testFile": "tests/e2e/tasks.spec.ts",
+      "flows": [
+        "Move tasks between and within columns with keyboard",
+        "Drag a task by mouse",
+        "Undo movement, rename inline, edit due date",
+        "Filter tasks and recover from empty results"
+      ]
+    }
+  ],
+  "mobile": []
+}

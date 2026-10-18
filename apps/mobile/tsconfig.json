@@ -1,0 +1,1 @@
+{"extends":"@react-native/typescript-config","compilerOptions":{"strict":true,"types":["react"],"noEmit":true,"moduleResolution":"bundler","module":"ESNext","target":"ES2022"},"include":["src/**/*.ts","src/**/*.tsx"],"exclude":["node_modules",".template"]}
