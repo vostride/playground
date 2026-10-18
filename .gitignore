@@ -16,3 +16,27 @@ mobile/ios/build/
 .env
 .env.*
 !.env.example
+
+# Local credentials, signing material, and IDE state.
+.npmrc
+.netrc
+.pypirc
+.aws/
+.ssh/
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+!mobile/android/app/debug.keystore
+*.mobileprovision
+*.provisionprofile
+xcuserdata/
+*.xcuserstate
+
+# Native packages are published by CI, never committed as source.
+release/
+*.apk
+*.aab
+*.ipa
