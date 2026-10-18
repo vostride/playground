@@ -30,6 +30,13 @@ export function diagnosticCommands({ platform, device, scenario }) {
   }
   const directory = `maestro-reports/${platform}`;
   const commands = [];
+  if (platform === 'android') {
+    commands.push({
+      name: 'emulator-prepare',
+      command: process.execPath,
+      args: ['tests/mobile/android-emulator.mjs', device],
+    });
+  }
   if (platform === 'android' && scenario === 'all') {
     commands.push({
       name: 'offline-start',
@@ -139,9 +146,16 @@ export function runDiagnostics(options, { execute = spawnSync, save = saveReport
       passed: result.status === 0 && !result.error && !result.signal,
     });
     save(report);
+    if (command.name === 'emulator-prepare' && !report.commands.at(-1).passed) {
+      report.blockedBy = command.name;
+      report.notRun = commands.slice(report.commands.length).map(({ name }) => name);
+      break;
+    }
   }
   report.completed = true;
-  report.passed = report.commands.every((command) => command.passed);
+  report.passed =
+    report.commands.length === commands.length &&
+    report.commands.every((command) => command.passed);
   report.finishedAt = new Date().toISOString();
   save(report);
   return report.passed ? 0 : 1;

@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { runDiagnostics } from './run-diagnostic.mjs';
+import { diagnosticCommands, runDiagnostics } from './run-diagnostic.mjs';
 
 function exercise(results, platform = 'android') {
+  if (platform === 'android') results = [{ status: 0 }, ...results];
   const calls = [];
   const reports = [];
   const exitCode = runDiagnostics(
@@ -22,12 +23,14 @@ function exercise(results, platform = 'android') {
 
 test('Maestro failure still runs drag and retains both results', () => {
   const result = exercise([{ status: 7 }, { status: 0 }]);
-  assert.equal(result.calls.length, 2);
-  assert.equal(result.calls[0].command, 'maestro');
-  assert.equal(result.calls[1].args[0], 'tests/mobile/android-drag.mjs');
+  assert.equal(result.calls.length, 3);
+  assert.equal(result.calls[0].args[0], 'tests/mobile/android-emulator.mjs');
+  assert.equal(result.calls[1].command, 'maestro');
+  assert.equal(result.calls[2].args[0], 'tests/mobile/android-drag.mjs');
   assert.deepEqual(
     result.final.commands.map(({ name, status }) => [name, status]),
     [
+      ['emulator-prepare', 0],
       ['maestro', 7],
       ['drag', 0],
     ],
@@ -35,7 +38,7 @@ test('Maestro failure still runs drag and retains both results', () => {
   assert(
     result.reports.some(
       (report) =>
-        !report.completed && report.commands.length === 1 && report.commands[0].status === 7,
+        !report.completed && report.commands.length === 2 && report.commands[1].status === 7,
     ),
   );
   assert.equal(result.final.completed, true);
@@ -61,12 +64,12 @@ test('spawn failures are recorded without losing drag evidence', () => {
   const error = new Error('Maestro could not start');
   for (const failure of [error, { status: null, error }]) {
     const result = exercise([failure, { status: 0 }]);
-    assert.equal(result.calls.length, 2);
-    assert.match(result.final.commands[0].error, /Maestro could not start/);
-    assert.equal(result.final.commands[0].status, null);
+    assert.equal(result.calls.length, 3);
+    assert.match(result.final.commands[1].error, /Maestro could not start/);
+    assert.equal(result.final.commands[1].status, null);
     assert.deepEqual(
       result.final.commands.map(({ passed }) => passed),
-      [false, true],
+      [true, false, true],
     );
     assert.equal(result.exitCode, 1);
   }
@@ -74,8 +77,8 @@ test('spawn failures are recorded without losing drag evidence', () => {
 
 test('a process killed by a signal cannot pass', () => {
   const result = exercise([{ status: 0 }, { status: null, signal: 'SIGTERM' }]);
-  assert.equal(result.final.commands[1].signal, 'SIGTERM');
-  assert.equal(result.final.commands[1].passed, false);
+  assert.equal(result.final.commands[2].signal, 'SIGTERM');
+  assert.equal(result.final.commands[2].passed, false);
   assert.equal(result.final.passed, false);
   assert.equal(result.exitCode, 1);
 });
@@ -106,7 +109,7 @@ test('an invalid scenario cannot execute commands or create a passing report', (
 });
 
 test('full Android acceptance requires offline evidence before and after product checks', () => {
-  for (const failedCommand of [-1, 0, 3]) {
+  for (const failedCommand of [-1, 1, 4]) {
     const calls = [];
     let final;
     const exitCode = runDiagnostics(
@@ -124,12 +127,54 @@ test('full Android acceptance requires offline evidence before and after product
     );
     assert.deepEqual(
       final.commands.map(({ name }) => name),
-      ['offline-start', 'maestro', 'drag', 'offline-end'],
+      ['emulator-prepare', 'offline-start', 'maestro', 'drag', 'offline-end'],
     );
-    assert.equal(calls[0].args.at(-1), 'configure');
-    assert.equal(calls[3].args.at(-1), 'verify');
+    assert.equal(calls[0].args[0], 'tests/mobile/android-emulator.mjs');
+    assert.equal(calls[1].args.at(-1), 'configure');
+    assert.equal(calls[4].args.at(-1), 'verify');
     assert.equal(exitCode, failedCommand === -1 ? 0 : 1);
     assert.equal(final.passed, failedCommand === -1);
+  }
+});
+
+test('every Android scenario prepares the CI emulator before other device operations', () => {
+  for (const scenario of ['all', 'shop', 'flights', 'tasks', 'observability', 'controls', 'drag']) {
+    const commands = diagnosticCommands({ platform: 'android', device: 'emulator-5554', scenario });
+    assert.deepEqual(commands[0], {
+      name: 'emulator-prepare',
+      command: process.execPath,
+      args: ['tests/mobile/android-emulator.mjs', 'emulator-5554'],
+    });
+  }
+});
+
+test('a failed preparation blocks later device operations and cannot create a passing report', () => {
+  for (const failure of [
+    { status: 1 },
+    { status: null, signal: 'SIGTERM' },
+    new Error('Cannot prepare'),
+  ]) {
+    let final;
+    let calls = 0;
+    const exitCode = runDiagnostics(
+      { platform: 'android', device: 'emulator-5554', scenario: 'all' },
+      {
+        execute() {
+          calls++;
+          if (failure instanceof Error) throw failure;
+          return failure;
+        },
+        save(report) {
+          final = structuredClone(report);
+        },
+      },
+    );
+    assert.equal(calls, 1);
+    assert.equal(final.blockedBy, 'emulator-prepare');
+    assert.deepEqual(final.notRun, ['offline-start', 'maestro', 'drag', 'offline-end']);
+    assert.equal(final.completed, true);
+    assert.equal(final.passed, false);
+    assert.equal(exitCode, 1);
   }
 });
 
