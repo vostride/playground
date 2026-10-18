@@ -9,11 +9,13 @@ appId: dev.vostride.playground
 - assertVisible:
     id: vigil-live-updates
     checked: false
+# Run 39147142315 found this first row 100% visible, then the centering swipe
+# moved past it. Stop at full visibility; do not scroll an already visible row.
 - scrollUntilVisible:
     element:
       id: vigil-log-000001
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - tapOn:
     id: vigil-log-000001
 - assertVisible:
