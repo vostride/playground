@@ -1,0 +1,246 @@
+name: Mobile diagnostic acceptance
+run-name: Retest ${{ inputs.platform }} candidate ${{ inputs.candidate_run_id }} with current harness
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_run_id:
+        description: 'Own-repository mobile candidate run containing the unverified diagnostic binary.'
+        type: string
+        required: true
+      platform:
+        description: 'Platform to retest. This run never builds or publishes the app.'
+        type: choice
+        required: true
+        default: ios
+        options: [android, ios]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: mobile-acceptance-${{ github.ref }}-${{ inputs.candidate_run_id }}-${{ inputs.platform }}
+  cancel-in-progress: false
+
+env:
+  CI: 'true'
+  MAESTRO_CLI_NO_ANALYTICS: 'true'
+  MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED: 'true'
+  MAESTRO_DISABLE_UPDATE_CHECK: 'true'
+  MAESTRO_DRIVER_STARTUP_TIMEOUT: '120000'
+
+jobs:
+  acceptance:
+    name: Retest the preserved ${{ inputs.platform }} app
+    runs-on: ${{ inputs.platform == 'ios' && 'macos-15' || 'ubuntu-latest' }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+          cache: npm
+      - name: Identify the own-repository candidate artifact
+        id: candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          CANDIDATE_PLATFORM: ${{ inputs.platform }}
+        run: |
+          node --input-type=module <<'NODE'
+          import {appendFileSync, mkdirSync, writeFileSync} from 'node:fs';
+          const {CANDIDATE_RUN_ID: runId, CANDIDATE_PLATFORM: platform, GITHUB_REPOSITORY: repository} = process.env;
+          if (!/^[1-9]\d*$/.test(runId) || !['android', 'ios'].includes(platform)) throw new Error('Select a numeric candidate run ID and a supported platform.');
+          const api = async (path) => {
+            const response = await fetch(`${process.env.GITHUB_API_URL}/repos/${repository}/${path}`, {headers: {Accept: 'application/vnd.github+json', Authorization: `Bearer ${process.env.GH_TOKEN}`, 'X-GitHub-Api-Version': '2022-11-28'}});
+            if (!response.ok) throw new Error(`GitHub candidate lookup failed: HTTP ${response.status}.`);
+            return response.json();
+          };
+          const run = await api(`actions/runs/${runId}`);
+          if (String(run.repository?.id) !== process.env.GITHUB_REPOSITORY_ID || String(run.head_repository?.id) !== process.env.GITHUB_REPOSITORY_ID) throw new Error('Only binaries built from this repository are accepted.');
+          if (run.path?.split('@')[0] !== '.github/workflows/mobile-release.yml' || !['workflow_dispatch', 'push'].includes(run.event)) throw new Error('The binary must come from the mobile candidate/release workflow.');
+          if (!/^[a-f0-9]{40}$/.test(run.head_sha)) throw new Error('The candidate source commit is invalid.');
+          const name = platform === 'ios' ? 'diagnostic-ios-simulator-unverified' : 'diagnostic-android-apk-unverified';
+          const matches = [];
+          for (let page = 1; ; page++) {
+            const listing = await api(`actions/runs/${runId}/artifacts?per_page=100&page=${page}`);
+            matches.push(...listing.artifacts.filter((artifact) => artifact.name === name));
+            if (listing.artifacts.length < 100) break;
+          }
+          if (matches.length !== 1 || matches[0].expired || matches[0].size_in_bytes < 1) throw new Error(`Expected one unexpired ${name} artifact. Run a fresh candidate if the diagnostic artifact is missing or expired.`);
+          const artifact = matches[0];
+          if (artifact.workflow_run?.head_sha && artifact.workflow_run.head_sha !== run.head_sha) throw new Error('Artifact and candidate source commits differ.');
+          const directory = `maestro-reports/${platform}`;
+          mkdirSync(directory, {recursive: true});
+          writeFileSync(`${directory}/provenance.json`, JSON.stringify({purpose: 'Diagnostic acceptance only; not release verification', repository, candidateRunId: runId, candidateRunUrl: run.html_url, candidateRunAttempt: run.run_attempt, candidateCommit: run.head_sha, harnessCommit: process.env.GITHUB_SHA, platform, artifactId: artifact.id, artifactName: name, artifactDigest: artifact.digest || null, artifactCreatedAt: artifact.created_at}, null, 2));
+          appendFileSync(process.env.GITHUB_OUTPUT, `source-sha=${run.head_sha}\nartifact-id=${artifact.id}\n`);
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Diagnostic acceptance only. Candidate run: ${run.html_url}\n\nBinary commit: ${run.head_sha}\n\nHarness commit: ${process.env.GITHUB_SHA}\n\nArtifact: ${name} (${artifact.id}). No app build, attestation, or publication occurs.\n`);
+          NODE
+      - name: Read the original candidate source tree
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ steps.candidate.outputs.source-sha }}
+          path: candidate-source
+          persist-credentials: false
+      - name: Require identical app source and dependencies
+        env:
+          CANDIDATE_PLATFORM: ${{ inputs.platform }}
+        run: |
+          node --input-type=module <<'NODE'
+          import {appendFileSync, readFileSync, writeFileSync} from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          import {createHash} from 'node:crypto';
+          const paths = ['apps/mobile', 'packages/core', 'package.json', 'package-lock.json'];
+          const tree = (directory) => Object.fromEntries(paths.map((path) => [path, execFileSync('git', ['-C', directory, 'rev-parse', `HEAD:${path}`], {encoding: 'utf8'}).trim()]));
+          const candidate = tree('candidate-source');
+          const current = tree('.');
+          const changed = paths.filter((path) => candidate[path] !== current[path]);
+          const file = `maestro-reports/${process.env.CANDIDATE_PLATFORM}/provenance.json`;
+          const provenance = JSON.parse(readFileSync(file, 'utf8'));
+          provenance.sourceComparison = {candidate, current, changed};
+          provenance.sourceFingerprint = createHash('sha256').update(JSON.stringify(current)).digest('hex');
+          writeFileSync(file, JSON.stringify(provenance, null, 2));
+          if (changed.length) throw new Error(`App source or dependencies changed: ${changed.join(', ')}. Build a fresh candidate; only test-harness/workflow changes can reuse this binary.`);
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\nApp source and dependency trees match. Fingerprint: ${provenance.sourceFingerprint}\n`);
+          NODE
+      - name: Download only the verified diagnostic artifact
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ steps.candidate.outputs.artifact-id }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.candidate_run_id }}
+          github-token: ${{ github.token }}
+          path: candidate-artifact
+          merge-multiple: true
+      - name: Recognize the binary and record its checksum
+        env:
+          CANDIDATE_PLATFORM: ${{ inputs.platform }}
+        run: |
+          node --input-type=module <<'NODE'
+          import {appendFileSync, lstatSync, readdirSync, readFileSync, writeFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const platform = process.env.CANDIDATE_PLATFORM;
+          const files = readdirSync('candidate-artifact');
+          const pattern = platform === 'android' ? /^app-release\.apk$/ : /^playground-ios-simulator-\d+\.\d+\.\d+-unverified\.zip$/;
+          if (files.length !== 1 || !pattern.test(files[0]) || !lstatSync(`candidate-artifact/${files[0]}`).isFile()) throw new Error('The diagnostic artifact does not contain the expected standalone binary.');
+          const path = `candidate-artifact/${files[0]}`;
+          const sha256 = createHash('sha256').update(readFileSync(path)).digest('hex');
+          const report = `maestro-reports/${platform}/provenance.json`;
+          const provenance = JSON.parse(readFileSync(report, 'utf8'));
+          writeFileSync(report, JSON.stringify({...provenance, binaryFile: files[0], binarySha256: sha256}, null, 2));
+          appendFileSync(process.env.GITHUB_ENV, `CANDIDATE_BINARY=${path}\n`);
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\nBinary SHA-256: ${sha256}\n`);
+          NODE
+      - run: npm ci --ignore-scripts
+      - run: npm run test:mobile:flows
+      - run: node --test tests/mobile/android-drag.test.mjs
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install the pinned Maestro CLI
+        run: |
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/maestro.zip" \
+            https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.11.0/maestro.zip
+          node --input-type=module <<'NODE'
+          import {readFileSync, appendFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const digest = createHash('sha256').update(readFileSync(`${process.env.RUNNER_TEMP}/maestro.zip`)).digest('hex');
+          if (digest !== '5384593cb4e7a106489e75a821d157dd43f4e438df6bc308b72e82c685e1283a') throw new Error('Maestro archive checksum mismatch.');
+          appendFileSync(process.env.GITHUB_PATH, `${process.env.RUNNER_TEMP}/maestro/bin\n`);
+          NODE
+          unzip -q "$RUNNER_TEMP/maestro.zip" -d "$RUNNER_TEMP"
+      - uses: android-actions/setup-android@v3
+        if: inputs.platform == 'android'
+        with:
+          packages: platform-tools
+      - name: Check the preserved APK identity and permissions
+        if: inputs.platform == 'android'
+        run: |
+          sdkmanager 'build-tools;36.0.0'
+          node --input-type=module <<'NODE'
+          import {writeFileSync} from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          const aapt = `${process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT}/build-tools/36.0.0/aapt`;
+          const permissions = execFileSync(aapt, ['dump', 'permissions', process.env.CANDIDATE_BINARY], {encoding: 'utf8'});
+          const metadata = execFileSync(aapt, ['dump', 'badging', process.env.CANDIDATE_BINARY], {encoding: 'utf8'});
+          writeFileSync('maestro-reports/android/apk-permissions.txt', permissions);
+          writeFileSync('maestro-reports/android/apk-metadata.txt', metadata);
+          if (!metadata.includes("package: name='dev.vostride.playground'")) throw new Error('Unexpected Android app ID.');
+          if (/^uses-permission/m.test(permissions)) throw new Error('The preserved APK requests permissions.');
+          NODE
+      - name: Enable Android emulator hardware acceleration
+        if: inputs.platform == 'android'
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run the current Android acceptance harness
+        if: inputs.platform == 'android'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7_pro
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install "$CANDIDATE_BINARY"
+            maestro --device emulator-5554 test --format JUNIT --output maestro-reports/android/results.xml --debug-output maestro-reports/android/debug --test-output-dir maestro-reports/android/artifacts tests/mobile/flows/
+            node tests/mobile/android-drag.mjs emulator-5554
+      - name: Select Xcode 16.4 and unpack the preserved simulator app
+        if: inputs.platform == 'ios'
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          mkdir -p candidate-app
+          ditto -x -k "$CANDIDATE_BINARY" candidate-app
+          test -d candidate-app/Playground.app
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' candidate-app/Playground.app/Info.plist)" = dev.vostride.playground
+          xcrun lipo -archs candidate-app/Playground.app/Playground | tee maestro-reports/ios/app-architectures.txt
+      - name: Boot an iOS 18.5 simulator and install the preserved app
+        if: inputs.platform == 'ios'
+        id: simulator
+        run: |
+          PLAYGROUND_SIMULATOR_ID=$(xcrun simctl create 'Playground diagnostic acceptance' 'com.apple.CoreSimulator.SimDeviceType.iPhone-16' 'com.apple.CoreSimulator.SimRuntime.iOS-18-5')
+          echo "id=$PLAYGROUND_SIMULATOR_ID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$PLAYGROUND_SIMULATOR_ID"
+          xcrun simctl bootstatus "$PLAYGROUND_SIMULATOR_ID" -b
+          xcrun simctl install "$PLAYGROUND_SIMULATOR_ID" candidate-app/Playground.app
+      - name: Run the current iOS acceptance harness
+        if: inputs.platform == 'ios'
+        env:
+          PLAYGROUND_SIMULATOR_ID: ${{ steps.simulator.outputs.id }}
+        run: |
+          maestro --device "$PLAYGROUND_SIMULATOR_ID" test --format JUNIT --output maestro-reports/ios/results.xml --debug-output maestro-reports/ios/debug --test-output-dir maestro-reports/ios/artifacts tests/mobile/flows/
+          xcodebuild test \
+            -project tests/mobile/ios/CorkboardGestures.xcodeproj \
+            -scheme CorkboardGestures \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination "platform=iOS Simulator,id=$PLAYGROUND_SIMULATOR_ID" \
+            -parallel-testing-enabled NO \
+            -maximum-concurrent-test-simulator-destinations 1 \
+            -derivedDataPath maestro-reports/ios/gesture-build \
+            -resultBundlePath maestro-reports/ios/corkboard-gestures.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+      - name: Preserve diagnostic acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-acceptance-${{ inputs.platform }}-${{ inputs.candidate_run_id }}
+          path: |
+            maestro-reports/
+            !maestro-reports/ios/gesture-build/**
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Shut down the test simulator
+        if: always() && steps.simulator.outputs.id != ''
+        env:
+          PLAYGROUND_SIMULATOR_ID: ${{ steps.simulator.outputs.id }}
+        run: xcrun simctl shutdown "$PLAYGROUND_SIMULATOR_ID"

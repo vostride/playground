@@ -26,15 +26,23 @@ npm run test:mobile:flows
 
 This checks both YAML documents, supported command names, selectors, helper references, cycles, fresh-session setup, and the presence of outcome assertions and screenshot capture.
 
+## Retest a preserved candidate
+
+For a test-harness-only correction, dispatch **Mobile diagnostic acceptance** (`mobile-acceptance.yml`) with the original candidate run ID and `android` or `ios`. Select the ref containing the corrected harness. The workflow downloads only that run's `diagnostic-android-apk-unverified` or `diagnostic-ios-simulator-unverified` artifact from this repository, then runs the current Maestro suite and continuous-touch checks against the installed binary. The iOS gesture test runner is compiled independently; the application is not rebuilt.
+
+The workflow requires identical Git trees for `apps/mobile`, `packages/core`, `package.json`, and `package-lock.json` between the candidate commit and the selected harness ref. App or dependency changes require a fresh candidate. Missing or expired diagnostic artifacts also require a fresh candidate; their retention is seven days.
+
+Reports retain the original run, artifact ID, both commits, source comparison, binary SHA-256, screenshots, and test results. These diagnostic runs never attest or publish artifacts and do not replace release verification: the release workflow still builds fresh apps and runs every required gate.
+
 ## Coverage
 
-| Scenario | Product outcome |
-| --- | --- |
-| `01-shop-checkout.yaml` | Two $24 mugs total $53 with standard shipping; sign-in; invalid address rejected; order FW-1001 created and cancelled. |
-| `02-flights-booking.yaml` | A round trip selected; occupied seats disabled; seats on both legs; empty traveler rejected; sample payment; booking WL006Q confirmed and listed. |
-| `03-tasks-workflow.yaml` | Task created and edited; moved to In progress; undo restores To do; checklist completion persists after reopening. |
-| `04-vigil-monitor.yaml` | Service/status query returns matching event; event opens a trace waterfall; monitor saves its threshold; pause and deletion update state. |
-| `05-controls-deeplinks.yaml` | Warm links open each flow; bundled WebView loads; labelled quantity bug produces $29; reset clears its flag and cart. |
+| Scenario                     | Product outcome                                                                                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `01-shop-checkout.yaml`      | Two $24 mugs total $53 with standard shipping; sign-in; invalid address rejected; order FW-1001 created and cancelled.                            |
+| `02-flights-booking.yaml`    | A round trip selected; occupied seats disabled; seats on both legs; empty traveler rejected; sample payment; booking WL006Q confirmed and listed. |
+| `03-tasks-workflow.yaml`     | Task created and edited; moved to In progress; undo restores To do; checklist completion persists after reopening.                                |
+| `04-vigil-monitor.yaml`      | Service/status query returns matching event; event opens a trace waterfall; monitor saves its threshold; pause and deletion update state.         |
+| `05-controls-deeplinks.yaml` | Warm links open each flow; bundled WebView loads; labelled quantity bug produces $29; reset clears its flag and cart.                             |
 
 ## Deliberately failing sample
 

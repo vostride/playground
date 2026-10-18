@@ -28,7 +28,7 @@ A new `mobile-vX.Y.Z` tag runs the same checks and publishes only after both pla
 
 The Android APK uses a dedicated playground test certificate shipped in the public template. It is not a production signing identity and carries no trust outside these test fixtures. Release variants omit network permission; debug variants permit a connection to the local Metro server. No runtime permissions are requested.
 
-The workflow refuses to overwrite an existing release. Assets are prepared before publication. Enable GitHub's immutable releases setting for an additional platform-enforced lock. A correction requires a new version and tag; never delete/re-upload an existing binary.
+The workflow refuses to overwrite an existing release. Assets are prepared before publication. GitHub's immutable releases setting is enabled for `vostride/playground`, adding a platform-enforced lock after publication. A correction requires a new version and tag; never delete/re-upload an existing binary.
 
 After CI succeeds:
 

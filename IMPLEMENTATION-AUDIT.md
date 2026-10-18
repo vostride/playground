@@ -1,10 +1,18 @@
 # Implementation audit
 
-Audited against `SPEC.md` on 2026-10-18. This is a source and local-evidence audit, not a claim that deployment or native releases have occurred. Only files in this repository were changed. Native release builds were not run on the developer machine.
+Audited against `SPEC.md` on 2026-10-18. This records source, local, and GitHub CI evidence; deployment and release publication are tracked separately. Only files in this repository were changed. Native release builds were not run on the developer machine.
 
 ## Outcome
 
 The four web products, their shared product models, and the four native product screens are implemented. The main outstanding completion evidence is external: successful native builds and device journeys on GitHub runners, the hosted custom domain, and published immutable release assets. The registry correctly labels the web apps as candidates and has no invented mobile release entries.
+
+## Recorded CI evidence
+
+- [Web run 39133315700](https://github.com/vostride/playground/actions/runs/39133315700), commit `645a23a`: source checks, 23 core tests, four static builds, and 23 browser checks passed. Cloudflare publication was skipped because the repository secrets were not yet configured.
+- [Mobile source run 39133315578](https://github.com/vostride/playground/actions/runs/39133315578), commit `645a23a`: source and Metro bundle checks passed. This is not native runtime acceptance.
+- [Initial native candidate 39125896939](https://github.com/vostride/playground/actions/runs/39125896939): the unsigned iOS simulator app compiled and launched on GitHub. All five Maestro journeys failed, exposing scroll-target visibility and keyboard-dismiss issues. Those failures are retained as evidence rather than counted as passing acceptance.
+- Native candidate `39133316123` tests the fixes in `645a23a`. Its final results remain pending in this audit.
+- Repository release immutability is enabled. No mobile release has been published.
 
 ## Required verification still outstanding
 
@@ -28,6 +36,10 @@ The four web products, their shared product models, and the four native product 
 - **Native card drafts:** closing or moving a card now flushes text drafts explicitly; undoing the move preserves the edited title.
 - **Native system insets:** the shell and each modal now use native safe-area providers and views so Android edge-to-edge system bars cannot cover controls.
 - **Production static routing:** exact directory redirects preserve JavaScript assets; a labelled 404 disables implicit SPA fallback. The preview server exercises the deployed headers and routing rules.
+- **Native keyboard dismissal:** forms expose a keyboard-visible “Done typing” action; single-line fields submit with Done. Acceptance helpers wait for the control to disappear after dismissal.
+- **Native scroll target visibility:** Maestro scroll targets are centered before tapping, keeping targets above fixed bottom navigation. Screenshots from the first iOS run demonstrated why screen-level visibility alone was insufficient.
+- **Android runner setup:** installation no longer requests the retired SDK `tools` package, and the version code is parsed as an integer before assignment to the Gradle DSL.
+- **Continuous native drag checks:** Android uses held `draganddrop` input and iOS uses an XCTest press-and-drag. Both check reordering, movement across columns, and undo. Source validation passes; runtime results remain pending.
 
 ## Requirement map
 
