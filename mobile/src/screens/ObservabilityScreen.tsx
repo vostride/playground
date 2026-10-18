@@ -1427,7 +1427,7 @@ const s = StyleSheet.create({
     letterSpacing: -0.5,
     lineHeight: 28,
   },
-  description: { color: colors.muted, fontSize: 13, lineHeight: 20 },
+  description: { color: colors.muted, fontSize: 14, lineHeight: 20 },
   action: { paddingHorizontal: 12 },
   actionText: { color: colors.text, fontSize: 13, fontWeight: '600', lineHeight: 20 },
   panel: {
@@ -1496,7 +1496,7 @@ const s = StyleSheet.create({
   },
   serviceName: {
     color: colors.text,
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 20,
     fontWeight: '500',
     flexShrink: 1,
@@ -1521,7 +1521,7 @@ const s = StyleSheet.create({
   logMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'space-between' },
   logService: { fontSize: 12, lineHeight: 18, color: colors.muted, flexShrink: 1 },
   logMessage: {
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 20,
     color: colors.text,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
@@ -1591,7 +1591,7 @@ const s = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  detailValue: { color: colors.text, fontSize: 13, lineHeight: 20 },
+  detailValue: { color: colors.text, fontSize: 14, lineHeight: 20 },
   json: {
     fontSize: 12,
     lineHeight: 20,
@@ -1630,8 +1630,8 @@ const s = StyleSheet.create({
   spanSelected: { backgroundColor: colors.subtle },
   spanName: {
     color: colors.text,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
     flexShrink: 1,
     fontWeight: '500',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
@@ -1690,5 +1690,5 @@ const s = StyleSheet.create({
     paddingRight: 4,
     gap: 8,
   },
-  noticeText: { color: colors.text, fontSize: 13, lineHeight: 20, flexShrink: 1 },
+  noticeText: { color: colors.text, fontSize: 14, lineHeight: 20, flexShrink: 1 },
 });
