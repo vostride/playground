@@ -31,6 +31,14 @@ env:
       - extendedWaitUntil:
           notVisible: 'Open.*Playground.*'
           timeout: 10000
+      # On the CI simulator, first consent can dismiss without delivering a
+      # UIOpenURLAction (confirmed against a successful-link native log).
+      # Re-dispatch once only in this consent branch if navigation is absent.
+      - runFlow:
+          when:
+            notVisible: '${LINK_DESTINATION}'
+          commands:
+            - openLink: '${LINK}'
 # This remains mandatory on both platforms; dismissing a dialog is not success.
 - extendedWaitUntil:
     visible: '${LINK_DESTINATION}'
