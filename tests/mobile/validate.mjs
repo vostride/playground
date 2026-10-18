@@ -6,7 +6,7 @@ import {parseAllDocuments} from 'yaml';
 import {checkInterpolations} from './interpolation.mjs';
 
 const root=path.dirname(fileURLToPath(import.meta.url));
-const commands=new Set(['launchApp','extendedWaitUntil','assertVisible','assertNotVisible','tapOn','longPressOn','scrollUntilVisible','runFlow','openLink','eraseText','inputText','hideKeyboard','takeScreenshot','swipe','copyTextFrom','evalScript','pressKey']);
+const commands=new Set(['launchApp','extendedWaitUntil','assertVisible','assertNotVisible','tapOn','longPressOn','scrollUntilVisible','runFlow','openLink','eraseText','inputText','hideKeyboard','takeScreenshot','swipe','copyTextFrom','evalScript','pressKey','waitForAnimationToEnd']);
 const files=['flows','helpers','expected-failure'].flatMap(directory=>fs.readdirSync(path.join(root,directory)).filter(file=>file.endsWith('.yaml')).map(file=>path.join(root,directory,file)));
 const dependencies=new Map();
 const launchPlatforms=new Set();
@@ -31,6 +31,7 @@ function checkSteps(steps,file,platform){
    assert.ok(!value.start&&!value.end,`${file}: use an element-anchored swipe instead of coordinates`);
    if(value.duration!==undefined)assert.ok(value.duration>0&&value.duration<=5000,`${file}: swipe duration must be bounded`);
   }
+  if(name==='waitForAnimationToEnd')assert.ok(Number.isInteger(value?.timeout)&&value.timeout>0&&value.timeout<=10000,`${file}: animation wait needs an explicit timeout of at most 10000ms`);
   if(name==='copyTextFrom')assert.ok(typeof value==='string'||value?.id||value?.text,`${file}: copyTextFrom needs a rendered element`);
   if(name==='evalScript')assert.equal(typeof value,'string',`${file}: evalScript must be a test expression`);
   if(name==='pressKey'){assert.equal(value,'back',`${file}: only actual Back navigation is exercised`);assert.equal(platform,'Android',`${file}: hardware Back is Android-only`)}

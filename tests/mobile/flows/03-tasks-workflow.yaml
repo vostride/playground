@@ -9,9 +9,16 @@ name: Brello boards, task properties, refresh, move, undo, and both bug switches
 - runFlow: ../helpers/tasks-browse-refresh.yaml
 - tapOn:
     id: task-new-button
+# The autofocus keyboard moves the sheet while it opens. Settle its geometry
+# before resolving the title field's tap target.
+- waitForAnimationToEnd:
+    timeout: 10000
 - tapOn:
     id: task-create-title
 - inputText: Native regression task
+- assertVisible:
+    id: task-create-title
+    text: '^Native regression task$'
 - runFlow: ../helpers/dismiss-keyboard.yaml
 - scrollUntilVisible:
     centerElement: true
@@ -20,6 +27,11 @@ name: Brello boards, task properties, refresh, move, undo, and both bug switches
     direction: DOWN
 - tapOn:
     id: task-create-submit
+- extendedWaitUntil:
+    notVisible: '^Close New task$'
+    timeout: 10000
+- assertVisible:
+    id: task-search
 - runFlow:
     file: ../helpers/open-link.yaml
     env:
