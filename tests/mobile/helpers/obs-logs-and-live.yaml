@@ -144,11 +144,13 @@ appId: dev.vostride.playground
 - assertVisible:
     id: vigil-log-count
     text: '^898 logs found$'
+# Run 39150057779 found this first result fully visible, then centering swiped
+# it above the list viewport. Keep both first-result checks visible in place.
 - scrollUntilVisible:
     element:
       id: vigil-log-000007
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - assertVisible:
     id: vigil-log-000007
     text: '^info checkout Cache refreshed for product catalog$'
@@ -170,7 +172,7 @@ appId: dev.vostride.playground
     element:
       id: vigil-log-000079
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - assertVisible:
     id: vigil-log-000079
     text: '^error checkout Database connection acquisition failed$'
