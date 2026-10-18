@@ -26,8 +26,16 @@ appId: dev.vostride.playground
 - runFlow: dismiss-keyboard.yaml
 - tapOn:
     id: button-use-date
-- tapOn:
+- assertVisible: '^Return Select date$'
+- assertVisible:
     id: button-done
+    enabled: false
+- scrollUntilVisible:
+    element:
+      text: '^2032-06-19$'
+    direction: DOWN
+    centerElement: false
+- tapOn: '^2032-06-19$'
 - extendedWaitUntil:
     notVisible:
       id: flight-exact-travel-date
@@ -47,8 +55,13 @@ appId: dev.vostride.playground
 - runFlow: dismiss-keyboard.yaml
 - tapOn:
     id: button-use-date
-- tapOn:
-    id: button-done
+- assertVisible: '^Return Select date$'
+- scrollUntilVisible:
+    element:
+      text: '^2024-04-19$'
+    direction: DOWN
+    centerElement: false
+- tapOn: '^2024-04-19$'
 - extendedWaitUntil:
     notVisible:
       id: flight-exact-travel-date
@@ -76,16 +89,38 @@ appId: dev.vostride.playground
     id: flight-exact-travel-date
     text: '^2026-11-10$'
 - assertVisible: '^November 2026$'
-# Choose both dates and check the return-date constraint before completing it.
+# An earlier second calendar click restarts the pending range. Exact typed
+# returns still reject an end before departure; complete the same Nov 12–19 trip.
 - scrollUntilVisible:
     element:
-      text: '^2026-11-12$'
+      text: '^2026-11-13$'
     direction: DOWN
     centerElement: true
+- tapOn: '^2026-11-13$'
 - tapOn: '^2026-11-12$'
 - assertVisible:
-    text: '^2026-11-11$'
+    text: '^2026-11-12$'
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: flight-exact-travel-date
+    direction: UP
+    centerElement: false
+- tapOn:
+    id: flight-exact-travel-date
+- inputText: '2026-11-11'
+- runFlow: dismiss-keyboard.yaml
+- tapOn:
+    id: button-use-date
+- assertVisible: '^Your return date must be on or after your departure\.$'
+- assertVisible:
+    id: button-done
     enabled: false
+- scrollUntilVisible:
+    element:
+      text: '^2026-11-19$'
+    direction: DOWN
+    centerElement: false
 - tapOn: '^2026-11-19$'
 - assertVisible:
     id: flight-dates-picker

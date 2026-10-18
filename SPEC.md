@@ -25,8 +25,8 @@ Komazon retains a responsive product grid with flat tiles and no enclosing card 
 Brello’s draggable tasks use compact cards with subtle fills, thin borders and 2px corners; its columns and shell stay flat.
 Open directly on the catalog, flight search, metrics dashboard, or task board. The directory is
 an app launcher with names and logos. Omit marketing heroes, slogans, welcome copy, and decorative
-introductory sections. The web and mobile launchers include a compact agent-qa banner and
-a “by Vostride” footer linking to `https://vostride.com/`, as requested by the owner.
+introductory sections. The web and mobile launchers include a compact agent-qa banner with “Your AI QA engineer” and
+a “by vostride” footer linking to `https://vostride.com/`, as requested by the owner.
 Looking's calendar supports any valid past or future date, with direct
 date entry and month/year navigation.
 

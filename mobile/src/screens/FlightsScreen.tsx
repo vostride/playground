@@ -78,6 +78,8 @@ export default function FlightsScreen({ route, bug, navigationKey }: MobileScree
     [query, setQuery] = useState(''),
     [month, setMonth] = useState('2026-11'),
     [datePart, setDatePart] = useState<'departure' | 'returnDate'>('departure'),
+    [draftDeparture, setDraftDeparture] = useState(initialSearch.departure),
+    [draftReturn, setDraftReturn] = useState(initialSearch.returnDate),
     [exactDate, setExactDate] = useState(initialSearch.departure),
     [dateError, setDateError] = useState(''),
     [calendarWidth, setCalendarWidth] = useState(308);
@@ -266,34 +268,36 @@ export default function FlightsScreen({ route, bug, navigationKey }: MobileScree
     }, 500);
   };
   const selectDatePart = (part: 'departure' | 'returnDate') => {
+    const date = part === 'departure' ? draftDeparture : draftReturn;
     setDatePart(part);
-    setMonth(search[part].slice(0, 7));
-    setExactDate(search[part]);
+    setMonth((date || draftDeparture).slice(0, 7));
+    setExactDate(date);
     setDateError('');
   };
-  const chooseDate = (date: string) => {
+  const chooseDate = (date: string, exact = false) => {
     if (!isValidFlightDate(date)) {
       setDateError('Enter a valid date in YYYY-MM-DD format.');
       return;
     }
-    if (datePart === 'returnDate' && date < search.departure) {
+    if (search.roundTrip && datePart === 'returnDate' && date < draftDeparture && exact) {
       setDateError('Your return date must be on or after your departure.');
       return;
     }
-    const next = {
-      ...search,
-      [datePart]: date,
-      ...(datePart === 'departure' && date > search.returnDate
-        ? { returnDate: addDays(date, 7) }
-        : {}),
-    };
-    setSearch(next);
     setMonth(date.slice(0, 7));
     setDateError('');
-    if (datePart === 'departure' && search.roundTrip) {
+    if (!search.roundTrip) {
+      setSearch({ ...search, departure: date });
+      setDraftDeparture(date);
+      setExactDate(date);
+      setPicker('');
+    } else if (datePart === 'departure' || date < draftDeparture) {
+      setDraftDeparture(date);
+      setDraftReturn('');
       setDatePart('returnDate');
-      setExactDate(next.returnDate);
+      setExactDate('');
     } else {
+      setSearch({ ...search, departure: draftDeparture, returnDate: date });
+      setDraftReturn(date);
       setExactDate(date);
       setPicker('');
     }
@@ -396,7 +400,12 @@ export default function FlightsScreen({ route, bug, navigationKey }: MobileScree
                   style={[styles.searchField, styles.searchDetail]}
                   onPress={() => {
                     setPicker('dates');
-                    selectDatePart('departure');
+                    setDraftDeparture(search.departure);
+                    setDraftReturn(search.roundTrip ? search.returnDate : '');
+                    setDatePart('departure');
+                    setMonth(search.departure.slice(0, 7));
+                    setExactDate(search.departure);
+                    setDateError('');
                   }}
                 >
                   <Row style={styles.fieldLabel}>
@@ -1138,7 +1147,17 @@ export default function FlightsScreen({ route, bug, navigationKey }: MobileScree
                         ? 'Sort flights'
                         : 'Travelers'}
             </Text>
-            <Button title="Done" variant="secondary" onPress={() => setPicker('')} />
+            <Row>
+              {picker === 'dates' && search.roundTrip && !draftReturn && (
+                <IconButton icon="x" label="Cancel date selection" onPress={() => setPicker('')} />
+              )}
+              <Button
+                title="Done"
+                variant="secondary"
+                disabled={picker === 'dates' && search.roundTrip && !draftReturn}
+                onPress={() => setPicker('')}
+              />
+            </Row>
           </View>
           {(picker === 'from' || picker === 'to') && (
             <View style={{ flex: 1, padding: 16 }}>
@@ -1183,13 +1202,13 @@ export default function FlightsScreen({ route, bug, navigationKey }: MobileScree
             <Screen>
               <Row>
                 <Chip
-                  label={`Departure ${shortDate(search.departure)}`}
+                  label={`Departure ${shortDate(draftDeparture)}`}
                   selected={datePart === 'departure'}
                   onPress={() => selectDatePart('departure')}
                 />
                 {search.roundTrip && (
                   <Chip
-                    label={`Return ${shortDate(search.returnDate)}`}
+                    label={`Return ${draftReturn ? shortDate(draftReturn) : 'Select date'}`}
                     selected={datePart === 'returnDate'}
                     onPress={() => selectDatePart('returnDate')}
                   />
@@ -1217,7 +1236,11 @@ export default function FlightsScreen({ route, bug, navigationKey }: MobileScree
                   {dateError}
                 </Text>
               ) : null}
-              <Button title="Use date" variant="secondary" onPress={() => chooseDate(exactDate)} />
+              <Button
+                title="Use date"
+                variant="secondary"
+                onPress={() => chooseDate(exactDate, true)}
+              />
               <Row style={{ justifyContent: 'space-between' }}>
                 <IconButton
                   icon="arrowLeft"
@@ -1255,27 +1278,20 @@ export default function FlightsScreen({ route, bug, navigationKey }: MobileScree
                     {Array.from({ length: days }, (_, i) => {
                       const value = `${month}-${String(i + 1).padStart(2, '0')}`,
                         selected =
-                          value === search.departure ||
-                          (search.roundTrip && value === search.returnDate);
+                          value === draftDeparture || (search.roundTrip && value === draftReturn);
                       return (
                         <TouchableOpacity
                           accessibilityRole="button"
                           accessibilityLabel={value}
-                          accessibilityState={{
-                            selected,
-                            disabled: datePart === 'returnDate' && value < search.departure,
-                          }}
-                          disabled={datePart === 'returnDate' && value < search.departure}
+                          accessibilityState={{ selected }}
                           key={value}
                           style={[
                             styles.calendarCell,
-                            datePart === 'returnDate' &&
-                              value < search.departure &&
-                              styles.calendarDisabled,
                             selected && styles.calendarSelected,
                             search.roundTrip &&
-                              value > search.departure &&
-                              value < search.returnDate &&
+                              Boolean(draftReturn) &&
+                              value > draftDeparture &&
+                              value < draftReturn &&
                               styles.calendarRange,
                           ]}
                           onPress={() => chooseDate(value)}
@@ -1611,10 +1627,8 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
-    borderRadius: 2,
+    borderRadius: 0,
   },
   calendarSelected: { backgroundColor: colors.primary },
   calendarRange: { backgroundColor: colors.soft },
-  calendarDisabled: { opacity: 0.4 },
 });

@@ -210,49 +210,60 @@ function DateRangePicker({
   const [open, setOpen] = useState(false),
     [month, setMonth] = useState(value.departure.slice(0, 7)),
     [selecting, setSelecting] = useState<'departure' | 'returnDate'>('departure'),
+    [draftDeparture, setDraftDeparture] = useState(value.departure),
+    [draftReturn, setDraftReturn] = useState(value.returnDate),
+    [hoverDate, setHoverDate] = useState(''),
     [year, setYear] = useState(value.departure.slice(0, 4)),
     [exactDate, setExactDate] = useState(value.departure),
     [dateError, setDateError] = useState('');
+  useEffect(() => setOpen(false), [value.roundTrip]);
   const showMonth = (next: string) => {
     setMonth(next);
     setYear(next.slice(0, 4));
   };
   const selectPart = (part: 'departure' | 'returnDate') => {
+    const date = part === 'departure' ? draftDeparture : draftReturn;
     setSelecting(part);
-    setExactDate(value[part]);
+    setExactDate(date);
     setDateError('');
-    showMonth(value[part].slice(0, 7));
+    setHoverDate('');
+    showMonth((date || draftDeparture).slice(0, 7));
   };
-  const chooseDate = (date: string) => {
+  const chooseDate = (date: string, exact = false) => {
     if (!isValidFlightDate(date)) {
       setDateError('Enter a valid date in YYYY-MM-DD format.');
       return;
     }
-    if (selecting === 'returnDate' && date < value.departure) {
+    if (value.roundTrip && selecting === 'returnDate' && date < draftDeparture && exact) {
       setDateError('Your return date must be on or after your departure.');
       return;
     }
-    const next = {
-      ...value,
-      [selecting]: date,
-      ...(selecting === 'departure' && date > value.returnDate
-        ? { returnDate: addDays(date, 7) }
-        : {}),
-    };
-    onChange(next);
     setDateError('');
+    setHoverDate('');
     showMonth(date.slice(0, 7));
-    if (selecting === 'departure' && value.roundTrip) {
+    if (!value.roundTrip) {
+      onChange({ ...value, departure: date });
+      setDraftDeparture(date);
+      setExactDate(date);
+      setOpen(false);
+    } else if (selecting === 'departure' || date < draftDeparture) {
+      // A fresh start is pending until the traveler chooses an end. An earlier
+      // calendar click restarts the range instead of inventing a return date.
+      setDraftDeparture(date);
+      setDraftReturn('');
       setSelecting('returnDate');
-      setExactDate(next.returnDate);
+      setExactDate('');
     } else {
+      onChange({ ...value, departure: draftDeparture, returnDate: date });
+      setDraftReturn(date);
       setExactDate(date);
       setOpen(false);
     }
   };
   const first = new Date(`${month}-01T00:00:00Z`),
     days = flightMonthDays(month),
-    start = (first.getUTCDay() + 6) % 7;
+    start = (first.getUTCDay() + 6) % 7,
+    rangeEnd = value.roundTrip ? draftReturn || (hoverDate >= draftDeparture ? hoverDate : '') : '';
   return (
     <div className="date-field">
       <span className="field-label">Travel dates</span>
@@ -262,7 +273,13 @@ function DateRangePicker({
         aria-expanded={open}
         onClick={() => {
           setOpen(!open);
-          selectPart('departure');
+          setDraftDeparture(value.departure);
+          setDraftReturn(value.roundTrip ? value.returnDate : '');
+          setSelecting('departure');
+          setExactDate(value.departure);
+          setDateError('');
+          setHoverDate('');
+          showMonth(value.departure.slice(0, 7));
         }}
       >
         <CalendarDays size={17} />
@@ -327,7 +344,7 @@ function DateRangePicker({
               className={selecting === 'departure' ? 'selected' : ''}
               onClick={() => selectPart('departure')}
             >
-              Departure <b>{formatDate(value.departure)}</b>
+              Departure <b>{formatDate(draftDeparture)}</b>
             </button>
             {value.roundTrip && (
               <button
@@ -335,11 +352,11 @@ function DateRangePicker({
                 className={selecting === 'returnDate' ? 'selected' : ''}
                 onClick={() => selectPart('returnDate')}
               >
-                Return <b>{formatDate(value.returnDate)}</b>
+                Return <b>{draftReturn ? formatDate(draftReturn) : 'Select date'}</b>
               </button>
             )}
           </div>
-          <div className="calendar-grid">
+          <div className="calendar-grid" onMouseLeave={() => setHoverDate('')}>
             {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
               <span key={`day-${i}`}>{d}</span>
             ))}
@@ -348,22 +365,28 @@ function DateRangePicker({
             ))}
             {Array.from({ length: days }, (_, i) => {
               const date = `${month}-${String(i + 1).padStart(2, '0')}`;
+              const isStart = date === draftDeparture;
+              const isEnd = value.roundTrip && date === draftReturn;
+              const inRange = Boolean(rangeEnd && date > draftDeparture && date < rangeEnd);
               return (
                 <button
                   type="button"
                   key={date}
                   aria-label={formatDate(date, { month: 'long', day: 'numeric', year: 'numeric' })}
-                  aria-pressed={
-                    date === value.departure || (value.roundTrip && date === value.returnDate)
-                  }
-                  disabled={selecting === 'returnDate' && date < value.departure}
-                  className={
-                    date === value.departure || date === value.returnDate
-                      ? 'date-selected'
-                      : value.roundTrip && date > value.departure && date < value.returnDate
-                        ? 'date-in-range'
-                        : ''
-                  }
+                  aria-pressed={isStart || isEnd}
+                  className={[
+                    (isStart || isEnd) && 'date-selected',
+                    inRange && 'date-in-range',
+                    isStart && 'date-range-start',
+                    isEnd && 'date-range-end',
+                    !draftReturn && !isStart && date === rangeEnd && 'date-range-preview',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  onMouseEnter={() => {
+                    if (value.roundTrip && selecting === 'returnDate' && !draftReturn)
+                      setHoverDate(date);
+                  }}
                   onClick={() => chooseDate(date)}
                 >
                   {i + 1}
@@ -380,7 +403,7 @@ function DateRangePicker({
                 id="exact-travel-date"
                 type="date"
                 className="rounded-none border-x-0 border-t-0 border-b bg-transparent dark:bg-transparent px-0 shadow-none focus-visible:ring-0 h-10 min-w-0 flex-1 text-[14px]"
-                min={selecting === 'returnDate' ? value.departure : '0001-01-01'}
+                min={selecting === 'returnDate' ? draftDeparture : '0001-01-01'}
                 max="9999-12-31"
                 value={exactDate}
                 aria-invalid={Boolean(dateError)}
@@ -394,7 +417,7 @@ function DateRangePicker({
                 type="button"
                 variant="outline"
                 className="h-10"
-                onClick={() => chooseDate(exactDate)}
+                onClick={() => chooseDate(exactDate, true)}
               >
                 Use date
               </Button>
@@ -409,6 +432,7 @@ function DateRangePicker({
             variant="default"
             className="button small full h-[42px] text-[14px] font-semibold"
             type="button"
+            disabled={value.roundTrip && !draftReturn}
             onClick={() => setOpen(false)}
           >
             Done

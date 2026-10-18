@@ -19,7 +19,7 @@ All four web apps use a shared dark design built with locally owned official sha
 
 Playground’s own P mark preserves the supplied Vostride spiral path, reflected vertically and joined to a straight stem. The [editable source and exporter](assets/branding/README.md) produce the web header/favicon, native Home header image, opaque iOS app icons, and Android legacy, adaptive and monochrome icons. Repeated taps on Komazon’s current tab no longer add duplicate Back history; sign-in retains the tab for its return destination.
 
-Looking’s web travel-date picker supports previous/next month, direct month and year selection, and an exact date field with **Use date**. Native provides month arrows and exact date entry. Both accept valid calendar dates in years 0001–9999, check leap days, and reject a return before departure. Search results use the selected dates; neither picker is limited to the seeded example month.
+Looking’s web travel-date picker supports previous/next month, direct month and year selection, and an exact date field with **Use date**. Native provides month arrows and exact date entry. One-way selection highlights only departure. Round trips use an explicit start and end with a continuous range highlight; selecting an earlier second day starts a new range. Both accept valid calendar dates in years 0001–9999, check leap days, and reject a typed return before departure. Search results use the selected dates; neither picker is limited to the seeded example month.
 
 ## Run locally
 
@@ -94,7 +94,7 @@ The five native scenarios now define checks for product forms and validation, bo
 
 [Android candidate 39163947889](https://github.com/vostride/playground/actions/runs/39163947889), source `bd2628e`, **passed its full gate**: all five journeys, continuous touch/Undo and offline checks. Its final APK checksum and GitHub attestation were verified, including the corrected Playground launcher label. The source-matched [iOS candidate 39162778135](https://github.com/vostride/playground/actions/runs/39162778135) compiled but failed acceptance on 2026-10-18: two of five journeys and all three native URL/drag tests passed; three harness lookup failures and an offline XCTest query crash blocked the full gate. Harness corrections await focused reruns. Exact artifacts, evidence and remaining work are in [MOBILE-ACCEPTANCE.md](MOBILE-ACCEPTANCE.md) and [IMPLEMENTATION-AUDIT.md](IMPLEMENTATION-AUDIT.md). No candidate is a published release.
 
-The web and native Home launchers include the requested compact agent-qa banner and “by Vostride” attribution. Branding is bundled locally; `https://vostride.com/` opens only when selected. These additions are included in `d73e4c4`.
+The web and native Home launchers include the requested compact agent-qa banner with “Your AI QA engineer” and “by vostride” attribution. Branding is bundled locally; `https://vostride.com/` opens only when selected. The launcher placements were added in `d73e4c4`; the revised subtitle, lowercase attribution and explicit calendar range selection await the next native build.
 
 ## Releases and deployment
 

@@ -233,7 +233,7 @@ export default function App() {
               <TouchableOpacity
                 testID="home-agent-qa"
                 accessibilityRole="link"
-                accessibilityLabel="agent-qa. Test web and mobile apps. Opens in your browser."
+                accessibilityLabel="agent-qa. Your AI QA engineer. Opens in your browser."
                 onPress={openVostride}
                 style={styles.agentBanner}
               >
@@ -244,7 +244,7 @@ export default function App() {
                     resizeMode="contain"
                     accessible={false}
                   />
-                  <Text style={styles.agentDescription}>Test web and mobile apps.</Text>
+                  <Text style={styles.agentDescription}>Your AI QA engineer</Text>
                 </View>
                 <Icon name="arrowUpRight" color={colors.muted} />
               </TouchableOpacity>
@@ -257,12 +257,12 @@ export default function App() {
               <TouchableOpacity
                 testID="home-by-vostride"
                 accessibilityRole="link"
-                accessibilityLabel="by Vostride. Opens in your browser."
+                accessibilityLabel="by vostride. Opens in your browser."
                 onPress={openVostride}
                 style={styles.attribution}
               >
                 <Text style={styles.attributionText}>
-                  by <Text style={styles.attributionBrand}>Vostride</Text>
+                  by <Text style={styles.attributionBrand}>vostride</Text>
                 </Text>
               </TouchableOpacity>
             </Screen>

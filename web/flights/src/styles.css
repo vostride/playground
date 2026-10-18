@@ -476,7 +476,7 @@
   .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 3px;
+    gap: 0;
     margin-bottom: 16px;
   }
   .calendar-grid > span {
@@ -489,7 +489,7 @@
   }
   .calendar-grid > button {
     border: 0;
-    border-radius: 2px;
+    border-radius: 0;
     height: 36px;
     background: transparent;
     color: var(--wl-text);
@@ -507,6 +507,16 @@
   .calendar-grid > button.date-in-range {
     background: #204344;
     color: #c8fff6;
+  }
+  .calendar-grid > button.date-range-preview {
+    background: #204344;
+    box-shadow: inset 0 0 0 1px var(--primary);
+  }
+  .calendar-grid > button:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
   }
   .calendar-grid > button:disabled {
     opacity: 0.3;

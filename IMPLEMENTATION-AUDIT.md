@@ -4,7 +4,7 @@ Audited against `SPEC.md`; current-source evidence updated on 2026-10-19. This r
 
 ## Outcome
 
-The four web products, their shared product models, and the four native product screens are implemented. Current Android source `bd2628e` passed all five native journeys, continuous touch/Undo and offline gates; its final APK checksum and provenance attestation are verified. The matching iOS source compiled, but candidate `39162778135` failed acceptance on 2026-10-18; three harness lookup failures and an offline XCTest query crash blocked the full gate. Their corrections await focused reruns. Complete iOS acceptance, the hosted custom domain and published immutable release assets remain outstanding. The registry labels the web apps as candidates and has no invented mobile release entries. Historical binary results below remain separate from current-source acceptance.
+The four web products, their shared product models, and the four native product screens are implemented. Android branding checkpoint `bd2628e` passed all five native journeys, continuous touch/Undo and offline gates; its final APK checksum and provenance attestation are verified. The subsequent launcher-copy and calendar-range changes require fresh native candidates. The matching iOS branding source compiled, but candidate `39162778135` failed acceptance on 2026-10-18; three harness lookup failures and an offline XCTest query crash blocked the full gate. Their corrections await focused reruns. Complete iOS acceptance, the hosted custom domain and published immutable release assets remain outstanding. The registry labels the web apps as candidates and has no invented mobile release entries. Historical binary results below remain separate from current-source acceptance.
 
 ## Current redesign and local verification
 
@@ -16,7 +16,7 @@ The app directory is a compact launcher with product names and logos. Each web a
 
 The current checkout uses locally owned official shadcn/ui components from the `new-york-v4` registry, Tailwind CSS, and self-hosted Inter variable fonts in all four web builds. The dark treatment covers every product view and form, with transparent sections, divider rules, brighter text, and stronger headings. Rectangular controls use 0–2px corners. Compact spacing replaces enclosing panels, while Komazon retains a responsive product grid and Brello uses small bordered cards for draggable tasks. Product styles use `@layer product`, while semantic component utilities remain shared. Original vector logos identify all four products in the directory and web headers; matching native PNG assets are bundled locally. Paths, storage keys, and automation IDs remain stable.
 
-Looking’s web calendar has month/year navigation and exact date entry through **Use date**. Valid dates in years 0001–9999 are supported, leap days are validated, and return-before-departure input is rejected. The selected dates propagate to search results rather than being restricted to the seed month.
+Looking’s web calendar has month/year navigation and exact date entry through **Use date**. Valid dates in years 0001–9999 are supported, leap days are validated, and return-before-departure input is rejected. The selected dates propagate to search results rather than being restricted to the seed month. The calendar now highlights only departure for one-way trips and requires an explicit start/end for round trips, with a continuous range fill. Earlier second calendar clicks restart the draft; typed invalid returns still reject. The same state flow is implemented in native. Eleven focused browser tests, both TypeScript targets, five date-logic tests and 39 Maestro YAML validations pass; desktop and narrow calendar screenshots were reviewed. Native runtime verification of this change is pending.
 
 An independent sub-agent audited the visible copy across web/native screens, secondary flows, metadata, help and the 404 page. Simulation notices and promotional copy are removed. Functional form help, data, errors and test controls remain. Native route assertions now target functional headings or stable identifiers.
 
@@ -38,7 +38,7 @@ The trace-view follow-up fixes clipped modal headers, duration labels drawn over
 
 The historical CI records below retain the product names used by those runs: Fernwood is now Komazon, Wayline is Looking, Vigil is PepaPog, and Corkboard is Brello. Prior binary results do not automatically verify the renamed source.
 
-The web and native Home launchers now include the requested compact agent-qa banner and “by Vostride” attribution. Both use locally bundled branding and open `https://vostride.com/` only when selected. No network request is required to render the launchers. These additions are included in `d73e4c4` and its branding candidate.
+The web and native Home launchers now include the requested compact agent-qa banner with “Your AI QA engineer” and “by vostride” attribution. Both use locally bundled branding and open `https://vostride.com/` only when selected. No network request is required to render the launchers. The launcher placements were added in `d73e4c4`; the revised subtitle, lowercase attribution and explicit calendar range selection await the next native build.
 
 ## Platform layout and expanded native acceptance
 

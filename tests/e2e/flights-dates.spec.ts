@@ -8,7 +8,7 @@ test('Looking jumps to a distant leap year and preserves the chosen round trip d
   await page.getByLabel('Calendar year', { exact: true }).fill('2032');
   await page.getByLabel('Calendar month', { exact: true }).selectOption('02');
   await page.getByRole('button', { name: 'February 29, 2032', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'February 28, 2032', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'February 28, 2032', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Next month', exact: true }).click();
   await page.getByRole('button', { name: 'March 4, 2032', exact: true }).click();
   await page.locator('.date-field .picker-button').click();
@@ -30,9 +30,87 @@ test('Looking jumps to a distant leap year and preserves the chosen round trip d
   await expect(page.locator('.flight-card')).toHaveCount(12);
 });
 
-test('Looking accepts exact past dates and rejects a return before departure', async ({
+test('Looking one-way calendar highlights only departure after a stored round trip', async ({
   page,
 }) => {
+  await page.goto('/flights/');
+  await page.locator('.date-field .picker-button').click();
+  await page.getByRole('button', { name: 'November 20, 2026', exact: true }).click();
+  await page.getByRole('button', { name: 'November 27, 2026', exact: true }).click();
+  await page.getByLabel('One way', { exact: true }).check();
+  await page.locator('.date-field .picker-button').click();
+  await expect(page.locator('.calendar-grid .date-selected')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'November 20, 2026', exact: true })).toHaveClass(
+    /date-selected/,
+  );
+  await expect(
+    page.getByRole('button', { name: 'November 27, 2026', exact: true }),
+  ).not.toHaveClass(/date-selected|date-in-range/);
+  await expect(page.locator('.calendar-grid .date-in-range')).toHaveCount(0);
+});
+
+test('Looking drafts an arbitrary range, restarts on an earlier day, and fills between endpoints', async ({
+  page,
+}) => {
+  await page.goto('/flights/');
+  await page.locator('.date-field .picker-button').click();
+  await page.getByRole('button', { name: 'November 20, 2026', exact: true }).click();
+  await expect(page.locator('.calendar-grid .date-selected')).toHaveCount(1);
+  await expect(page.locator('.calendar-grid .date-in-range')).toHaveCount(0);
+  await expect(page.getByLabel('Return date', { exact: true })).toHaveValue('');
+  await expect(
+    page.locator('.calendar-popover').getByRole('button', { name: 'Done', exact: true }),
+  ).toBeDisabled();
+  await page.getByRole('button', { name: 'November 15, 2026', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'November 15, 2026', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'November 25, 2026', exact: true }).hover();
+  await expect(page.locator('.calendar-grid .date-in-range')).toHaveCount(9);
+  await page.getByRole('button', { name: 'November 25, 2026', exact: true }).click();
+  await expect(page.locator('.date-field .picker-button')).toContainText('Nov 15 – Nov 25');
+  await page.locator('.date-field .picker-button').click();
+  await expect(page.locator('.calendar-grid .date-selected')).toHaveCount(2);
+  await expect(page.locator('.calendar-grid .date-in-range')).toHaveCount(9);
+  const from = await page
+    .getByRole('button', { name: 'November 16, 2026', exact: true })
+    .boundingBox();
+  const to = await page
+    .getByRole('button', { name: 'November 17, 2026', exact: true })
+    .boundingBox();
+  expect(from).not.toBeNull();
+  expect(to).not.toBeNull();
+  expect(Math.abs(from!.x + from!.width - to!.x)).toBeLessThan(1);
+});
+
+test('Looking completes same-day and cross-year ranges at the supported date boundaries', async ({
+  page,
+}) => {
+  await page.goto('/flights/');
+  await page.locator('.date-field .picker-button').click();
+  await page.getByLabel('Departure date', { exact: true }).fill('0001-12-31');
+  await page.getByRole('button', { name: 'Use date', exact: true }).click();
+  await page.getByRole('button', { name: 'Next month', exact: true }).click();
+  await page.getByRole('button', { name: 'January 2, 2', exact: true }).click();
+  await page.locator('.date-field .picker-button').click();
+  await expect(page.getByLabel('Departure date', { exact: true })).toHaveValue('0001-12-31');
+  await page.getByRole('button', { name: 'Return Jan 2', exact: true }).click();
+  await expect(page.getByLabel('Return date', { exact: true })).toHaveValue('0002-01-02');
+  await expect(page.getByRole('button', { name: 'January 1, 2', exact: true })).toHaveClass(
+    /date-in-range/,
+  );
+  await page.getByRole('button', { name: 'Departure Dec 31', exact: true }).click();
+  await page.getByLabel('Departure date', { exact: true }).fill('9999-12-31');
+  await page.getByRole('button', { name: 'Use date', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Next month', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'December 31, 9999', exact: true }).click();
+  await page.locator('.date-field .picker-button').click();
+  await expect(page.locator('.calendar-grid .date-selected')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Return Dec 31', exact: true }).click();
+  await expect(page.getByLabel('Return date', { exact: true })).toHaveValue('9999-12-31');
+});
+
+test('Looking accepts exact past dates and rejects a return before departure', async ({ page }) => {
   await page.goto('/flights/');
   await page.locator('.date-field .picker-button').click();
   await page.getByLabel('Departure date', { exact: true }).fill('1980-02-29');
