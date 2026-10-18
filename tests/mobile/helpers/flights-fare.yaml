@@ -1,11 +1,13 @@
 appId: dev.vostride.playground
 ---
 # $501 outbound + $456 return, for two adults. Standard adds $256 total.
+# The total sits near the scroll boundary. Require visibility without forcing
+# its position higher; iOS cannot center this row once the page reaches its end.
 - scrollUntilVisible:
     element:
       id: flight-fare-total
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - assertVisible:
     id: flight-fare-total
     text: '^Total \$2,170$'
@@ -23,7 +25,7 @@ appId: dev.vostride.playground
     element:
       id: flight-fare-total
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - assertVisible:
     id: flight-fare-total
     text: '^Total \$2,426$'
@@ -37,7 +39,7 @@ appId: dev.vostride.playground
     element:
       id: flight-fare-total
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - assertVisible:
     id: flight-fare-total
     text: '^Total \$1,914$'
@@ -51,7 +53,7 @@ appId: dev.vostride.playground
     element:
       id: flight-fare-total
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - assertVisible:
     id: flight-fare-total
     text: '^Total \$2,426$'

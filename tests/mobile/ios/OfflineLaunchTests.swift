@@ -55,9 +55,12 @@ final class OfflineLaunchTests: XCTestCase {
         try require(web, "Local help WebView")
         // Require actual DOM text within the WebView, not the native sheet's Help heading.
         try require(web.staticTexts["Navigation"].firstMatch, "Local help HTML heading")
-        try require(web.staticTexts[
-            "Choose an app from Home. Use the grid button to switch apps and the bottom tabs to navigate within each app. The back button returns to the previous screen."
-        ].firstMatch, "Local help HTML content")
+        // XCTest's string-identifier subscript rejects text longer than 128 characters.
+        // Match the full rendered paragraph explicitly, still scoped to the WebView.
+        let navigationHelp = "Choose an app from Home. Use the grid button to switch apps and the bottom tabs to navigate within each app. The back button returns to the previous screen."
+        try require(web.staticTexts.matching(
+            NSPredicate(format: "label == %@", navigationHelp)
+        ).firstMatch, "Local help HTML content")
         attach("Offline local WebView content")
         try await control("complete")
         // Completion only records a marker. The host still waits for XCTest to exit and

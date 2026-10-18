@@ -1,11 +1,27 @@
 appId: dev.vostride.playground
 ---
-- scrollUntilVisible:
-    centerElement: true
-    element:
-      id: '${FIELD}'
-    direction: DOWN
-    timeout: 20000
+# Maestro parses centerElement as a Boolean before script evaluation, so keep
+# literal values in two branches instead of interpolating that command field.
+- runFlow:
+    when:
+      true: "${typeof CENTER === 'undefined' || CENTER !== 'false'}"
+    commands:
+      - scrollUntilVisible:
+          centerElement: true
+          element:
+            id: '${FIELD}'
+          direction: DOWN
+          timeout: 20000
+- runFlow:
+    when:
+      true: "${typeof CENTER !== 'undefined' && CENTER === 'false'}"
+    commands:
+      - scrollUntilVisible:
+          centerElement: false
+          element:
+            id: '${FIELD}'
+          direction: DOWN
+          timeout: 20000
 - tapOn:
     id: '${FIELD}'
 - eraseText

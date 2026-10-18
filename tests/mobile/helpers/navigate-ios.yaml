@@ -57,17 +57,12 @@ env:
           timeout: 10000
       - tapOn:
           id: task-view-list
-      # The created task is beyond the initially rendered list. Search by its
-      # real ID once; reopening the visible card keeps the same warm session.
-      - runFlow:
-          when:
-            notVisible:
-              id: 'task-card-${UI_TASK_ID}'
-          commands:
-            - tapOn: '^Search tasks$'
-            - eraseText
-            - inputText: '${UI_TASK_ID}'
-            - runFlow: dismiss-keyboard.yaml
+      # iOS exposes offscreen list rows as visible in its accessibility tree.
+      # Search the exact ID so the card is inside the list viewport before tapping.
+      - tapOn: '^Search tasks$'
+      - eraseText
+      - inputText: '${UI_TASK_ID}'
+      - runFlow: dismiss-keyboard.yaml
       - extendedWaitUntil:
           visible:
             id: 'task-card-${UI_TASK_ID}'

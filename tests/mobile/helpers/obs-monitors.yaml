@@ -20,6 +20,8 @@ appId: dev.vostride.playground
 # Read validation messages without centering before filling their preceding
 # inputs. On iOS, centering the threshold error flicked its input behind the
 # fixed sheet header; name and recipient errors use the same form layout.
+# Keep these already-visible inputs in place too: a centering swipe can move
+# the threshold from y588 to y94, placing its tap behind that fixed header.
 - scrollUntilVisible:
     element:
       text: '^Enter a threshold greater than 0 and at most 100\.$'
@@ -31,6 +33,10 @@ appId: dev.vostride.playground
     env:
       FIELD: vigil-field-alert-threshold
       VALUE: '2'
+      CENTER: 'false'
+- assertVisible:
+    id: vigil-field-alert-threshold
+    text: '^2$'
 - scrollUntilVisible:
     element:
       text: '^Enter a monitor name with at least 3 characters\.$'
@@ -42,6 +48,10 @@ appId: dev.vostride.playground
     env:
       FIELD: vigil-field-monitor-name
       VALUE: Native regression monitor
+      CENTER: 'false'
+- assertVisible:
+    id: vigil-field-monitor-name
+    text: '^Native regression monitor$'
 - scrollUntilVisible:
     element:
       text: '^Enter email addresses separated by commas\.$'
@@ -53,6 +63,10 @@ appId: dev.vostride.playground
     env:
       FIELD: vigil-field-notify
       VALUE: oncall@example.test
+      CENTER: 'false'
+- assertVisible:
+    id: vigil-field-notify
+    text: '^oncall@example\.test$'
 - scrollUntilVisible:
     element:
       text: '^Create monitor$'
