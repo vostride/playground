@@ -5,10 +5,11 @@ import {fileURLToPath} from 'node:url';
 import {parseAllDocuments} from 'yaml';
 
 const root=path.dirname(fileURLToPath(import.meta.url));
-const commands=new Set(['launchApp','extendedWaitUntil','assertVisible','assertNotVisible','tapOn','longPressOn','scrollUntilVisible','runFlow','openLink','pressKey','eraseText','inputText','hideKeyboard','takeScreenshot']);
+const commands=new Set(['launchApp','extendedWaitUntil','assertVisible','assertNotVisible','tapOn','longPressOn','scrollUntilVisible','runFlow','openLink','eraseText','inputText','hideKeyboard','takeScreenshot']);
 const files=['flows','helpers','expected-failure'].flatMap(directory=>fs.readdirSync(path.join(root,directory)).filter(file=>file.endsWith('.yaml')).map(file=>path.join(root,directory,file)));
 const dependencies=new Map();
-function checkSteps(steps,file){
+const launchPlatforms=new Set();
+function checkSteps(steps,file,platform){
  assert.ok(Array.isArray(steps)&&steps.length>0,`${file}: commands must be a nonempty list`);
  for(const step of steps){
   const name=typeof step==='string'?step:Object.keys(step||{})[0];
@@ -18,12 +19,22 @@ function checkSteps(steps,file){
   if(name==='runFlow'){
    const target=typeof value==='string'?value:value.file;
    if(target){const resolved=path.resolve(path.dirname(file),target);assert.ok(resolved.startsWith(root+path.sep),`${file}: helper outside test suite`);assert.ok(fs.existsSync(resolved),`${file}: missing helper ${target}`);dependencies.get(file).push(resolved)}
-   else {assert.ok(value.when,`${file}: inline flow requires a condition`);checkSteps(value.commands,file)}
+   else {assert.ok(value.when,`${file}: inline flow requires a condition`);checkSteps(value.commands,file,value.when.platform||platform)}
   }
   if(name==='scrollUntilVisible')assert.ok(value.element&&['DOWN','UP','LEFT','RIGHT'].includes(value.direction),`${file}: scroll needs a selector and direction`);
-  if(name==='launchApp')assert.equal(value.permissions?.all,'deny',`${file}: native smoke must run without granting permissions`);
+  if(name==='launchApp'){
+   assert.equal(file,path.join(root,'helpers','launch.yaml'),`${file}: launches belong in the shared isolation helper`);
+   assert.equal(value.permissions?.all,'deny',`${file}: native smoke must run without granting permissions`);
+   assert.ok(['Android','iOS'].includes(platform),`${file}: session reset must be explicitly scoped by platform`);
+   assert.ok(!launchPlatforms.has(platform),`${file}: duplicate ${platform} session reset`);
+   launchPlatforms.add(platform);
+   if(platform==='Android')assert.equal(value.clearState,true,`${file}: Android starts with cleared app state`);
+   if(platform==='iOS'){
+    assert.equal(value.stopApp,true,`${file}: iOS must restart the process-local session`);
+    assert.ok(!Object.hasOwn(value,'clearState'),`${file}: iOS must preserve installed URL-scheme registration`);
+   }
+  }
   if(name==='openLink')assert.match(value,/^(playground:\/\/|\$\{LINK\})/,`${file}: test must not navigate to an external service`);
-  if(name==='pressKey')assert.equal(value,'home',`${file}: only the documented home key is used by this suite`);
   if(name==='tapOn'||name==='longPressOn'||name.startsWith('assert')){
    assert.ok(typeof value==='string'||(value&&(value.id||value.text)),`${file}: selector needs stable text or id`);
    assert.ok(!value?.point,`${file}: coordinate-only selectors are not allowed`);
@@ -45,6 +56,7 @@ for(const file of files){
   assert.ok(steps.some(step=>step.takeScreenshot),`${file}: scenario must preserve visual evidence`);
  }
 }
+assert.deepEqual([...launchPlatforms].sort(),['Android','iOS'],'Shared launch helper must reset both platforms');
 function visit(file,ancestors=[]){assert.ok(!ancestors.includes(file),`Recursive helper cycle: ${[...ancestors,file].join(' → ')}`);for(const next of dependencies.get(file)||[])visit(next,[...ancestors,file])}
 for(const file of files)visit(file);
 assert.equal(files.filter(file=>file.includes(`${path.sep}flows${path.sep}`)).length,5,'Expected all five native acceptance scenarios');

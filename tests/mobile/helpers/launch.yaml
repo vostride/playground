@@ -12,10 +12,25 @@ appId: dev.vostride.playground
       - extendedWaitUntil:
           notVisible: 'Open.*Playground.*'
           timeout: 10000
-- launchApp:
-    clearState: true
-    permissions:
-      all: deny
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - launchApp:
+          clearState: true
+          permissions:
+            all: deny
+# Product/session state is process-local (the Map in ui.tsx). Restart iOS
+# without clearState's uninstall/reinstall, preserving installed URL-scheme
+# registration while retaining a clean seeded session.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - launchApp:
+          stopApp: true
+          permissions:
+            all: deny
 - extendedWaitUntil:
     visible: 'Make yourself at home\.'
     timeout: 30000
