@@ -73,11 +73,22 @@ appId: dev.vostride.playground
     direction: DOWN
     centerElement: true
 - tapOn: '^Create monitor$'
+- extendedWaitUntil:
+    notVisible: '^New metric monitor$'
+    timeout: 10000
+# The search input belongs to the list header. After saving, iOS can retain
+# a lower list position; scrolling down here moves away from that input.
+- scrollUntilVisible:
+    element:
+      id: vigil-field-search-monitors
+    direction: UP
+    centerElement: false
 - runFlow:
     file: fill.yaml
     env:
       FIELD: vigil-field-search-monitors
       VALUE: Native regression monitor
+      CENTER: 'false'
 - scrollUntilVisible:
     element:
       text: '^Edit Native regression monitor$'

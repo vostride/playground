@@ -26,21 +26,28 @@ appId: dev.vostride.playground
     element:
       id: task-card-CKB-031
     direction: UP
-    centerElement: true
+    centerElement: false
     timeout: 60000
-# Use the list viewport center; a cell reported visible can still be clipped
-# behind the fixed header. The first pull reaches the top, the second refreshes.
-# Both are moving swipes, separate from the held-finger drag companions.
+# Return to the top using the list's side gutter, outside the draggable cards.
+# The point is relative to the matched viewport, below the fixed header.
 - swipe:
     from:
       id: task-list
+      point: '2%, 10%'
     direction: DOWN
-    duration: 800
+    duration: 600
+    waitToSettleTimeoutMs: 500
+- assertVisible:
+    id: task-card-CKB-031
+# Pull again from the top. Bound settling so the six-second completion notice
+# remains observable; a visible first card alone does not prove a refresh.
 - swipe:
     from:
       id: task-list
+      point: '2%, 10%'
     direction: DOWN
-    duration: 800
+    duration: 600
+    waitToSettleTimeoutMs: 500
 - extendedWaitUntil:
     visible: '^Board is up to date$'
     timeout: 10000
