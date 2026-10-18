@@ -1010,6 +1010,8 @@ function NewTaskSheet({
       <Text style={styles.fieldLabel}>Title</Text>
       <TextInput
         testID="task-create-title"
+        returnKeyType="done"
+        submitBehavior="blurAndSubmit"
         autoFocus
         accessibilityLabel="Title"
         placeholder="What needs to be done?"
@@ -1282,6 +1284,8 @@ function TaskDetail({
       <View style={styles.row}>
         <TextInput
           testID="task-checklist-new"
+          returnKeyType="done"
+          submitBehavior="blurAndSubmit"
           accessibilityLabel="New checklist item"
           placeholder="Add a checklist item…"
           value={item}

@@ -11,8 +11,9 @@ name: Corkboard create, edit, move, undo, checklist, and persistence
 - tapOn:
     id: task-create-title
 - inputText: Native regression task
-- hideKeyboard
+- runFlow: ../helpers/dismiss-keyboard.yaml
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: task-create-submit
     direction: DOWN
@@ -29,19 +30,21 @@ name: Corkboard create, edit, move, undo, checklist, and persistence
     id: task-detail-title
 - eraseText
 - inputText: Native regression task edited
-- hideKeyboard
+- runFlow: ../helpers/dismiss-keyboard.yaml
 - tapOn:
     id: task-status-progress
 - assertVisible:
     id: task-status-progress
     selected: true
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: task-detail-undo
     direction: DOWN
 - tapOn:
     id: task-detail-undo
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: task-status-todo
     direction: UP
@@ -61,6 +64,7 @@ name: Corkboard create, edit, move, undo, checklist, and persistence
     text: Confirm mobile flow
     checked: true
 - scrollUntilVisible:
+    centerElement: true
     element:
       text: Done
     direction: DOWN
@@ -73,6 +77,7 @@ name: Corkboard create, edit, move, undo, checklist, and persistence
     id: task-detail-title
     text: Native regression task edited
 - scrollUntilVisible:
+    centerElement: true
     element:
       text: Confirm mobile flow
     direction: DOWN

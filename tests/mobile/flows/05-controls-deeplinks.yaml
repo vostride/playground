@@ -38,9 +38,12 @@ name: Warm deep links, local WebView, opt-in defect, and session reset
     element:
       id: button-a-quick-guide-to-the-playground
     direction: DOWN
+    centerElement: true
 - tapOn:
     id: button-a-quick-guide-to-the-playground
+- assertVisible: A quick guide
 - assertVisible: 'A place to try things\.'
+- takeScreenshot: local-webview-guide
 - tapOn:
     id: button-close
 # The labelled opt-in bug changes two $24 mugs from $53 to $29 including shipping.
@@ -54,6 +57,7 @@ name: Warm deep links, local WebView, opt-in defect, and session reset
     element:
       text: '\$29\.00'
     direction: DOWN
+    centerElement: true
 - assertVisible: '\$29\.00'
 - assertNotVisible: '\$53\.00'
 - takeScreenshot: labelled-cart-total-bug
@@ -62,6 +66,7 @@ name: Warm deep links, local WebView, opt-in defect, and session reset
     element:
       id: button-reset-playground-session
     direction: DOWN
+    centerElement: true
 - tapOn:
     id: button-reset-playground-session
 - assertVisible: 'Make yourself at home\.'

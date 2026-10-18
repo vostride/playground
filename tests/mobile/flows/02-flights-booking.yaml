@@ -7,6 +7,7 @@ name: Wayline round trip, both seat maps, validated checkout, and booking
     env:
       LINK: playground://flights
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-search-flights
     direction: DOWN
@@ -14,6 +15,7 @@ name: Wayline round trip, both seat maps, validated checkout, and booking
     id: button-search-flights
 - assertVisible: 'New York → London'
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-select-flight
     direction: DOWN
@@ -22,6 +24,7 @@ name: Wayline round trip, both seat maps, validated checkout, and booking
     index: 0
 - assertVisible: 'London → New York'
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-select-flight
     direction: DOWN
@@ -30,6 +33,7 @@ name: Wayline round trip, both seat maps, validated checkout, and booking
     index: 0
 - assertVisible: 'A fare that fits your plans'
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-continue-to-seats
     direction: DOWN
@@ -45,6 +49,7 @@ name: Wayline round trip, both seat maps, validated checkout, and booking
     index: 0
 - assertVisible: 'Seat 1[A-F], selected'
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-choose-return-seats
     direction: DOWN
@@ -56,6 +61,7 @@ name: Wayline round trip, both seat maps, validated checkout, and booking
     enabled: true
     index: 0
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-continue-to-checkout
     direction: DOWN
@@ -63,6 +69,7 @@ name: Wayline round trip, both seat maps, validated checkout, and booking
     id: button-continue-to-checkout
 # Empty traveler fields must not advance.
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-continue-to-payment
     direction: DOWN
@@ -70,6 +77,7 @@ name: Wayline round trip, both seat maps, validated checkout, and booking
     id: button-continue-to-payment
 - assertVisible: 'Enter the passenger.*first and last name\.'
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: field-first-name
     direction: UP
@@ -94,30 +102,35 @@ name: Wayline round trip, both seat maps, validated checkout, and booking
       FIELD: field-email-address
       VALUE: alex@example.com
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-continue-to-payment
     direction: DOWN
 - tapOn:
     id: button-continue-to-payment
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-use-sample
     direction: DOWN
 - tapOn:
     id: button-use-sample
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-review-booking
     direction: DOWN
 - tapOn:
     id: button-review-booking
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: flight-accept-terms
     direction: DOWN
 - tapOn:
     id: flight-accept-terms
 - scrollUntilVisible:
+    centerElement: true
     element:
       text: 'Confirm booking · .*'
     direction: DOWN
@@ -125,6 +138,7 @@ name: Wayline round trip, both seat maps, validated checkout, and booking
 - assertVisible: 'You’re going to London\.'
 - assertVisible: 'WL006Q'
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-manage-your-booking
     direction: DOWN

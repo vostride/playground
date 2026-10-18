@@ -1,6 +1,7 @@
 appId: dev.vostride.playground
 ---
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: '${FIELD}'
     direction: DOWN
@@ -9,4 +10,4 @@ appId: dev.vostride.playground
     id: '${FIELD}'
 - eraseText
 - inputText: '${VALUE}'
-- hideKeyboard
+- runFlow: dismiss-keyboard.yaml

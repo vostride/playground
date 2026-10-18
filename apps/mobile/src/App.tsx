@@ -25,6 +25,7 @@ import {
   Card,
   colors,
   Heading,
+  KeyboardDismissButton,
   PlaygroundNotice,
   resetSession,
   Row,
@@ -180,6 +181,7 @@ export default function App() {
             </Text>
           </View>
         )}
+        <KeyboardDismissButton />
         <View style={{ flex: 1 }} key={session}>
           {current.app === 'home' ? (
             <Screen>

@@ -9,6 +9,7 @@ name: Deliberate cart total bug is detected by the normal price assertion
 - assertVisible: 'Deliberate bug: Quantity ignored in totals'
 - runFlow: ../helpers/add-two-mugs.yaml
 - scrollUntilVisible:
+    centerElement: true
     element:
       text: '\$29\.00'
     direction: DOWN

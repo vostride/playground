@@ -8,11 +8,13 @@ name: Fernwood sign-in, quantity, validated checkout, and cancellation
       LINK: playground://shop
 - runFlow: ../helpers/add-two-mugs.yaml
 - scrollUntilVisible:
+    centerElement: true
     element:
       text: '\$53\.00'
     direction: DOWN
 - assertVisible: '\$53\.00'
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-continue-to-checkout
     direction: DOWN
@@ -30,6 +32,7 @@ name: Fernwood sign-in, quantity, validated checkout, and cancellation
       FIELD: field-password
       VALUE: fernwood123
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: shop-submit-signin
     direction: DOWN
@@ -38,12 +41,14 @@ name: Fernwood sign-in, quantity, validated checkout, and cancellation
 - assertVisible: 'Where should we send it\?'
 # Verify a blank address cannot advance to delivery.
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-continue-to-delivery
     direction: DOWN
 - tapOn:
     id: button-continue-to-delivery
 - scrollUntilVisible:
+    centerElement: true
     element:
       text: 'Enter a street address\.[\s\S]*'
     direction: UP
@@ -64,6 +69,7 @@ name: Fernwood sign-in, quantity, validated checkout, and cancellation
       FIELD: field-postal-code
       VALUE: '97205'
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-continue-to-delivery
     direction: DOWN
@@ -71,6 +77,7 @@ name: Fernwood sign-in, quantity, validated checkout, and cancellation
     id: button-continue-to-delivery
 - assertVisible: 'A good thing is on its way\.'
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-review-order
     direction: DOWN
@@ -78,11 +85,13 @@ name: Fernwood sign-in, quantity, validated checkout, and cancellation
     id: button-review-order
 - assertVisible: 'One last look\.'
 - scrollUntilVisible:
+    centerElement: true
     element:
       text: 'Everyday Ceramic Mug × 2'
     direction: DOWN
 - assertVisible: 'Everyday Ceramic Mug × 2'
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-place-order-53-00
     direction: DOWN
@@ -95,6 +104,7 @@ name: Fernwood sign-in, quantity, validated checkout, and cancellation
 - assertVisible: 'Order FW-1001'
 - assertVisible: 'Total \$53\.00'
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-cancel-order
     direction: DOWN

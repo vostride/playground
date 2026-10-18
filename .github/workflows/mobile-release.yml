@@ -75,6 +75,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run test:mobile:flows
+      - run: node --test tests/mobile/android-drag.test.mjs
       - run: npm run typecheck --workspace @playground/mobile
 
   android:
@@ -111,9 +112,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - run: npm ci
       - name: Build a standalone release APK
+        id: build
         working-directory: apps/mobile/android
         run: ./gradlew assembleRelease --no-daemon
-      - name: Verify the final APK requests no permissions
+      - name: Verify final APK permissions and native architectures
         run: |
           node --input-type=module <<'NODE'
           import {mkdirSync, writeFileSync} from 'node:fs';
@@ -126,6 +128,14 @@ jobs:
           writeFileSync('maestro-reports/android/apk-permissions.txt', result.stdout);
           console.log(result.stdout);
           if (/^uses-permission/m.test(result.stdout)) throw new Error('The final merged APK requests permissions. Playground release apps must request none.');
+          const metadata = spawnSync(`${sdk}/build-tools/36.0.0/aapt`, ['dump', 'badging', 'apps/mobile/android/app/build/outputs/apk/release/app-release.apk'], {encoding: 'utf8'});
+          if (metadata.error || metadata.status !== 0) throw new Error(`Cannot inspect APK metadata: ${metadata.error?.message || metadata.stderr}`);
+          writeFileSync('maestro-reports/android/apk-metadata.txt', metadata.stdout);
+          const architectures = metadata.stdout.match(/^native-code:\s*(.*)$/m)?.[1] || '';
+          console.log(`APK native architectures: ${architectures}`);
+          for (const required of ['arm64-v8a', 'x86_64']) {
+            if (!architectures.includes(`'${required}'`)) throw new Error(`APK is missing required native architecture ${required}.`);
+          }
           NODE
       - name: Install the pinned Maestro CLI
         run: |
@@ -157,6 +167,7 @@ jobs:
             adb install apps/mobile/android/app/build/outputs/apk/release/app-release.apk
             mkdir -p maestro-reports/android
             maestro --device emulator-5554 test --format JUNIT --output maestro-reports/android/results.xml --debug-output maestro-reports/android/debug --test-output-dir maestro-reports/android/artifacts tests/mobile/flows/
+            node tests/mobile/android-drag.mjs emulator-5554
       - name: Preserve Android acceptance evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -179,6 +190,15 @@ jobs:
         with:
           name: mobile-android-release
           path: release/
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+      - name: Preserve the unverified APK when later checks fail
+        if: failure() && steps.build.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostic-android-apk-unverified
+          path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
           compression-level: 0
           retention-days: 7
           if-no-files-found: error
@@ -223,6 +243,7 @@ jobs:
           writeFileSync('apps/mobile/ios/.xcode.env.local', `export NODE_BINARY="${process.execPath}"\n`);
           NODE
       - name: Build the unsigned universal simulator app
+        id: build
         working-directory: apps/mobile/ios
         run: |
           xcodebuild \
@@ -239,6 +260,21 @@ jobs:
             MARKETING_VERSION="$PLAYGROUND_VERSION" \
             CURRENT_PROJECT_VERSION="$PLAYGROUND_BUILD_NUMBER" \
             build
+      - name: Verify the simulator binary contains both architectures
+        run: |
+          node --input-type=module <<'NODE'
+          import {mkdirSync, writeFileSync} from 'node:fs';
+          import {spawnSync} from 'node:child_process';
+          const result = spawnSync('xcrun', ['lipo', '-archs', 'apps/mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app/Playground'], {encoding: 'utf8'});
+          if (result.error || result.status !== 0) throw new Error(`Cannot inspect simulator architectures: ${result.error?.message || result.stderr}`);
+          mkdirSync('maestro-reports/ios', {recursive: true});
+          writeFileSync('maestro-reports/ios/app-architectures.txt', result.stdout);
+          console.log(`Simulator binary architectures: ${result.stdout.trim()}`);
+          const architectures = result.stdout.trim().split(/\s+/);
+          for (const required of ['arm64', 'x86_64']) {
+            if (!architectures.includes(required)) throw new Error(`Simulator app is missing required architecture ${required}.`);
+          }
+          NODE
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -269,12 +305,30 @@ jobs:
         run: |
           mkdir -p maestro-reports/ios
           maestro --device "$PLAYGROUND_SIMULATOR_ID" test --format JUNIT --output maestro-reports/ios/results.xml --debug-output maestro-reports/ios/debug --test-output-dir maestro-reports/ios/artifacts tests/mobile/flows/
+      - name: Verify continuous touch dragging on the simulator build
+        env:
+          PLAYGROUND_SIMULATOR_ID: ${{ steps.simulator.outputs.id }}
+        run: |
+          xcodebuild test \
+            -project tests/mobile/ios/CorkboardGestures.xcodeproj \
+            -scheme CorkboardGestures \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination "platform=iOS Simulator,id=$PLAYGROUND_SIMULATOR_ID" \
+            -parallel-testing-enabled NO \
+            -maximum-concurrent-test-simulator-destinations 1 \
+            -derivedDataPath maestro-reports/ios/gesture-build \
+            -resultBundlePath maestro-reports/ios/corkboard-gestures.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
       - name: Preserve iOS acceptance evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ios-acceptance-report
-          path: maestro-reports/ios/
+          path: |
+            maestro-reports/ios/
+            !maestro-reports/ios/gesture-build/**
           retention-days: 14
           if-no-files-found: ignore
       - name: Shut down the test simulator
@@ -299,6 +353,23 @@ jobs:
         with:
           name: mobile-ios-release
           path: release/
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+      - name: Package the unverified simulator app when later checks fail
+        id: diagnostic-package
+        if: failure() && steps.build.outcome == 'success'
+        run: |
+          mkdir -p diagnostics
+          ditto -c -k --sequesterRsrc --keepParent \
+            apps/mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app \
+            "diagnostics/playground-ios-simulator-${PLAYGROUND_VERSION}-unverified.zip"
+      - name: Preserve the unverified simulator app
+        if: failure() && steps.diagnostic-package.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostic-ios-simulator-unverified
+          path: diagnostics/*.zip
           compression-level: 0
           retention-days: 7
           if-no-files-found: error

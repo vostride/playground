@@ -44,6 +44,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run test:mobile:flows
+      - run: node --test tests/mobile/android-drag.test.mjs
       - run: npm run typecheck --workspace @playground/mobile
       - name: Prepare bundle directories
         run: mkdir -p apps/mobile/.bundle/android apps/mobile/.bundle/ios

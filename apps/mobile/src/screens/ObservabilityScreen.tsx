@@ -172,6 +172,8 @@ function Field({
         placeholderTextColor="#a2acba"
         keyboardType={numeric ? 'decimal-pad' : 'default'}
         multiline={multiline}
+        returnKeyType={multiline ? 'default' : 'done'}
+        submitBehavior={multiline ? 'newline' : 'blurAndSubmit'}
         autoCapitalize="none"
         style={[
           s.input,

@@ -1,6 +1,7 @@
-import React, { useState, type Dispatch, type SetStateAction } from 'react';
+import React, { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import {
   ScrollView,
+  Keyboard,
   StyleSheet,
   Text,
   TextInput,
@@ -75,9 +76,35 @@ export function SafeModalArea({ children, style, ...props }: ViewProps) {
   return (
     <SafeAreaProvider style={{ flex: 1 }}>
       <SafeAreaView style={[{ flex: 1 }, style]} {...props}>
+        <KeyboardDismissButton />
         {children}
       </SafeAreaView>
     </SafeAreaProvider>
+  );
+}
+export function KeyboardDismissButton() {
+  const [visible, setVisible] = useState(Keyboard.isVisible());
+  useEffect(() => {
+    const shown = Keyboard.addListener('keyboardDidShow', () => setVisible(true));
+    const hidden = Keyboard.addListener('keyboardDidHide', () => setVisible(false));
+    return () => {
+      shown.remove();
+      hidden.remove();
+    };
+  }, []);
+  if (!visible) return null;
+  return (
+    <View style={styles.keyboardToolbar}>
+      <TouchableOpacity
+        testID="keyboard-dismiss-button"
+        accessibilityRole="button"
+        accessibilityLabel="Hide keyboard"
+        onPress={Keyboard.dismiss}
+        style={styles.keyboardDismiss}
+      >
+        <Text style={styles.keyboardDismissText}>Done typing</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 export function Card({ children, style, ...props }: ViewProps) {
@@ -144,6 +171,8 @@ export function Field({ label, style, ...props }: TextInputProps & { label: stri
           .replace(/^-|-$/g, '')}`}
         accessibilityLabel={label}
         placeholderTextColor="#93a18e"
+        returnKeyType={props.multiline ? 'default' : 'done'}
+        submitBehavior={props.multiline ? 'newline' : 'blurAndSubmit'}
         style={[styles.input, style]}
         {...props}
       />
@@ -202,6 +231,14 @@ export function PlaygroundNotice() {
   );
 }
 const styles = StyleSheet.create({
+  keyboardToolbar: {
+    alignItems: 'flex-end',
+    backgroundColor: '#f0f3ef',
+    borderBottomWidth: 1,
+    borderBottomColor: '#dfe5dc',
+  },
+  keyboardDismiss: { minHeight: 44, paddingHorizontal: 18, justifyContent: 'center' },
+  keyboardDismissText: { color: '#1b5149', fontSize: 14, fontWeight: '600' },
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: 20, paddingBottom: 40, gap: 14 },
   card: {

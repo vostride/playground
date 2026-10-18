@@ -15,6 +15,7 @@ name: Vigil log query, event trace, monitor creation, pause, and delete
       VALUE: 'service:checkout status:error'
 - tapOn: Search
 - scrollUntilVisible:
+    centerElement: true
     element:
       text: 'error checkout .*'
     direction: DOWN
@@ -23,6 +24,7 @@ name: Vigil log query, event trace, monitor creation, pause, and delete
     index: 0
 - assertVisible: Log event
 - scrollUntilVisible:
+    centerElement: true
     element:
       text: View trace
     direction: DOWN
@@ -47,6 +49,7 @@ name: Vigil log query, event trace, monitor creation, pause, and delete
       FIELD: vigil-field-notify
       VALUE: oncall@example.test
 - scrollUntilVisible:
+    centerElement: true
     element:
       text: Create monitor
     direction: DOWN
@@ -57,6 +60,7 @@ name: Vigil log query, event trace, monitor creation, pause, and delete
       FIELD: vigil-field-search-monitors
       VALUE: Native regression monitor
 - scrollUntilVisible:
+    centerElement: true
     element:
       text: Edit Native regression monitor
     direction: DOWN
@@ -66,6 +70,7 @@ name: Vigil log query, event trace, monitor creation, pause, and delete
 - assertVisible: Resume Native regression monitor
 - takeScreenshot: vigil-monitor-paused
 - scrollUntilVisible:
+    centerElement: true
     element:
       text: Delete
     direction: DOWN

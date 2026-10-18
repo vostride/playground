@@ -6,17 +6,20 @@ appId: dev.vostride.playground
       FIELD: field-search-products
       VALUE: Everyday Ceramic Mug
 - scrollUntilVisible:
+    centerElement: true
     element:
       text: 'View Everyday Ceramic Mug'
     direction: DOWN
 - tapOn: 'View Everyday Ceramic Mug'
 - assertVisible: 'PLAYGROUND.*Simulated data.*'
 - scrollUntilVisible:
+    centerElement: true
     element:
       text: '\+'
     direction: DOWN
 - tapOn: '\+'
 - scrollUntilVisible:
+    centerElement: true
     element:
       id: button-add-to-bag
     direction: DOWN

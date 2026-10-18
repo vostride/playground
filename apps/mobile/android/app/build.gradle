@@ -87,8 +87,8 @@ android {
         applicationId "dev.vostride.playground"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode (System.getenv("PLAYGROUND_BUILD_NUMBER") ?: "1").toInteger()
-        versionName System.getenv("PLAYGROUND_VERSION") ?: "0.1.0"
+        versionCode = Integer.parseInt(System.getenv("PLAYGROUND_BUILD_NUMBER") ?: "1")
+        versionName = System.getenv("PLAYGROUND_VERSION") ?: "0.1.0"
     }
     signingConfigs {
         debug {

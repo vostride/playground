@@ -1,0 +1,6 @@
+appId: dev.vostride.playground
+---
+- tapOn:
+    id: keyboard-dismiss-button
+- assertNotVisible:
+    id: keyboard-dismiss-button
