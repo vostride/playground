@@ -124,7 +124,8 @@ drag and drop by touch, gestures, a WebView screen, and a deep link into each fl
   which run on agent-qa's mobile runtime. New sample tests can use the bigger apps, and a released
   sample path never changes.
 
-## Open questions
+## Mobile scope decisions
 
-- How a deliberate bug is switched on in the mobile app: a deep link or a debug menu.
-- Which sub-apps the first mobile release includes.
+- Deliberate bugs are available through the labelled **Test controls** panel and
+  `?bug=<id>` deep links. Every bug is off by default.
+- The first mobile release includes Komazon, Looking, Brello and PepaPog.
