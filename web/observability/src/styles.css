@@ -1607,161 +1607,317 @@
     font-size: 13px;
     color: #a7b4c7;
   }
-  .trace-title {
-    font-family: Consolas, monospace;
-    font-size: 20px;
-    margin-bottom: 19px;
-    color: #c2cee0;
-  }
-  .trace-metrics {
-    display: flex;
-    gap: 45px;
+  .dialog.trace-dialog > header {
+    position: static;
+    flex-shrink: 0;
+    padding: 10px 16px;
     background: #141c29;
-    padding: 16px;
-    border: 1px solid #2a3648;
-    border-radius: 2px;
-    margin-bottom: 24px;
   }
-  .trace-metrics > span {
-    font-size: 13px;
-    color: #a7b4c7;
-  }
-  .trace-metrics strong {
-    display: block;
-    color: #c2cee0;
+  .dialog.trace-dialog > header h2 {
     font-size: 16px;
-    font-weight: 550;
-    margin-top: 7px;
+    line-height: 24px;
   }
-  .waterfall-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
+  .dialog.trace-dialog .dialog-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    padding: 14px 16px;
   }
-  .waterfall-heading h3 {
+  .trace-dialog .detail-meta {
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin-bottom: 8px;
     font-size: 13px;
-    color: #c2cee0;
   }
-  .waterfall-heading > span {
+  .trace-dialog .detail-meta code {
     font-size: 13px;
-    color: #a7b4c7;
   }
-  .waterfall-ticks {
+  .trace-dialog .trace-title {
+    margin: 0 0 10px;
+    color: #edf2f7;
+    font:
+      650 16px/1.5 'SFMono-Regular',
+      Consolas,
+      monospace;
+    overflow-wrap: anywhere;
+  }
+  .trace-dialog .trace-metrics {
     display: flex;
-    align-items: center;
-    font-size: 13px;
-    color: #a7b4c7;
-    border-bottom: 1px solid #2a3648;
-    padding: 8px 0;
+    flex-wrap: wrap;
+    gap: 8px 28px;
+    margin: 0 0 14px;
+    padding: 0 0 12px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    background: transparent;
   }
-  .waterfall-ticks > span {
-    width: 200px;
-    flex-shrink: 0;
-  }
-  .waterfall-ticks > div {
-    flex: 1;
+  .trace-dialog .trace-metrics > div {
     display: flex;
-    justify-content: space-between;
-    font-family: monospace;
+    align-items: baseline;
+    gap: 8px;
   }
-  .waterfall-row {
-    width: 100%;
-    display: flex;
-    text-align: left;
-    border-bottom: 1px solid #2a3648;
-    align-items: center;
-    height: 50px;
+  .trace-dialog .trace-metrics dt,
+  .trace-dialog .trace-metrics dd {
+    margin: 0;
     padding: 0;
-    background: #141c29;
+    border: 0;
+    font-size: 13px;
+    line-height: 20px;
+    font-variant-numeric: tabular-nums;
   }
-  .waterfall-row:hover,
-  .waterfall-row.selected {
-    background: #141c29;
+  .trace-dialog .trace-metrics dd {
+    color: #edf2f7;
+    font-weight: 650;
   }
-  .span-name {
-    width: 200px;
-    flex-shrink: 0;
+  .trace-dialog .waterfall-heading {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 4px 12px;
+    margin: 0 0 8px;
+  }
+  .trace-dialog .waterfall-heading h3 {
+    font-size: 14px;
+    font-weight: 650;
+    color: #edf2f7;
+  }
+  .trace-dialog .waterfall-heading > span {
+    font-size: 13px;
+    color: var(--app-muted);
+  }
+  .trace-dialog .waterfall-scroll {
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+  }
+  .trace-dialog .waterfall-scroll:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
+  }
+  .trace-dialog .waterfall-table {
+    --waterfall-columns: minmax(212px, 0.9fr) minmax(250px, 1.6fr) 86px;
+    min-width: 640px;
+  }
+  .trace-dialog .waterfall-ticks,
+  .trace-dialog .waterfall-row {
     display: grid;
-    grid-template-columns: 6px 1fr;
-    gap: 4px 5px;
+    grid-template-columns: var(--waterfall-columns);
+    column-gap: 12px;
     align-items: center;
+    width: 100%;
+    min-width: 0;
+    border-bottom: 1px solid var(--line);
   }
-  .span-name i {
+  .trace-dialog .waterfall-ticks {
+    padding: 8px 0;
+    color: var(--app-muted);
+    font-size: 13px;
+    line-height: 20px;
+  }
+  .trace-dialog .waterfall-ticks > span {
+    width: auto;
+  }
+  .trace-dialog .waterfall-ticks > span:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--background);
+    box-shadow: 12px 0 var(--background);
+  }
+  .trace-dialog .waterfall-axis {
     display: block;
+    position: relative;
+    height: 20px;
+    min-width: 0;
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .trace-dialog .waterfall-axis > span {
+    position: absolute;
+    top: 0;
+    white-space: nowrap;
+    transform: translateX(-50%);
+  }
+  .trace-dialog .waterfall-axis > span:first-child {
+    transform: none;
+  }
+  .trace-dialog .waterfall-axis > span:last-child {
+    transform: translateX(-100%);
+  }
+  .trace-dialog .duration-heading {
+    text-align: right;
+  }
+  .trace-dialog .waterfall {
+    min-width: 0;
+    overflow: visible;
+  }
+  .trace-dialog .waterfall-row {
+    height: auto;
+    min-height: 52px;
+    padding: 6px 0;
+    text-align: left;
+    background: transparent;
+  }
+  .trace-dialog .waterfall-row:hover,
+  .trace-dialog .waterfall-row.selected {
+    background: #8eafff08;
+  }
+  .trace-dialog .waterfall-row.selected .span-name strong {
+    color: #a9c6ff;
+  }
+  .trace-dialog .waterfall-row:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
+  }
+  .trace-dialog .span-name {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 5px minmax(0, 1fr);
+    align-items: center;
+    gap: 0 7px;
+    width: auto;
+    min-width: 0;
+    background: var(--background);
+    box-shadow: 12px 0 var(--background);
+  }
+  .trace-dialog .span-name i {
     width: 5px;
     height: 5px;
-    border-radius: 1px;
-    filter: brightness(0.8);
+    border-radius: 50%;
+    background: currentColor;
+    filter: none;
   }
-  .span-name strong {
-    font-size: 13px;
-    font-family: Consolas, monospace;
-    color: #c2cee0;
-    font-weight: 550;
+  .trace-dialog .span-name i.service-color-0 {
+    color: #7daaff;
   }
-  .span-name small {
+  .trace-dialog .span-name i.service-color-1 {
+    color: #b2a1ed;
+  }
+  .trace-dialog .span-name i.service-color-2 {
+    color: #72bbd3;
+  }
+  .trace-dialog .span-name i.service-color-3 {
+    color: #72c5b5;
+  }
+  .trace-dialog .span-name i.service-color-4 {
+    color: #d6ac80;
+  }
+  .trace-dialog .span-name i.service-color-5 {
+    color: #97aed6;
+  }
+  .trace-dialog .span-name i.span-error {
+    color: #f393b3;
+  }
+  .trace-dialog .span-name strong {
+    font:
+      600 13px/20px 'SFMono-Regular',
+      Consolas,
+      monospace;
+    color: #e1e9f6;
+    overflow-wrap: anywhere;
+  }
+  .trace-dialog .span-name small {
     grid-column: 2;
-    color: #a7b4c7;
     font-size: 13px;
+    line-height: 18px;
+    color: var(--app-muted);
   }
-  .span-track {
+  .trace-dialog .span-track {
     position: relative;
-    flex: 1;
-    height: 100%;
-    background: repeating-linear-gradient(
-      to right,
-      transparent 0,
-      transparent calc(25% - 1px),
-      #141c29 calc(25% - 1px),
-      #141c29 25%
-    );
+    align-self: stretch;
+    min-width: 0;
+    height: auto;
+    background-image: linear-gradient(to right, #2a364866 1px, transparent 1px);
+    background-size: 25% 100%;
+    box-shadow: inset -1px 0 #2a364866;
   }
-  .span-bar {
+  .trace-dialog .span-bar {
     position: absolute;
-    top: 15px;
-    height: 19px;
-    border: 1px solid currentColor;
-    border-radius: 2px;
-    opacity: 0.9;
+    top: 50%;
+    height: 10px;
+    min-width: 1px;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: 1px;
+    opacity: 1;
   }
-  .span-error {
-    background: #202d49;
-    border-color: #2a3648;
+  .trace-dialog .span-duration {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    color: #d7e4f8;
+    font:
+      500 13px/20px 'SFMono-Regular',
+      Consolas,
+      monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .trace-dialog .span-duration.is-error {
     color: #fda4af;
   }
-  .span-track em {
-    position: absolute;
-    top: 20px;
-    font-size: 13px;
-    color: #c2cee0;
-    font-style: normal;
-    font-family: monospace;
-    white-space: nowrap;
-    z-index: 2;
-  }
-  .span-prompt {
+  .trace-dialog .span-prompt {
     display: flex;
     align-items: center;
     gap: 7px;
-    color: #a7b4c7;
+    margin-top: 12px;
     font-size: 13px;
-    margin-top: 20px;
+    color: var(--app-muted);
   }
-  .span-detail {
-    margin-top: 20px;
+  .trace-dialog .span-detail {
+    margin-top: 16px;
+    background: transparent;
   }
-  .span-detail h3 {
+  .trace-dialog .span-detail h3 {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
-    color: #c2cee0;
-    margin-bottom: 14px;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #edf2f7;
+  }
+  .trace-dialog .span-detail dl {
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+  }
+  .trace-dialog .span-detail dl > div {
+    grid-template-columns: minmax(110px, 170px) minmax(0, 1fr);
+    gap: 12px;
+    padding: 7px 0;
     font-size: 13px;
   }
-  .span-detail dl > div {
-    grid-template-columns: 180px 1fr;
-    font-size: 13px;
+  @media (max-width: 700px) {
+    .dialog.trace-dialog > header {
+      padding: 8px 12px;
+    }
+    .dialog.trace-dialog .dialog-body {
+      padding: 12px;
+    }
+    .trace-dialog .detail-meta > span:last-child {
+      margin-left: 0;
+    }
+    .trace-dialog .trace-metrics {
+      gap: 6px 18px;
+    }
+    .trace-dialog .trace-metrics > div {
+      display: block;
+    }
+    .trace-dialog .span-detail dl > div {
+      grid-template-columns: minmax(90px, 0.85fr) minmax(0, 1fr);
+    }
   }
   .monitor-stats {
     display: flex;

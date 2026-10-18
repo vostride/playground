@@ -164,12 +164,19 @@ function Dialog({
   children,
   onClose,
   wide = false,
+  className = '',
+  restoreFocus = false,
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;
+  className?: string;
+  restoreFocus?: boolean;
 }) {
+  const [opener] = useState(() =>
+    document.activeElement instanceof HTMLElement ? document.activeElement : null,
+  );
   return (
     <ShadcnDialog
       open
@@ -178,9 +185,15 @@ function Dialog({
       }}
     >
       <DialogContent
-        className={`dialog ${wide ? 'wide sm:max-w-[1000px]' : 'sm:max-w-[640px]'} top-[calc(50%+20px)] max-h-[calc(100dvh-80px)] block gap-0 p-0`}
+        className={`dialog ${wide ? 'wide sm:max-w-[1000px]' : 'sm:max-w-[640px]'} top-[calc(50%+20px)] max-h-[calc(100dvh-80px)] block gap-0 p-0 ${className}`}
         aria-describedby={undefined}
         showCloseButton={false}
+        onCloseAutoFocus={(event) => {
+          if (restoreFocus && opener?.isConnected) {
+            event.preventDefault();
+            opener.focus({ preventScroll: true });
+          }
+        }}
       >
         <header>
           <DialogTitle>{title}</DialogTitle>
@@ -1389,6 +1402,19 @@ function Traces({
   const [sort, setSort] = useState('newest');
   const [limit, setLimit] = useState(25);
   const [span, setSpan] = useState<TraceSpan | null>(null);
+  const spanDepth = (item: TraceSpan) => {
+    const visited = new Set([item.id]);
+    let parentId = item.parentId;
+    let depth = 0;
+    while (parentId && !visited.has(parentId)) {
+      const parent = selected?.spans.find((candidate) => candidate.id === parentId);
+      if (!parent) break;
+      visited.add(parentId);
+      depth += 1;
+      parentId = parent.parentId;
+    }
+    return depth;
+  };
   const filtered = useMemo(
     () =>
       traces
@@ -1556,7 +1582,13 @@ function Traces({
         )}
       </Card>
       {selected && (
-        <Dialog title="Trace details" wide onClose={() => setSelected(null)}>
+        <Dialog
+          title="Trace details"
+          wide
+          restoreFocus
+          className="trace-dialog top-1/2 flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] flex-col overflow-hidden"
+          onClose={() => setSelected(null)}
+        >
           <div className="dialog-body">
             <div className="detail-meta">
               <Status value={selected.status} />
@@ -1564,71 +1596,79 @@ function Traces({
               <span>{time(selected.timestamp)} UTC</span>
             </div>
             <h3 className="trace-title">{selected.name}</h3>
-            <div className="trace-metrics">
-              <span>
-                Duration<strong>{selected.duration} ms</strong>
-              </span>
-              <span>
-                Total spans<strong>{selected.spans.length}</strong>
-              </span>
-              <span>
-                Services<strong>{new Set(selected.spans.map((span) => span.service)).size}</strong>
-              </span>
-            </div>
+            <dl className="trace-metrics">
+              <div>
+                <dt>Duration</dt>
+                <dd>{selected.duration} ms</dd>
+              </div>
+              <div>
+                <dt>Total spans</dt>
+                <dd>{selected.spans.length}</dd>
+              </div>
+              <div>
+                <dt>Services</dt>
+                <dd>{new Set(selected.spans.map((item) => item.service)).size}</dd>
+              </div>
+            </dl>
             <div className="waterfall-heading">
-              <h3>Flame graph</h3>
-              <span>Click a span to inspect</span>
+              <h3>Trace waterfall</h3>
+              <span>Select a span to inspect</span>
             </div>
-            <div className="waterfall-scroll">
-              <div className="waterfall-ticks">
-                <span>Service / operation</span>
-                <div>
-                  {[0, 0.25, 0.5, 0.75, 1].map((value) => (
-                    <span key={value}>{Math.round(selected.duration * value)} ms</span>
+            <div className="waterfall-scroll" role="region" aria-label="Span timings" tabIndex={0}>
+              <div className="waterfall-table">
+                <div className="waterfall-ticks" aria-hidden="true">
+                  <span>Operation / service</span>
+                  <div className="waterfall-axis">
+                    {[0, 0.25, 0.5, 0.75, 1].map((value) => (
+                      <span key={value} style={{ left: `${value * 100}%` }}>
+                        {Math.round(selected.duration * value)}
+                        {value === 0 ? ' ms' : ''}
+                      </span>
+                    ))}
+                  </div>
+                  <span className="duration-heading">Duration</span>
+                </div>
+                <div className="waterfall" role="list" aria-label="Trace waterfall">
+                  {selected.spans.map((item) => (
+                    <div role="listitem" key={item.id}>
+                      <button
+                        className={`waterfall-row ${span?.id === item.id ? 'selected' : ''}`}
+                        onClick={() => setSpan(item)}
+                        aria-label={`Inspect ${item.name}, ${item.duration} milliseconds`}
+                        aria-pressed={span?.id === item.id}
+                        data-span-id={item.id}
+                        data-start-ms={item.start}
+                        data-duration-ms={item.duration}
+                        data-depth={spanDepth(item)}
+                      >
+                        <span className="span-name" style={{ paddingLeft: spanDepth(item) * 12 }}>
+                          <i
+                            className={`service-color-${SERVICES.indexOf(item.service)} ${item.status === 'error' ? 'span-error' : ''}`}
+                          />
+                          <strong>{item.name}</strong>
+                          <small>{item.service}</small>
+                        </span>
+                        <span className="span-track" aria-hidden="true">
+                          <span
+                            className={`span-bar service-color-${SERVICES.indexOf(item.service)} ${item.status === 'error' ? 'span-error' : ''}`}
+                            style={{
+                              left: `${(item.start / selected.duration) * 100}%`,
+                              width: `${(item.duration / selected.duration) * 100}%`,
+                            }}
+                          />
+                        </span>
+                        <span
+                          className={`span-duration ${item.status === 'error' ? 'is-error' : ''}`}
+                        >
+                          {item.status === 'error' && (
+                            <TriangleAlert size={12} aria-label="Error span" />
+                          )}
+                          {item.duration} ms
+                        </span>
+                      </button>
+                    </div>
                   ))}
                 </div>
-              </div>
-              <div className="waterfall" role="list" aria-label="Trace waterfall">
-                {selected.spans.map((item) => (
-                  <button
-                    key={item.id}
-                    className={`waterfall-row ${span?.id === item.id ? 'selected' : ''}`}
-                    onClick={() => setSpan(item)}
-                    aria-label={`Inspect ${item.name}, ${item.duration} milliseconds`}
-                  >
-                    <span
-                      className="span-name"
-                      style={{
-                        paddingLeft:
-                          item.parentId === null
-                            ? 0
-                            : item.parentId === selected.spans[0]?.id
-                              ? 12
-                              : 24,
-                      }}
-                    >
-                      <i className={`service-color-${SERVICES.indexOf(item.service)}`} />
-                      <strong>{item.name}</strong>
-                      <small>{item.service}</small>
-                    </span>
-                    <div className="span-track">
-                      <span
-                        className={`span-bar service-color-${SERVICES.indexOf(item.service)} ${item.status === 'error' ? 'span-error' : ''}`}
-                        style={{
-                          left: `${(item.start / selected.duration) * 100}%`,
-                          width: `${Math.max(1, (item.duration / selected.duration) * 100)}%`,
-                        }}
-                      />
-                      <em
-                        style={{
-                          left: `${Math.min(75, ((item.start + item.duration) / selected.duration) * 100 + 1)}%`,
-                        }}
-                      >
-                        {item.duration} ms
-                      </em>
-                    </div>
-                  </button>
-                ))}
               </div>
             </div>
             {span ? (
@@ -1645,6 +1685,14 @@ function Traces({
                   <div>
                     <dt>Duration</dt>
                     <dd>{span.duration} ms</dd>
+                  </div>
+                  <div>
+                    <dt>Start offset</dt>
+                    <dd>{span.start} ms</dd>
+                  </div>
+                  <div>
+                    <dt>End offset</dt>
+                    <dd>{span.start + span.duration} ms</dd>
                   </div>
                   {Object.entries(span.tags).map(([key, value]) => (
                     <div key={key}>
