@@ -4,9 +4,13 @@
 
 The repository's web workflow builds static files in `dist/`. Every product owns its output directory; no server framework or Pages Functions are needed.
 
-One-time setup:
+The live Git-connected Pages project is named `playground`, with [playground-kgs.pages.dev](https://playground-kgs.pages.dev/) and custom domain [playground.vostride.dev](https://playground.vostride.dev/). Cloudflare deployed source `49d24f6`; both hostnames returned HTTPS 200, and all 35 browser checks passed against the custom domain on 2026-10-18. The four web registry contracts are now released with their test-file hashes. Evidence: `test-results/hosted-audit/2026-10-18/`.
 
-1. Create a Cloudflare Pages **Direct Upload** project named `playground`, with production branch `main`. If using a different name, set the repository variable `CLOUDFLARE_PAGES_PROJECT`.
+The first hosted audit ran **after** that Git-integrated deployment. The spec's preview-audit-before-production ordering remains an automation requirement. Cloudflare's automatic Git deployments do not wait for the separate GitHub Actions audit. To retain that ordering on the existing Git-connected project, disable automatic production and preview builds in Cloudflare branch controls, then configure the two secrets below so Actions owns the sequence. Cloudflare explicitly supports Wrangler uploads into Git-connected projects. If Cloudflare instead remains the automatic deployer, the ordering requirement must be revised; do not enable a second automatic deployer alongside it.
+
+Setup for the Actions-controlled preview/report/production sequence:
+
+1. Use the existing Git-connected Pages project `playground` with automatic Git builds disabled, or create a **Direct Upload** project for a new installation. Production branch is `main`. If using a different project name, set the repository variable `CLOUDFLARE_PAGES_PROJECT`.
 2. Set GitHub Actions secrets `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. The token needs Pages edit access to that account. Do not commit these values.
 3. Attach `playground.vostride.dev` as a Pages custom domain and complete the Cloudflare DNS setup.
 4. Disable bot challenges, Access gates, and challenge rules for this hostname and preview URLs. Automated visitors are the intended users. Noindex is set in each document, `robots.txt`, and `_headers`.
@@ -16,7 +20,7 @@ The workflow deploys a preview, runs the complete registered sample flows agains
 
 Do not configure a second automatic production deployment in Cloudflare Git integration: it would bypass the preview/report ordering implemented by the workflow.
 
-Reference: [Pages deployment commands](https://developers.cloudflare.com/workers/wrangler/commands/pages/), [branch controls](https://developers.cloudflare.com/pages/configuration/branch-build-controls/).
+Reference: [Git integration and disabling automatic builds](https://developers.cloudflare.com/pages/configuration/git-integration/), [Pages deployment commands](https://developers.cloudflare.com/workers/wrangler/commands/pages/), [branch controls](https://developers.cloudflare.com/pages/configuration/branch-build-controls/).
 
 ## Mobile releases
 

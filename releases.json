@@ -6,7 +6,7 @@
       "app": "shop",
       "path": "/shop/",
       "name": "Komazon",
-      "status": "candidate",
+      "status": "released",
       "testFile": "tests/e2e/shop.spec.ts",
       "flows": [
         "Sign in with alex@example.com / komazon123",
@@ -15,49 +15,53 @@
         "Validate shipping, choose delivery, review and place order",
         "View orders and cancel an order",
         "Enable cart-total for the labelled failing scenario"
-      ]
+      ],
+      "testSha256": "8ccc6aef8a4d3c5be038a20bbe6c1161195920bce9dc0d11e6c5faaa9582fbec"
     },
     {
       "id": "wayline-v1",
       "app": "flights",
       "path": "/flights/",
       "name": "Looking",
-      "status": "candidate",
+      "status": "released",
       "testFile": "tests/e2e/flights.spec.ts",
       "flows": [
         "Search JFK to LHR using airport autocomplete",
         "Filter nonstop flights, choose outbound and return",
         "Choose fare, select seats, complete validated checkout",
         "Manage and cancel the booking"
-      ]
+      ],
+      "testSha256": "7653b120365ef75236d7551e5e03d3c92478618d282dd9faee1d8c11a1dd68ec"
     },
     {
       "id": "vigil-v1",
       "app": "observability",
       "path": "/observability/",
       "name": "PepaPog",
-      "status": "candidate",
+      "status": "released",
       "testFile": "tests/e2e/observability.spec.ts",
       "flows": [
         "Inspect dashboard charts and simulated live telemetry",
         "Query and filter virtualized logs",
         "Open a log and inspect its trace waterfall",
         "Create, pause, and delete a validated monitor"
-      ]
+      ],
+      "testSha256": "92684120582d2562d42d730d81ea5e006b319b586b51f8045602ae6248fbdd16"
     },
     {
       "id": "corkboard-v1",
       "app": "tasks",
       "path": "/tasks/",
       "name": "Brello",
-      "status": "candidate",
+      "status": "released",
       "testFile": "tests/e2e/tasks.spec.ts",
       "flows": [
         "Move tasks between and within columns with keyboard",
         "Drag a task by mouse",
         "Undo movement, rename inline, edit due date",
         "Filter tasks and recover from empty results"
-      ]
+      ],
+      "testSha256": "39fd02cfeb11f1c455d9ea1aa385024965ab6029f285dbe34bcbb0bd5a151f05"
     }
   ],
   "mobile": []
