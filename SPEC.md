@@ -19,6 +19,9 @@ shown on its pages and in its page titles (`<page> · <name>`, for example `Cart
 stay plain words.
 
 Use a dark shadcn/ui interface with readable text and an original simple logo for each product.
+Navigation is flat, without boxed active pills or accent strips. Rectangular UI uses 0–2px corners.
+Use compact spacing, transparent sections and divider-separated rows instead of card containers.
+Komazon retains a responsive product grid with flat tiles and no enclosing card borders.
 Open directly on the catalog, flight search, metrics dashboard, or task board. The directory is
 an app launcher with names and logos. Omit marketing heroes, slogans, welcome copy, and decorative
 introductory sections. Looking.com's calendar supports any valid past or future date, with direct
@@ -72,7 +75,7 @@ drag and drop by touch, gestures, a WebView screen, and a deep link into each fl
    Login credentials are printed on the page.
 4. **Nothing hidden.** Everything the apps need ships with them: fonts, icons, images and data. No
    analytics, trackers or outside network calls. The mobile app asks for no permissions.
-5. **Clearly a playground.** Every page and screen shows a banner saying so. Web pages are `noindex`.
+5. **Product-focused screens.** Show only functional product copy and controls. Omit promotional introductions and simulation disclaimers. Web pages remain `noindex`.
    Bot challenges are off, because automated agents are the intended visitors.
 6. **Stable.** Released names, paths, texts and flows never change in place, because people's tests
    depend on them. The repo keeps a list of what has been released, and the site check walks it. A

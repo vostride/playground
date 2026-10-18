@@ -13,7 +13,7 @@ final class NativeLinkTests: XCTestCase {
         // keep this same app session for every URL in the journey.
         app.terminate()
         app.launch()
-        requireText("Make yourself at home.")
+        requireElement(app.buttons["Open Komazon"], "Home product launcher")
         XCTAssertFalse(app.staticTexts[bugLabel].exists)
     }
 
@@ -31,13 +31,12 @@ final class NativeLinkTests: XCTestCase {
 
     func testNativeURLsReachEveryProductAndPreserveWarmBugState() {
         visit("playground://home", named: "Home") {
-            self.requireText("Make yourself at home.")
             self.requireElement(self.app.buttons["Open Komazon"], "Home product launcher")
         }
 
         visit("playground://flights", named: "Looking.com search") {
-            self.requireText("A LITTLE FURTHER. A LITTLE FREER.")
-            self.requireElement(self.app.buttons["Explore flights"], "Looking.com navigation")
+            self.requireText("Flight search")
+            self.requireElement(self.app.buttons["Flights"], "Looking.com navigation")
         }
 
         visit("playground://flights/bookings", named: "Looking.com bookings") {
@@ -74,7 +73,7 @@ final class NativeLinkTests: XCTestCase {
         }
 
         visit("playground://shop?bug=cart-total", named: "Komazon opt-in catalog") {
-            self.requireText("THE EVERYDAY COLLECTION")
+            self.requireText("Products")
             self.requireElement(self.element("field-search-products"), "Catalog search field")
             self.requireText(self.bugLabel)
         }
@@ -85,7 +84,7 @@ final class NativeLinkTests: XCTestCase {
         }
 
         visit("playground://home", named: "Leave Komazon without restarting") {
-            self.requireText("Make yourself at home.")
+            self.requireElement(self.app.buttons["Open Komazon"], "Home product launcher")
             XCTAssertFalse(self.app.staticTexts[self.bugLabel].exists)
         }
 
@@ -99,7 +98,7 @@ final class NativeLinkTests: XCTestCase {
 
     private func requireEmptyCart() {
         requireText("Your bag (0)")
-        requireText("A little room for something good.")
+        requireText("Your bag is empty")
     }
 
     private func element(_ identifier: String) -> XCUIElement {

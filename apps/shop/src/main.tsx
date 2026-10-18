@@ -218,7 +218,7 @@ function App() {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     if (!authenticate(String(data.get('email')), String(data.get('password')))) {
-      setError('That email and password do not match. Use the demo credentials below.');
+      setError('That email and password do not match. Use the sign-in details below.');
       return;
     }
     setState((s) => ({ ...s, signedIn: true }));
@@ -264,7 +264,7 @@ function App() {
         <span>Shipping</span>
         <b>{totals.shippingCost ? money(totals.shippingCost) : 'Free'}</b>
       </div>
-      <p>Taxes included. No payment will be collected.</p>
+      <p>Taxes included.</p>
       <div className="total">
         <span>Total</span>
         <strong>{money(totals.total)}</strong>
@@ -285,10 +285,18 @@ function App() {
           Komazon
         </a>
         <nav aria-label="Main navigation">
-          <a className={route === 'catalog' ? 'active' : ''} href="#catalog">
+          <a
+            className={route === 'catalog' ? 'active' : ''}
+            aria-current={route === 'catalog' ? 'page' : undefined}
+            href="#catalog"
+          >
             Shop
           </a>
-          <a className={route === 'orders' ? 'active' : ''} href="#orders">
+          <a
+            className={route === 'orders' ? 'active' : ''}
+            aria-current={route === 'orders' ? 'page' : undefined}
+            href="#orders"
+          >
             Orders
           </a>
         </nav>
@@ -377,6 +385,7 @@ function App() {
                       variant="ghost"
                       key={c}
                       onClick={() => setCategory(c)}
+                      aria-pressed={c === category}
                       className={`w-full justify-between px-2.5 ${c === category ? 'selected' : ''}`}
                     >
                       {c}
@@ -483,11 +492,7 @@ function App() {
                 ) : visible.length ? (
                   <div className="product-grid">
                     {visible.map((product) => (
-                      <Card
-                        role="article"
-                        className="product-card gap-0 overflow-hidden py-0 shadow-none"
-                        key={product.id}
-                      >
+                      <Card role="article" className="product-card" key={product.id}>
                         <Button
                           variant="ghost"
                           className={`product-image relative h-auto w-full rounded-none p-0 has-[>svg]:px-0 art-${product.art}`}
@@ -505,13 +510,13 @@ function App() {
                           {product.tag && (
                             <Badge
                               variant="secondary"
-                              className={`tag ${product.tag === 'New arrival' ? 'new' : ''}`}
+                              className={`tag px-1 py-0 text-[9px] ${product.tag === 'New arrival' ? 'new' : ''}`}
                             >
                               {product.tag}
                             </Badge>
                           )}
                           {!product.stock && (
-                            <Badge variant="secondary" className="tag">
+                            <Badge variant="secondary" className="tag px-1 py-0 text-[9px]">
                               Sold out
                             </Badge>
                           )}
@@ -535,8 +540,8 @@ function App() {
                           <span className="product-price">{money(product.price)}</span>
                         </div>
                         <Button
-                          variant="outline"
-                          className="quick-add w-full"
+                          variant="ghost"
+                          className="quick-add"
                           onClick={() => add(product)}
                           disabled={!product.stock}
                           aria-label={`Add ${product.name} to bag`}
@@ -627,7 +632,7 @@ function App() {
               </Button>
             </form>
             <div className="demo-credentials">
-              <b>Demo account</b>
+              <b>Sign-in details</b>
               <span>
                 Email <code>{credentials.email}</code>
               </span>
@@ -714,7 +719,6 @@ function App() {
                 <Button className="primary full" onClick={checkout}>
                   Continue to checkout <ArrowRight size={17} />
                 </Button>
-                <p className="safe-note">A simulated checkout. No payment details needed.</p>
               </aside>
             </div>
           )}
@@ -757,7 +761,7 @@ function App() {
                   {step === 1 && (
                     <form onSubmit={nextStep} noValidate>
                       <h2>Shipping address</h2>
-                      <p className="muted">Use fictional details. Nothing will be shipped.</p>
+
                       <div className="form-grid">
                         {(
                           ['name', 'email', 'address', 'city', 'postalCode', 'country'] as const
@@ -916,9 +920,6 @@ function App() {
                           </div>
                         );
                       })}
-                      <p className="simulation-note">
-                        This order is simulated. You will not be charged.
-                      </p>
                       <Button className="primary" onClick={submitOrder}>
                         Place order · {money(totals.total)} <ArrowRight size={16} />
                       </Button>
@@ -939,7 +940,7 @@ function App() {
           <p>
             Your order <b>{orderId || state.orders[0]?.id || ''}</b> is confirmed.
           </p>
-          <p className="muted">This is a simulated order. Nothing will be shipped or charged.</p>
+
           <div>
             <Button className="primary" onClick={() => go('orders')}>
               View orders <ArrowRight size={17} />
@@ -1095,7 +1096,7 @@ function App() {
         <Dialog title="Cancel order" onClose={() => setConfirmCancel(null)}>
           <div className="cancel-dialog">
             <h2>Cancel order {confirmCancel}?</h2>
-            <p>This will mark your simulated order as cancelled.</p>
+            <p>This will cancel your order.</p>
             <div className="form-actions">
               <Button variant="outline" className="outline" onClick={() => setConfirmCancel(null)}>
                 Keep order

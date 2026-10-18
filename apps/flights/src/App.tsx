@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  CreditCard,
   Globe2,
   Luggage,
   MapPin,
@@ -15,7 +16,6 @@ import {
   Plus,
   Minus,
   Search,
-  ShieldCheck,
   SlidersHorizontal,
   Users,
   X,
@@ -26,7 +26,6 @@ import {
   useSessionState,
   Button,
   Input,
-  Card,
   Badge,
   Dialog,
   DialogContent,
@@ -298,7 +297,7 @@ function DateRangePicker({
               <Input
                 type="number"
                 aria-label="Calendar year"
-                className="h-9 w-[76px] px-2 text-[14px]"
+                className="rounded-none border-x-0 border-t-0 border-b bg-transparent dark:bg-transparent px-0 shadow-none focus-visible:ring-0 h-9 w-[76px] px-2 text-[14px]"
                 min={1}
                 max={9999}
                 value={year}
@@ -380,7 +379,7 @@ function DateRangePicker({
               <Input
                 id="exact-travel-date"
                 type="date"
-                className="h-10 min-w-0 flex-1 text-[14px]"
+                className="rounded-none border-x-0 border-t-0 border-b bg-transparent dark:bg-transparent px-0 shadow-none focus-visible:ring-0 h-10 min-w-0 flex-1 text-[14px]"
                 min={selecting === 'returnDate' ? value.departure : '0001-01-01'}
                 max="9999-12-31"
                 value={exactDate}
@@ -469,7 +468,7 @@ function PassengerPicker({ count, onChange }: { count: number; onChange: (n: num
 }
 function FlightCard({ flight, choose }: { flight: Flight; choose: () => void }) {
   return (
-    <Card className="flight-card grid gap-0 p-0">
+    <div className="flight-card">
       <div className={`airline-logo airline-${airlines.indexOf(flight.airline)}`}>
         <Plane size={20} />
       </div>
@@ -518,7 +517,7 @@ function FlightCard({ flight, choose }: { flight: Flight; choose: () => void }) 
           Select flight <ArrowRight size={15} />
         </Button>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -723,7 +722,7 @@ export default function App() {
     }, 700);
   };
   const searchForm = (
-    <Card className="search-panel gap-0 p-0">
+    <div className="search-panel">
       <form
         className="search-box"
         onSubmit={(e) => {
@@ -778,17 +777,17 @@ export default function App() {
           />
           <Button
             variant="default"
-            className="button search-submit h-full self-stretch px-6 text-[14px] font-semibold"
+            className="button search-submit h-11 px-5 text-[14px] font-semibold"
             type="submit"
           >
             <Search size={19} /> Search flights
           </Button>
         </div>
       </form>
-    </Card>
+    </div>
   );
   const summary = outbound && (
-    <Card className="trip-summary block gap-0 p-6">
+    <div className="trip-summary">
       <span className="section-label">Trip summary</span>
       <h3>
         {airport(search.from).city} <ArrowRight size={18} /> {airport(search.to).city}
@@ -831,10 +830,7 @@ export default function App() {
           {money(total)} <small>USD</small>
         </strong>
       </div>
-      <p>
-        <ShieldCheck size={15} /> All taxes and fees included
-      </p>
-    </Card>
+    </div>
   );
   const currentSeatFlight = editingSeat
     ? seatLeg === 'outbound'
@@ -1004,7 +1000,6 @@ export default function App() {
                     </select>
                   </fieldset>
                   <div className="filter-note">
-                    <ShieldCheck size={19} />
                     <p>Prices include taxes and fees.</p>
                   </div>
                 </aside>
@@ -1095,10 +1090,7 @@ export default function App() {
             <div className="fare-layout">
               <div className="fare-cards">
                 {fares.map((f) => (
-                  <Card
-                    className={`fare-card block gap-0 p-6 ${fare === f.id ? 'selected' : ''}`}
-                    key={f.id}
-                  >
+                  <div className={`fare-card ${fare === f.id ? 'selected' : ''}`} key={f.id}>
                     <h2>{f.name}</h2>
                     <strong className="fare-price">
                       {f.extra ? `+${money(f.extra)}` : 'Included'}
@@ -1126,7 +1118,7 @@ export default function App() {
                         `Choose ${f.name}`
                       )}
                     </Button>
-                  </Card>
+                  </div>
                 ))}
               </div>
               {summary}
@@ -1293,7 +1285,7 @@ export default function App() {
               {step === 0
                 ? 'Enter each traveler’s details as they appear on their travel document.'
                 : step === 1
-                  ? 'This is a practice booking. Use the sample payment details below.'
+                  ? 'Enter your payment details.'
                   : 'Take a moment to check the details before you book.'}
             </p>
             <div className="checkout-layout">
@@ -1301,7 +1293,7 @@ export default function App() {
                 {step === 0 && (
                   <>
                     {travelers.map((p, i) => (
-                      <Card className="form-section block gap-0 p-6" key={i}>
+                      <div className="form-section" key={i}>
                         <h3>
                           Traveler {i + 1} <span>Adult</span>
                         </h3>
@@ -1309,7 +1301,7 @@ export default function App() {
                           <label>
                             First name
                             <Input
-                              className="h-11 text-[14px]"
+                              className="rounded-none border-x-0 border-t-0 border-b bg-transparent dark:bg-transparent px-0 shadow-none focus-visible:ring-0 h-11 text-[14px]"
                               autoComplete="given-name"
                               value={p.firstName}
                               onChange={(e) =>
@@ -1324,7 +1316,7 @@ export default function App() {
                           <label>
                             Last name
                             <Input
-                              className="h-11 text-[14px]"
+                              className="rounded-none border-x-0 border-t-0 border-b bg-transparent dark:bg-transparent px-0 shadow-none focus-visible:ring-0 h-11 text-[14px]"
                               autoComplete="family-name"
                               value={p.lastName}
                               onChange={(e) =>
@@ -1339,7 +1331,7 @@ export default function App() {
                           <label>
                             Date of birth
                             <Input
-                              className="h-11 text-[14px]"
+                              className="rounded-none border-x-0 border-t-0 border-b bg-transparent dark:bg-transparent px-0 shadow-none focus-visible:ring-0 h-11 text-[14px]"
                               type="date"
                               min="1900-01-01"
                               max="2014-10-18"
@@ -1354,14 +1346,14 @@ export default function App() {
                             />
                           </label>
                         </div>
-                      </Card>
+                      </div>
                     ))}
-                    <Card className="form-section block gap-0 p-6">
-                      <h3>Where should we send your confirmation?</h3>
+                    <div className="form-section">
+                      <h3>Contact details</h3>
                       <label>
                         Email address
                         <Input
-                          className="h-11 text-[14px]"
+                          className="rounded-none border-x-0 border-t-0 border-b bg-transparent dark:bg-transparent px-0 shadow-none focus-visible:ring-0 h-11 text-[14px]"
                           type="email"
                           autoComplete="email"
                           placeholder="alex@example.com"
@@ -1369,17 +1361,16 @@ export default function App() {
                           onChange={(e) => setEmail(e.target.value)}
                         />
                       </label>
-                      <p className="muted">Use sample details. No email will be sent.</p>
-                    </Card>
+                    </div>
                   </>
                 )}
                 {step === 1 && (
-                  <Card className="form-section block gap-0 p-6">
+                  <div className="form-section">
                     <h3>Payment details</h3>
                     <div className="sample-card">
-                      <ShieldCheck size={20} />
+                      <CreditCard size={20} />
                       <div>
-                        <strong>Sample card · no real payment</strong>
+                        <strong>Sample card</strong>
                         <p>4242 4242 4242 4242 · Expiry 12/30 · Security code 123</p>
                       </div>
                       <button
@@ -1400,7 +1391,7 @@ export default function App() {
                       <label className="span-two">
                         Name on card
                         <Input
-                          className="h-11 text-[14px]"
+                          className="rounded-none border-x-0 border-t-0 border-b bg-transparent dark:bg-transparent px-0 shadow-none focus-visible:ring-0 h-11 text-[14px]"
                           value={card.name}
                           autoComplete="off"
                           onChange={(e) => setCard({ ...card, name: e.target.value })}
@@ -1409,7 +1400,7 @@ export default function App() {
                       <label className="span-two">
                         Card number
                         <Input
-                          className="h-11 text-[14px]"
+                          className="rounded-none border-x-0 border-t-0 border-b bg-transparent dark:bg-transparent px-0 shadow-none focus-visible:ring-0 h-11 text-[14px]"
                           inputMode="numeric"
                           autoComplete="off"
                           placeholder="4242 4242 4242 4242"
@@ -1420,7 +1411,7 @@ export default function App() {
                       <label>
                         Expiry date
                         <Input
-                          className="h-11 text-[14px]"
+                          className="rounded-none border-x-0 border-t-0 border-b bg-transparent dark:bg-transparent px-0 shadow-none focus-visible:ring-0 h-11 text-[14px]"
                           placeholder="MM/YY"
                           value={card.expiry}
                           maxLength={5}
@@ -1430,7 +1421,7 @@ export default function App() {
                       <label>
                         Security code
                         <Input
-                          className="h-11 text-[14px]"
+                          className="rounded-none border-x-0 border-t-0 border-b bg-transparent dark:bg-transparent px-0 shadow-none focus-visible:ring-0 h-11 text-[14px]"
                           inputMode="numeric"
                           value={card.cvc}
                           maxLength={3}
@@ -1438,11 +1429,11 @@ export default function App() {
                         />
                       </label>
                     </div>
-                  </Card>
+                  </div>
                 )}
                 {step === 2 && (
                   <>
-                    <Card className="form-section block gap-0 p-6">
+                    <div className="form-section">
                       <div className="section-line">
                         <h3>Travelers & seats</h3>
                         <button className="text-button" onClick={() => setStep(0)}>
@@ -1463,10 +1454,10 @@ export default function App() {
                       <p>
                         Confirmation for <strong>{email}</strong>
                       </p>
-                    </Card>
-                    <Card className="form-section block gap-0 p-6">
+                    </div>
+                    <div className="form-section">
                       <h3>Payment</h3>
-                      <p>Sample Visa ending in 4242 · {card.name}</p>
+                      <p>Visa ending in 4242 · {card.name}</p>
                       <h3>Fare conditions</h3>
                       <p>
                         {fare === 'flex'
@@ -1483,7 +1474,7 @@ export default function App() {
                         />{' '}
                         I have reviewed the trip details and accept the fare conditions.
                       </label>
-                    </Card>
+                    </div>
                   </>
                 )}
                 {error && (
@@ -1507,9 +1498,6 @@ export default function App() {
                           : `Confirm booking · ${money(total)}`}
                     <ArrowRight size={16} />
                   </Button>
-                  <span>
-                    <ShieldCheck size={14} /> Practice booking. No charge.
-                  </span>
                 </div>
               </div>
               {summary}
@@ -1522,7 +1510,7 @@ export default function App() {
               <Check size={35} />
             </div>
             <h1>Booking confirmed</h1>
-            <Card className="confirmation-card block gap-0 p-6">
+            <div className="confirmation-card">
               <span className="section-label">Booking reference</span>
               <strong className="booking-reference">{confirmed.reference}</strong>
               <div className="confirmation-route">
@@ -1562,7 +1550,7 @@ export default function App() {
                 <strong>Total</strong>
                 <strong>{money(confirmed.total)}</strong>
               </div>
-            </Card>
+            </div>
             <Button
               variant="default"
               className="button h-[42px] text-[14px] font-semibold"
@@ -1570,7 +1558,6 @@ export default function App() {
             >
               Manage your booking <ArrowRight size={16} />
             </Button>
-            <p className="muted">This booking exists only in your current browser session.</p>
           </section>
         )}
         {view === 'bookings' && (
@@ -1581,7 +1568,7 @@ export default function App() {
               <label>
                 <Search size={17} />
                 <Input
-                  className="h-11 pl-10 text-[14px]"
+                  className="rounded-none border-x-0 border-t-0 border-b bg-transparent dark:bg-transparent px-0 shadow-none focus-visible:ring-0 h-11 pl-10 text-[14px]"
                   placeholder="Search by reference or destination"
                   aria-label="Find a booking"
                   value={lookup}
@@ -1615,7 +1602,7 @@ export default function App() {
                       .includes(lookup.toLowerCase()),
                 )
                 .map((b) => (
-                  <Card className="booking-card block gap-0 p-0" key={b.reference}>
+                  <div className="booking-card" key={b.reference}>
                     <div className="booking-card-top">
                       <Badge variant="outline" className={`status ${b.status}`}>
                         {b.status === 'confirmed' ? 'Confirmed' : 'Cancelled'}
@@ -1688,13 +1675,13 @@ export default function App() {
                     {b.status === 'cancelled' && (
                       <p className="cancelled-note">
                         {b.fare === 'flex'
-                          ? `Refund of ${money(b.total)} recorded for this practice booking.`
+                          ? `Refund of ${money(b.total)} recorded.`
                           : b.fare === 'standard'
-                            ? `Travel credit of ${money(Math.max(0, b.total - 40))} recorded for this practice booking.`
+                            ? `Travel credit of ${money(Math.max(0, b.total - 40))} recorded.`
                             : 'Cancelled under Light fare conditions. No refund.'}
                       </p>
                     )}
-                  </Card>
+                  </div>
                 ))}
               {!bookings.some(
                 (b) =>
@@ -1749,9 +1736,9 @@ export default function App() {
           </DialogHeader>
           <p>
             {bookings.find((b) => b.reference === cancelRef)?.fare === 'flex'
-              ? 'Your Flex fare is fully refundable. A simulated refund will be recorded.'
+              ? 'Your Flex fare is fully refundable.'
               : bookings.find((b) => b.reference === cancelRef)?.fare === 'standard'
-                ? 'Your Standard fare receives a simulated travel credit less a $40 cancellation fee.'
+                ? 'Your Standard fare receives a travel credit less a $40 cancellation fee.'
                 : 'Your Light fare is non-refundable. You won’t receive a refund.'}
           </p>
           <div className="modal-actions">

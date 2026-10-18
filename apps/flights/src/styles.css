@@ -64,13 +64,13 @@
     margin: 0;
   }
   h1 {
-    font-size: 34px;
+    font-size: 26px;
     font-weight: 720;
     line-height: 1.18;
-    letter-spacing: -1.1px;
+    letter-spacing: -0.7px;
   }
   h2 {
-    font-size: 24px;
+    font-size: 21px;
     font-weight: 700;
     line-height: 1.25;
     letter-spacing: -0.6px;
@@ -88,17 +88,18 @@
   }
   select {
     min-height: 42px;
-    padding: 10px 34px 10px 12px;
-    border: 1px solid var(--wl-input);
-    border-radius: 8px;
-    background: var(--wl-panel);
+    padding: 8px 28px 8px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     color: var(--wl-text);
     font-size: 14px;
+    border-bottom: 1px solid var(--wl-input);
   }
   .site-header {
-    height: 76px;
+    height: 64px;
     border-bottom: 1px solid var(--wl-line);
-    background: #101722;
+    background: transparent;
   }
   .header-inner {
     max-width: 1280px;
@@ -107,7 +108,7 @@
     padding: 0 32px;
     display: flex;
     align-items: center;
-    gap: 64px;
+    gap: 40px;
   }
   .wordmark {
     display: flex;
@@ -116,7 +117,7 @@
     background: none;
     border: 0;
     color: #f7f9fc;
-    font-size: 28px;
+    font-size: 25px;
     font-weight: 750;
     letter-spacing: -1.4px;
   }
@@ -126,7 +127,7 @@
     width: 34px;
     height: 34px;
     margin-right: 10px;
-    border-radius: 9px;
+    border-radius: 2px;
     background: var(--primary);
     color: var(--primary-foreground);
   }
@@ -151,19 +152,12 @@
     font-size: 14px;
     font-weight: 600;
   }
-  .site-header nav button:hover,
-  .site-header nav .nav-active {
+  .site-header nav button:hover {
     color: var(--wl-text);
   }
-  .nav-active:after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: var(--primary);
-    border-radius: 3px 3px 0 0;
+  .site-header nav .nav-active {
+    color: var(--primary);
+    font-weight: 700;
   }
   .header-locale {
     display: flex;
@@ -184,26 +178,28 @@
   }
   .home-search {
     max-width: 1280px;
-    padding: 36px 32px 64px;
+    padding: 24px 32px 40px;
     margin: auto;
     position: relative;
     z-index: 10;
   }
   .home-search > h1 {
-    margin-bottom: 24px;
+    margin-bottom: 18px;
   }
   .search-panel {
     border-color: var(--wl-input);
-    box-shadow: 0 12px 34px #00000024;
+    box-shadow: none;
+    border: 0;
+    background: transparent;
   }
   .search-box {
-    padding: 24px;
+    padding: 0;
   }
   .search-options {
     display: flex;
     align-items: center;
-    gap: 24px;
-    margin-bottom: 20px;
+    gap: 20px;
+    margin-bottom: 12px;
   }
   .search-options label {
     display: inline-flex;
@@ -224,9 +220,9 @@
   }
   .search-fields {
     display: grid;
-    grid-template-columns: 1fr 30px 1fr 1.15fr 0.8fr auto;
-    align-items: center;
-    gap: 10px;
+    grid-template-columns: 1fr 28px 1fr 1.1fr 0.75fr auto;
+    align-items: end;
+    gap: 16px;
     position: relative;
   }
   .airport-field,
@@ -234,10 +230,11 @@
   .passenger-field {
     position: relative;
     min-width: 0;
-    border: 1px solid var(--wl-input);
-    border-radius: 8px;
-    background: #101925;
-    padding: 10px 12px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--wl-input);
   }
   .airport-field:focus-within,
   .date-field:focus-within,
@@ -275,7 +272,7 @@
     width: 30px;
     height: 38px;
     border: 0;
-    border-radius: 7px;
+    border-radius: 2px;
     background: transparent;
     color: var(--app-muted);
   }
@@ -307,9 +304,10 @@
     color: var(--app-muted);
   }
   .search-submit {
-    min-width: 150px;
-    align-self: stretch;
+    min-width: 144px;
+    align-self: end;
     margin-top: 0;
+    height: 44px;
   }
   .full {
     width: 100%;
@@ -327,15 +325,15 @@
     margin: 0;
     background: #192433;
     border: 1px solid #3a4a62;
-    border-radius: 10px;
-    box-shadow: 0 18px 45px #0008;
+    border-radius: 2px;
+    box-shadow: none;
   }
   .airport-options li {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 12px 10px;
-    border-radius: 6px;
+    border-radius: 2px;
     color: var(--wl-text);
     font-size: 13px;
     cursor: pointer;
@@ -371,7 +369,7 @@
     height: 38px;
     flex-shrink: 0;
     border: 1px solid #3a5166;
-    border-radius: 6px;
+    border-radius: 2px;
     color: var(--wl-teal);
     font-weight: 700;
   }
@@ -383,9 +381,9 @@
     width: 336px;
     padding: 18px;
     border: 1px solid #3a4a62;
-    border-radius: 12px;
+    border-radius: 2px;
     background: #192433;
-    box-shadow: 0 18px 45px #0008;
+    box-shadow: none;
   }
   .calendar-heading {
     display: flex;
@@ -403,9 +401,10 @@
     width: 110px;
     height: 36px;
     padding: 0 6px;
-    border: 1px solid var(--wl-input);
-    border-radius: 6px;
-    background: var(--wl-panel);
+    border: 0;
+    border-bottom: 1px solid var(--wl-input);
+    border-radius: 0;
+    background: transparent;
     color: var(--wl-text);
     font-size: 13px;
     font-weight: 600;
@@ -438,9 +437,9 @@
     place-items: center;
     width: 34px;
     height: 34px;
-    border: 1px solid var(--wl-input);
-    border-radius: 7px;
-    background: var(--wl-panel);
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
     color: var(--wl-text);
   }
   .icon-button:hover:not(:disabled) {
@@ -452,13 +451,14 @@
   .date-tabs {
     display: flex;
     gap: 8px;
-    margin: 18px 0;
+    margin: 12px 0;
   }
   .date-tabs button {
     flex: 1;
-    padding: 10px;
-    border: 1px solid var(--wl-input);
-    border-radius: 7px;
+    padding: 8px 0;
+    border: 0;
+    border-bottom: 1px solid var(--wl-input);
+    border-radius: 0;
     background: transparent;
     text-align: left;
     color: var(--app-muted);
@@ -466,7 +466,7 @@
   }
   .date-tabs button.selected {
     border-color: var(--primary);
-    background: #183b3e;
+    color: var(--primary);
   }
   .date-tabs b {
     display: block;
@@ -490,7 +490,7 @@
   }
   .calendar-grid > button {
     border: 0;
-    border-radius: 6px;
+    border-radius: 2px;
     height: 36px;
     background: transparent;
     color: var(--wl-text);
@@ -524,9 +524,9 @@
     min-width: 300px;
     padding: 20px;
     border: 1px solid #3a4a62;
-    border-radius: 10px;
+    border-radius: 2px;
     background: #192433;
-    box-shadow: 0 18px 45px #0008;
+    box-shadow: none;
   }
   .passenger-popover > div {
     flex: 1;
@@ -548,7 +548,7 @@
     min-height: 34px;
     padding: 5px 0;
     border: 0;
-    border-radius: 4px;
+    border-radius: 2px;
     background: transparent;
     color: var(--wl-teal);
     font-size: 13px;
@@ -558,9 +558,9 @@
     color: #bbfff4;
   }
   .compact-search {
-    padding: 24px 32px;
+    padding: 20px 32px;
     border-bottom: 1px solid var(--wl-line);
-    background: #0e1520;
+    background: transparent;
   }
   .compact-search .search-panel {
     max-width: 1216px;
@@ -568,47 +568,48 @@
     box-shadow: none;
   }
   .compact-search .search-box {
-    padding: 20px;
+    padding: 0;
   }
   .results-page {
     max-width: 1280px;
     margin: auto;
-    padding: 32px 32px 56px;
+    padding: 24px 32px 40px;
   }
   .results-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
   }
   .results-heading h1 {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 15px;
-    font-size: 30px;
+    font-size: 25px;
   }
   .results-heading h1 svg {
     color: #7c96b3;
   }
   .results-heading p {
     color: var(--app-muted);
-    margin-top: 10px;
+    margin-top: 5px;
     font-size: 14px;
   }
   .results-layout {
     display: grid;
-    grid-template-columns: 240px minmax(0, 1fr);
-    gap: 24px;
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 32px;
     align-items: start;
   }
   .filters {
-    padding: 20px;
-    border: 1px solid var(--wl-line);
-    border-radius: 12px;
-    background: var(--wl-panel);
+    padding: 0 20px 0 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     font-size: 14px;
+    border-right: 1px solid var(--wl-line);
   }
   .filter-title {
     display: flex;
@@ -619,7 +620,7 @@
   .filters fieldset {
     min-width: 0;
     margin: 0;
-    padding: 20px 0;
+    padding: 12px 0;
     border: 0;
     border-bottom: 1px solid var(--wl-line);
   }
@@ -627,7 +628,7 @@
     display: block;
     width: 100%;
     float: none;
-    padding: 20px 0 0;
+    padding: 14px 0 0;
     font-size: 13px;
     font-weight: 650;
   }
@@ -640,7 +641,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 12px;
+    margin-top: 9px;
     color: #d1dbe8;
     font-size: 13px;
     cursor: pointer;
@@ -661,15 +662,16 @@
     font-size: 13px;
   }
   .filter-note {
-    margin-top: 22px;
-    padding: 15px;
-    border-radius: 8px;
-    background: #102d30;
-    border: 1px solid #275355;
+    margin-top: 14px;
+    padding: 0;
+    border-radius: 2px;
+    background: transparent;
+    border: 0;
   }
   .filter-note svg {
     color: var(--wl-teal);
     margin-bottom: 9px;
+    display: none;
   }
   .filter-note strong {
     display: block;
@@ -687,21 +689,23 @@
   .price-calendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    border: 1px solid var(--wl-line);
-    border-radius: 10px;
+    border: 0;
+    border-radius: 0;
     overflow: hidden;
-    background: var(--wl-panel);
+    background: transparent;
+    border-bottom: 1px solid var(--wl-line);
   }
   .price-calendar button {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 7px;
-    padding: 16px 8px;
+    gap: 4px;
+    padding: 10px 8px;
     border: 0;
-    border-right: 1px solid var(--wl-line);
+    border-right: 0;
     background: transparent;
     color: var(--wl-text);
+    border-bottom: 2px solid transparent;
   }
   .price-calendar button:last-child {
     border-right: 0;
@@ -715,8 +719,9 @@
     font-weight: 650;
   }
   .price-calendar .selected {
-    background: #173c40;
-    box-shadow: inset 0 -3px var(--primary);
+    background: transparent;
+    box-shadow: none;
+    border-bottom-color: var(--primary);
   }
   .price-calendar .selected > span {
     color: #c5e5e3;
@@ -725,7 +730,7 @@
     color: #91f2e5;
   }
   .price-calendar button:hover:not(:disabled) {
-    background: #223547;
+    background: #14212c;
   }
   .price-calendar button:disabled {
     opacity: 0.35;
@@ -735,7 +740,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 21px 0 15px;
+    padding: 12px 0;
     color: var(--app-muted);
     font-size: 13px;
   }
@@ -752,44 +757,51 @@
     font-weight: 600;
   }
   .flight-card {
-    grid-template-columns: 65px minmax(0, 1fr) 195px;
+    grid-template-columns: 44px minmax(0, 1fr) 174px;
     align-items: center;
-    margin-bottom: 14px;
+    margin-bottom: 0;
     border-color: var(--wl-line);
-    overflow: hidden;
+    overflow: visible;
+    display: grid;
+    gap: 16px;
+    padding: 16px 0;
+    border: 0;
+    border-top: 1px solid var(--wl-line);
+    border-radius: 0;
+    background: transparent;
   }
   .airline-logo {
     display: grid;
     place-items: center;
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     align-self: start;
-    margin: 24px 0 0 20px;
-    border: 1px solid #305b69;
-    border-radius: 10px;
-    background: #143640;
+    margin: 0;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
     color: #96dfdd;
   }
   .airline-logo svg {
     transform: rotate(-22deg);
   }
   .airline-1 {
-    background: #2b2444;
+    background: transparent;
     border-color: #524270;
     color: #d0b8ff;
   }
   .airline-2 {
-    background: #28324c;
+    background: transparent;
     border-color: #40577d;
     color: #b6d2ff;
   }
   .airline-3 {
-    background: #3a3025;
+    background: transparent;
     border-color: #615139;
     color: #e8c58c;
   }
   .flight-detail {
-    padding: 22px 24px 20px 12px;
+    padding: 0;
     min-width: 0;
   }
   .flight-airline {
@@ -797,22 +809,23 @@
     font-weight: 650;
   }
   .flight-airline > span {
-    display: block;
+    display: inline;
     color: var(--app-muted);
     font-size: 12px;
     font-weight: 450;
-    margin-top: 4px;
+    margin-top: 0;
+    margin-left: 10px;
   }
   .flight-route {
     display: grid;
     grid-template-columns: auto minmax(70px, 1fr) auto;
     align-items: center;
-    gap: 20px;
-    margin-top: 20px;
+    gap: 16px;
+    margin-top: 10px;
   }
   .flight-route strong {
     display: block;
-    font-size: 25px;
+    font-size: 23px;
     letter-spacing: -0.6px;
     font-weight: 650;
     font-variant-numeric: tabular-nums;
@@ -849,7 +862,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-top: 18px;
+    margin-top: 10px;
     color: #b3c3d4;
     font-size: 12px;
   }
@@ -863,12 +876,12 @@
     align-items: flex-end;
     justify-content: center;
     align-self: stretch;
-    border-left: 1px solid var(--wl-line);
-    padding: 24px;
-    background: #172130;
+    border-left: 0;
+    padding: 0 0 0 16px;
+    background: transparent;
   }
   .flight-price > strong {
-    font-size: 28px;
+    font-size: 25px;
     font-weight: 700;
     letter-spacing: -0.7px;
   }
@@ -878,7 +891,7 @@
     font-size: 12px;
   }
   .flight-price .button {
-    margin-top: 20px;
+    margin-top: 12px;
     width: 100%;
   }
   .results-footnote {
@@ -890,13 +903,14 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 13px 18px;
-    margin-bottom: 24px;
-    border: 1px solid #29595b;
-    border-radius: 8px;
-    background: #102d31;
+    padding: 10px 0;
+    margin-bottom: 16px;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
     color: #cee8e6;
     font-size: 13px;
+    border-bottom: 1px solid var(--wl-line);
   }
   .selected-outbound > svg {
     color: var(--wl-teal);
@@ -908,43 +922,47 @@
   .flow-page {
     max-width: 1280px;
     margin: auto;
-    padding: 36px 32px 64px;
+    padding: 24px 32px 40px;
   }
   .back {
-    margin-bottom: 24px;
+    margin-bottom: 14px;
   }
   .page-subtitle {
     max-width: 850px;
-    margin-top: 12px;
-    margin-bottom: 30px;
-    font-size: 15px;
+    margin-top: 8px;
+    margin-bottom: 22px;
+    font-size: 14px;
     color: var(--app-muted);
   }
   .fare-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 300px;
-    gap: 24px;
+    gap: 32px;
     align-items: start;
   }
   .fare-cards {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-    padding-top: 14px;
+    gap: 24px;
+    padding-top: 0;
   }
   .fare-card {
     position: relative;
     height: 100%;
     border-color: var(--wl-line);
+    padding: 16px 0;
+    border: 0;
+    border-top: 1px solid var(--wl-line);
+    background: transparent;
   }
   .fare-card.selected {
     border-color: var(--primary);
-    box-shadow: 0 0 0 1px var(--primary);
-    background: #14292f;
+    box-shadow: none;
+    background: transparent;
   }
   .fare-card h2 {
-    margin-top: 8px;
-    font-size: 24px;
+    margin-top: 0;
+    font-size: 21px;
   }
   .fare-card > p {
     min-height: 44px;
@@ -954,8 +972,8 @@
   }
   .fare-price {
     display: block;
-    margin-top: 24px;
-    font-size: 27px;
+    margin-top: 16px;
+    font-size: 24px;
     font-weight: 700;
     letter-spacing: -0.8px;
   }
@@ -970,11 +988,11 @@
   .fare-card ul {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin: 24px 0;
-    padding: 22px 0 0;
+    gap: 10px;
+    margin: 18px 0;
+    padding: 16px 0 0;
     border-top: 1px solid var(--wl-line);
-    min-height: 180px;
+    min-height: 132px;
     list-style: none;
   }
   .fare-card li {
@@ -1000,10 +1018,14 @@
     top: 24px;
     align-self: start;
     border-color: var(--wl-line);
+    padding: 16px 0;
+    border: 0;
+    border-top: 1px solid var(--wl-line);
+    background: transparent;
   }
   .trip-summary > .section-label {
-    font-size: 11px;
-    margin-bottom: 13px;
+    font-size: 12px;
+    margin-bottom: 10px;
   }
   .trip-summary h3 {
     display: flex;
@@ -1019,9 +1041,9 @@
     display: flex;
     flex-direction: column;
     gap: 5px;
-    margin-top: 20px;
-    padding-bottom: 20px;
+    margin-top: 8px;
     border-bottom: 1px solid var(--wl-line);
+    padding: 14px 0;
   }
   .summary-route > span {
     color: var(--app-muted);
@@ -1040,7 +1062,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 13px 0;
+    padding: 10px 0;
     font-size: 13px;
   }
   .summary-row > span {
@@ -1078,8 +1100,8 @@
     align-items: center;
     justify-content: flex-end;
     gap: 24px;
-    padding-top: 28px;
-    margin-top: 28px;
+    padding-top: 18px;
+    margin-top: 18px;
     border-top: 1px solid var(--wl-line);
   }
   .flow-actions > span {
@@ -1093,10 +1115,11 @@
     align-items: start;
   }
   .seat-panel {
-    padding: 26px;
-    border: 1px solid var(--wl-line);
-    border-radius: 12px;
-    background: var(--wl-panel);
+    padding: 16px 0;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
+    border-top: 1px solid var(--wl-line);
   }
   .seat-legend {
     display: flex;
@@ -1104,7 +1127,7 @@
     justify-content: center;
     flex-wrap: wrap;
     gap: 22px;
-    margin-bottom: 30px;
+    margin-bottom: 18px;
     color: var(--app-muted);
     font-size: 13px;
   }
@@ -1117,7 +1140,7 @@
     width: 16px;
     height: 16px;
     border: 1px solid #617b96;
-    border-radius: 4px;
+    border-radius: 2px;
     background: #2a3d53;
   }
   .seat-legend i.chosen {
@@ -1131,20 +1154,20 @@
   .airplane {
     max-width: 364px;
     margin: auto;
-    padding: 26px 28px 32px;
-    border: 1px solid #3b4c61;
-    border-radius: 88px 88px 22px 22px;
-    background: #101824;
+    padding: 16px 22px;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
   }
   .cockpit {
     display: grid;
     place-items: center;
     width: 86px;
     height: 44px;
-    margin: 0 auto 28px;
-    border: 1px solid #3e5268;
-    border-radius: 40px 40px 10px 10px;
-    background: #223347;
+    margin: 0 auto 18px;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
     color: #93afc7;
   }
   .seat-letters,
@@ -1174,7 +1197,7 @@
     padding: 0;
     border: 1px solid #57718c;
     border-bottom-width: 3px;
-    border-radius: 7px 7px 5px 5px;
+    border-radius: 2px;
     background: #253a50;
     color: #e2edf7;
     font-size: 11px;
@@ -1201,10 +1224,11 @@
     color: #fff1d9;
   }
   .seat-details {
-    padding: 24px;
-    border: 1px solid var(--wl-line);
-    border-radius: 12px;
-    background: var(--wl-panel);
+    padding: 16px 0;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
+    border-top: 1px solid var(--wl-line);
   }
   .seat-details > h3 {
     margin-bottom: 14px;
@@ -1216,14 +1240,14 @@
   }
   .seat-details > .trip-summary {
     position: static;
-    margin-top: 24px;
-    background: #101925;
+    margin-top: 18px;
+    background: transparent;
   }
   .checkout-progress {
     display: flex;
     gap: 32px;
     padding: 0;
-    margin: 0 0 32px;
+    margin: 0 0 20px;
     list-style: none;
   }
   .checkout-progress li {
@@ -1237,10 +1261,10 @@
   .checkout-progress li > span {
     display: grid;
     place-items: center;
-    width: 30px;
-    height: 30px;
-    border: 1px solid #435269;
-    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    border: 0;
+    border-radius: 2px;
     font-size: 12px;
   }
   .checkout-progress .active {
@@ -1250,25 +1274,29 @@
   .checkout-progress .active > span,
   .checkout-progress .complete > span {
     border-color: var(--primary);
-    background: var(--primary);
-    color: #082c30;
+    background: transparent;
+    color: var(--primary);
   }
   .checkout-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 320px;
-    gap: 28px;
+    gap: 40px;
     align-items: start;
   }
   .checkout-content {
     min-width: 0;
   }
   .form-section {
-    margin-bottom: 20px;
+    margin-bottom: 6px;
     border-color: var(--wl-line);
+    padding: 18px 0;
+    border: 0;
+    border-top: 1px solid var(--wl-line);
+    background: transparent;
   }
   .form-section h3 {
-    font-size: 17px;
-    margin-bottom: 22px;
+    font-size: 16px;
+    margin-bottom: 16px;
   }
   .form-section h3 > span {
     margin-left: 8px;
@@ -1292,7 +1320,7 @@
   .form-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
+    gap: 16px 24px;
   }
   .span-two {
     grid-column: 1/-1;
@@ -1313,12 +1341,13 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 16px;
-    margin-bottom: 24px;
-    border: 1px solid #29595b;
-    border-radius: 8px;
-    background: #102e32;
+    padding: 12px 0;
+    margin-bottom: 18px;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
     font-size: 13px;
+    border-bottom: 1px solid var(--wl-line);
   }
   .sample-card > svg {
     color: var(--wl-teal);
@@ -1341,20 +1370,13 @@
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    margin-top: 28px;
-  }
-  .checkout-action > span {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    color: var(--app-muted);
-    font-size: 12px;
+    margin-top: 18px;
   }
   .error-message {
     margin: 18px 0;
     padding: 14px 16px;
     border: 1px solid #9b4a4e;
-    border-radius: 8px;
+    border-radius: 2px;
     background: #411e28;
     color: #ffd1d5;
     font-size: 14px;
@@ -1401,22 +1423,22 @@
   .confirmation-page {
     max-width: 660px;
     margin: auto;
-    padding: 48px 24px 64px;
+    padding: 28px 24px 40px;
     text-align: center;
   }
   .confirmation-icon {
     display: grid;
     place-items: center;
-    width: 64px;
-    height: 64px;
-    margin: 0 auto 22px;
-    border: 1px solid #3c8b83;
-    border-radius: 18px;
-    background: #133d3d;
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 14px;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
     color: #8aeee0;
   }
   .confirmation-page h1 {
-    font-size: 37px;
+    font-size: 26px;
     font-weight: 720;
   }
   .confirmation-page > p {
@@ -1425,12 +1447,17 @@
     color: var(--app-muted);
   }
   .confirmation-card {
-    margin: 28px 0;
+    margin: 20px 0;
     text-align: left;
+    padding: 18px 0;
+    border: 0;
+    border-top: 1px solid var(--wl-line);
+    border-bottom: 1px solid var(--wl-line);
+    background: transparent;
   }
   .booking-reference {
     display: block;
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     letter-spacing: 2px;
     text-align: center;
@@ -1446,7 +1473,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    padding: 26px 0;
+    padding: 18px 0;
     margin-bottom: 10px;
     border-bottom: 1px solid var(--wl-line);
   }
@@ -1474,7 +1501,7 @@
     grid-template-columns: minmax(220px, 1fr) 190px auto;
     align-items: center;
     gap: 14px;
-    margin: 30px 0;
+    margin: 20px 0;
   }
   .booking-controls > label {
     display: flex;
@@ -1493,19 +1520,23 @@
   }
   .booking-list {
     display: grid;
-    gap: 20px;
+    gap: 0;
   }
   .booking-card {
     overflow: hidden;
+    padding: 16px 0;
+    border: 0;
+    border-top: 1px solid var(--wl-line);
+    background: transparent;
   }
   .booking-card-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    padding: 16px 24px;
-    background: #182332;
-    border-bottom: 1px solid var(--wl-line);
+    padding: 0 0 12px;
+    background: transparent;
+    border-bottom: 0;
     color: var(--app-muted);
     font-size: 13px;
   }
@@ -1532,9 +1563,9 @@
   .booking-card-main {
     display: grid;
     grid-template-columns: 70px minmax(0, 1fr) auto;
-    gap: 22px;
+    gap: 18px;
     align-items: center;
-    padding: 28px 24px;
+    padding: 8px 0 16px;
   }
   .trip-date {
     display: flex;
@@ -1543,10 +1574,10 @@
     justify-content: center;
     gap: 1px;
     align-self: start;
-    border: 1px solid #3b4d63;
-    border-radius: 9px;
-    padding: 13px 8px;
-    background: #1b2a3a;
+    border: 0;
+    border-radius: 2px;
+    padding: 0;
+    background: transparent;
   }
   .trip-date b {
     font-size: 28px;
@@ -1563,8 +1594,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 23px;
-    margin-bottom: 12px;
+    font-size: 21px;
+    margin-bottom: 8px;
   }
   .booking-card h2 svg {
     color: #85a5c3;
@@ -1590,8 +1621,8 @@
   .booking-actions {
     display: flex;
     gap: 28px;
-    border-top: 1px solid var(--wl-line);
-    padding: 12px 24px;
+    border-top: 0;
+    padding: 8px 0 0;
   }
   .booking-actions .danger {
     margin-left: auto;
@@ -1604,7 +1635,7 @@
   }
   .cancelled-note {
     margin: 0;
-    padding: 15px 24px;
+    padding: 10px 0;
     border-top: 1px solid var(--wl-line);
     color: var(--app-muted);
     font-size: 13px;
@@ -1638,10 +1669,10 @@
     width: max-content;
     padding: 15px 20px;
     border: 1px solid #38675f;
-    border-radius: 10px;
+    border-radius: 2px;
     background: #183930;
     color: #e4fff4;
-    box-shadow: 0 12px 32px #0007;
+    box-shadow: none;
     font-size: 14px;
   }
   .toast svg {
@@ -1653,11 +1684,12 @@
     flex-direction: column;
     align-items: center;
     gap: 15px;
-    padding: 64px 24px;
-    border: 1px dashed #3d4e65;
-    border-radius: 12px;
-    background: var(--wl-panel);
+    padding: 32px 16px;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
     text-align: center;
+    border-top: 1px solid var(--wl-line);
   }
   .empty-state > svg {
     color: #93b4d0;
@@ -1676,7 +1708,7 @@
     align-items: center;
     justify-content: center;
     gap: 14px;
-    min-height: 280px;
+    min-height: 180px;
     color: var(--app-muted);
     font-size: 15px;
   }
@@ -1705,25 +1737,25 @@
     }
     .search-submit {
       grid-column: 3/-1;
-      min-height: 54px;
+      min-height: 44px;
     }
     .results-layout {
       grid-template-columns: 210px minmax(0, 1fr);
       gap: 20px;
     }
     .filters {
-      padding: 16px;
+      padding: 0 16px 0 0;
     }
     .flight-card {
-      grid-template-columns: 55px minmax(0, 1fr) 160px;
+      grid-template-columns: 36px minmax(0, 1fr) 150px;
     }
     .airline-logo {
-      margin-left: 15px;
-      width: 34px;
-      height: 34px;
+      margin-left: 0;
+      width: 30px;
+      height: 30px;
     }
     .flight-detail {
-      padding-right: 16px;
+      padding-right: 0;
     }
     .flight-route {
       gap: 12px;
@@ -1732,7 +1764,7 @@
       font-size: 22px;
     }
     .flight-price {
-      padding: 18px;
+      padding: 0 0 0 10px;
     }
     .flight-price .button {
       padding: 0 10px;
@@ -1762,14 +1794,14 @@
   }
   @media (max-width: 760px) {
     .header-inner {
-      padding: 0 20px;
-      gap: 24px;
+      padding: 0 16px;
+      gap: 20px;
     }
     .site-header {
-      height: 68px;
+      height: 60px;
     }
     .wordmark {
-      font-size: 25px;
+      font-size: 23px;
     }
     .brand-mark {
       width: 30px;
@@ -1790,16 +1822,16 @@
       display: none;
     }
     .home-search {
-      padding: 28px 20px 48px;
+      padding: 20px 16px 32px;
     }
     .search-box,
     .compact-search .search-box {
-      padding: 18px;
+      padding: 0;
     }
     .search-options {
       flex-wrap: wrap;
-      gap: 16px;
-      margin-bottom: 18px;
+      gap: 14px;
+      margin-bottom: 12px;
     }
     .search-options label {
       gap: 6px;
@@ -1811,12 +1843,12 @@
     }
     .search-fields {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 12px 20px;
     }
     .airport-field,
     .date-field,
     .passenger-field {
-      padding: 8px 10px;
+      padding: 4px 0;
     }
     .airport-field:first-child {
       grid-column: 1;
@@ -1826,14 +1858,14 @@
     }
     .swap-button {
       position: absolute;
-      left: calc(50% - 15px);
-      top: 29px;
+      left: calc(50% - 14px);
+      top: 26px;
       z-index: 2;
       height: 30px;
-      width: 30px;
-      background: #223448;
-      border: 1px solid #415871;
-      border-radius: 50%;
+      width: 28px;
+      background: var(--wl-bg);
+      border: 0;
+      border-radius: 2px;
     }
     .date-field {
       grid-column: 1/-1;
@@ -1843,11 +1875,12 @@
     }
     .search-submit {
       grid-column: 2;
-      align-self: stretch;
+      align-self: end;
       min-width: 0;
-      min-height: 68px;
+      min-height: 44px;
       white-space: normal;
       gap: 7px;
+      margin-bottom: 0;
     }
     .picker-button {
       height: 35px;
@@ -1882,19 +1915,19 @@
       right: auto;
     }
     .compact-search {
-      padding: 20px;
+      padding: 16px;
     }
     .results-page {
-      padding: 26px 20px 40px;
+      padding: 20px 16px 32px;
     }
     .results-heading {
       align-items: flex-start;
       flex-direction: column;
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 8px;
+      margin-bottom: 16px;
     }
     .results-heading h1 {
-      font-size: 26px;
+      font-size: 24px;
       gap: 10px;
     }
     .results-heading h1 svg {
@@ -1910,16 +1943,18 @@
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0 18px;
-      padding: 18px;
+      padding: 0 0 12px;
+      border-right: 0;
+      border-bottom: 1px solid var(--wl-line);
     }
     .filter-title {
       grid-column: 1/-1;
     }
     .filters fieldset {
-      padding: 14px 0;
+      padding: 10px 0;
     }
     .filters legend {
-      padding-top: 16px;
+      padding-top: 12px;
       font-size: 13px;
     }
     .filters legend b {
@@ -1946,7 +1981,7 @@
       overflow-x: auto;
     }
     .price-calendar button {
-      padding: 15px 8px;
+      padding: 10px 8px;
     }
     .results-toolbar {
       gap: 12px;
@@ -1960,28 +1995,33 @@
       font-size: 12px;
     }
     .flight-card {
-      grid-template-columns: 58px minmax(0, 1fr);
+      grid-template-columns: 32px minmax(0, 1fr);
+      gap: 10px;
+      padding: 14px 0;
     }
     .airline-logo {
-      margin: 21px 0 0 17px;
-      width: 36px;
-      height: 36px;
+      margin: 0;
+      width: 28px;
+      height: 28px;
     }
     .flight-detail {
-      padding: 20px 20px 18px 12px;
+      padding: 0;
     }
     .flight-airline {
       font-size: 14px;
     }
     .flight-airline > span {
       font-size: 11px;
+      display: block;
+      margin-left: 0;
+      margin-top: 2px;
     }
     .flight-route {
-      gap: 12px;
-      margin-top: 18px;
+      gap: 10px;
+      margin-top: 10px;
     }
     .flight-route strong {
-      font-size: 23px;
+      font-size: 22px;
     }
     .flight-route small {
       font-size: 12px;
@@ -2001,13 +2041,13 @@
       flex-direction: row;
       align-items: center;
       justify-content: flex-start;
-      gap: 10px;
+      gap: 8px;
       border-left: 0;
-      border-top: 1px solid var(--wl-line);
-      padding: 15px 18px;
+      border-top: 0;
+      padding: 4px 0 0 42px;
     }
     .flight-price > strong {
-      font-size: 25px;
+      font-size: 23px;
     }
     .flight-price > span {
       max-width: 70px;
@@ -2026,21 +2066,21 @@
       gap: 8px;
     }
     .flow-page {
-      padding: 28px 20px 40px;
+      padding: 20px 16px 32px;
     }
     .flow-page h1 {
-      font-size: 29px;
+      font-size: 25px;
     }
     .back {
-      margin-bottom: 20px;
+      margin-bottom: 12px;
     }
     .page-subtitle {
-      margin-bottom: 24px;
+      margin-bottom: 18px;
       font-size: 14px;
     }
     .fare-cards {
       grid-template-columns: 1fr;
-      gap: 26px;
+      gap: 0;
     }
     .fare-card ul {
       min-height: auto;
@@ -2063,14 +2103,14 @@
       gap: 20px;
     }
     .seat-panel {
-      padding: 20px 16px;
+      padding: 14px 0;
     }
     .seat-legend {
       gap: 12px;
       font-size: 11px;
     }
     .airplane {
-      padding: 24px 18px;
+      padding: 16px 12px;
     }
     .seat-letters,
     .seat-row {
@@ -2082,36 +2122,36 @@
       font-size: 10px;
     }
     .seat-details {
-      padding: 20px;
+      padding: 14px 0;
     }
     .checkout-layout {
       grid-template-columns: minmax(0, 1fr);
     }
     .checkout-progress {
-      gap: 18px;
-      margin-bottom: 26px;
+      gap: 14px;
+      margin-bottom: 18px;
     }
     .checkout-progress li {
       font-size: 12px;
       gap: 7px;
     }
     .checkout-progress li > span {
-      width: 27px;
-      height: 27px;
+      width: 22px;
+      height: 22px;
     }
     .form-section h3 {
       font-size: 17px;
     }
     .form-grid {
       grid-template-columns: 1fr;
-      gap: 18px;
+      gap: 14px;
     }
     .span-two {
       grid-column: auto;
     }
     .sample-card {
-      padding: 14px;
-      gap: 10px;
+      padding: 12px 0;
+      gap: 8px;
     }
     .sample-card > div {
       flex: 1;
@@ -2134,10 +2174,10 @@
       position: static;
     }
     .confirmation-page {
-      padding: 36px 20px 48px;
+      padding: 24px 16px 32px;
     }
     .confirmation-page h1 {
-      font-size: 31px;
+      font-size: 25px;
     }
     .confirmation-route {
       gap: 18px;
@@ -2164,16 +2204,16 @@
       padding-right: 10px;
     }
     .booking-card-top {
-      padding: 14px 18px;
+      padding: 0 0 10px;
       font-size: 12px;
     }
     .booking-card-main {
-      grid-template-columns: 56px minmax(0, 1fr);
-      gap: 16px;
-      padding: 20px 18px;
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 12px;
+      padding: 8px 0 12px;
     }
     .trip-date {
-      padding: 10px 6px;
+      padding: 0;
     }
     .trip-date b {
       font-size: 25px;
@@ -2181,7 +2221,7 @@
     .booking-card h2 {
       flex-wrap: wrap;
       gap: 8px;
-      font-size: 21px;
+      font-size: 20px;
     }
     .booking-card h2 svg {
       width: 18px;
@@ -2200,14 +2240,14 @@
     }
     .booking-actions {
       flex-wrap: wrap;
-      padding: 12px 18px;
+      padding: 8px 0 0;
       gap: 8px 22px;
     }
     .booking-actions .danger {
       margin-left: 0;
     }
     .cancelled-note {
-      padding: 14px 18px;
+      padding: 10px 0;
       font-size: 12px;
     }
     .modal-actions {
@@ -2243,7 +2283,7 @@
       grid-column: 1/-1;
     }
     .search-submit {
-      min-height: 48px;
+      min-height: 44px;
     }
     .flight-route {
       gap: 8px;
@@ -2253,7 +2293,7 @@
     }
     .flight-price {
       gap: 8px;
-      padding: 14px 12px;
+      padding: 4px 0 0;
     }
     .flight-price > span {
       display: none;

@@ -31,7 +31,7 @@ name: Looking.com round trip, both seat maps, validated checkout, and booking
 - tapOn:
     id: button-select-flight
     index: 0
-- assertVisible: 'A fare that fits your plans'
+- assertVisible: 'Choose your fare'
 - scrollUntilVisible:
     centerElement: true
     element:
@@ -39,7 +39,7 @@ name: Looking.com round trip, both seat maps, validated checkout, and booking
     direction: DOWN
 - tapOn:
     id: button-continue-to-seats
-- assertVisible: 'Find your favorite seat'
+- assertVisible: 'Choose your seats'
 - assertVisible:
     text: 'Seat 1[A-F], occupied'
     enabled: false
@@ -162,7 +162,9 @@ name: Looking.com round trip, both seat maps, validated checkout, and booking
     direction: DOWN
 - tapOn:
     id: button-review-booking
-- assertVisible: 'Ready for your next chapter\?'
+- assertVisible:
+    id: flight-review-heading
+    text: '^Review booking$'
 - scrollUntilVisible:
     centerElement: true
     element:
@@ -176,7 +178,7 @@ name: Looking.com round trip, both seat maps, validated checkout, and booking
       text: 'Confirm booking · .*'
     direction: DOWN
 - tapOn: 'Confirm booking · .*'
-- assertVisible: 'You’re going to London\.'
+- assertVisible: 'Booking confirmed'
 - assertVisible: 'WL006Q'
 - scrollUntilVisible:
     centerElement: true

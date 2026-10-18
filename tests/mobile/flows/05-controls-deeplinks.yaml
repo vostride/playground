@@ -41,8 +41,8 @@ name: Warm navigation, local WebView, opt-in defect, and session reset
     centerElement: true
 - tapOn:
     id: button-a-quick-guide-to-the-playground
-- assertVisible: A quick guide
-- assertVisible: 'A place to try things\.'
+- assertVisible: Help
+- assertVisible: 'Navigation'
 - takeScreenshot: local-webview-guide
 - tapOn:
     id: button-close
@@ -69,12 +69,12 @@ name: Warm navigation, local WebView, opt-in defect, and session reset
     centerElement: true
 - tapOn:
     id: button-reset-playground-session
-- assertVisible: 'Make yourself at home\.'
+- assertVisible: 'Open Komazon'
 - assertNotVisible: 'Deliberate bug:.*'
 - runFlow:
     file: ../helpers/open-link.yaml
     env:
       LINK: playground://shop/cart
 - assertVisible: 'Your bag \(0\)'
-- assertVisible: 'A little room for something good\.'
+- assertVisible: 'Your bag is empty'
 - takeScreenshot: session-reset-empty-bag

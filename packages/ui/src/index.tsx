@@ -56,12 +56,10 @@ export function PlaygroundBanner({ app, bugs = [] }: { app: string; bugs?: BugDe
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <div className="pg-banner">
-        <div>
-          <span className="pg-dot" /> Playground{' '}
-          <span className="pg-muted">· Simulated data. No real transactions.</span>
-        </div>
+        <a className="pg-home" href="/">
+          All apps
+        </a>
         <div className="pg-tools">
-          <a href="/">All apps</a>
           <DialogTrigger asChild>
             <Button variant="ghost" size="sm">
               <Bug size={13} /> {active ? 'Bug enabled' : 'Test controls'}

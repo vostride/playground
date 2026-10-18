@@ -43,6 +43,5 @@ appId: dev.vostride.playground
           permissions:
             all: deny
 - extendedWaitUntil:
-    visible: 'Make yourself at home\.'
+    visible: 'Open Komazon'
     timeout: 30000
-- assertVisible: 'PLAYGROUND.*Simulated data.*'

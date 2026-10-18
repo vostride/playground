@@ -11,7 +11,7 @@ appId: dev.vostride.playground
       text: 'View Everyday Ceramic Mug'
     direction: DOWN
 - tapOn: 'View Everyday Ceramic Mug'
-- assertVisible: 'PLAYGROUND.*Simulated data.*'
+- assertVisible: '^Everyday Ceramic Mug$'
 - scrollUntilVisible:
     centerElement: true
     element:

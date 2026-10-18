@@ -371,7 +371,7 @@ function RangePicker({
               {range === value && <Check size={15} />}
             </button>
           ))}
-          <p>Simulated time · UTC</p>
+          <p>UTC</p>
         </div>
       )}
     </div>
@@ -574,10 +574,7 @@ export default function App() {
             <code>service:checkout status:error</code>
             <code>env:production -status:debug</code>
             <code>"payment provider"</code>
-            <p>
-              Live metrics update every 5 seconds. Monitors and filters persist for this browser
-              session. Use Test controls to reset them.
-            </p>
+            <p>Live metrics update every 5 seconds.</p>
             <Button className="primary" onClick={() => setHelp(false)}>
               Close
             </Button>
@@ -663,7 +660,7 @@ function Overview({
         <span className="subtle">6 services</span>
         <span className="filter-right">
           <span className="live-dot" />
-          Updated {tick === 0 ? 'just now' : `${tick * 5}s into simulation`}
+          Updated just now
         </span>
       </div>
       <section className="stats-grid" aria-label="Key metrics">
@@ -709,7 +706,7 @@ function Overview({
             note: 'services reporting',
           },
         ].map((metric) => (
-          <Card className="stat-card block gap-0 p-5" key={metric.name}>
+          <Card className="stat-card block gap-0" key={metric.name}>
             <div className="stat-label">
               {metric.name}
               <Activity size={14} />
@@ -1244,7 +1241,7 @@ function Logs({
                   setBusy(true);
                   setTimeout(() => {
                     setBusy(false);
-                    notify('Logs refreshed from the local dataset.');
+                    notify('Logs refreshed.');
                   }, 250);
                 }}
               >
@@ -1776,7 +1773,7 @@ function Monitors({
         </div>
         <div className="builder-layout">
           <div className="builder-sections">
-            <Card className="panel builder-section block gap-0 p-5">
+            <Card className="panel builder-section block gap-0">
               <div className="step-heading">
                 <span>1</span>
                 <div>
@@ -1837,7 +1834,7 @@ function Monitors({
                 {field('service')}
               </label>
             </Card>
-            <Card className="panel builder-section block gap-0 p-5">
+            <Card className="panel builder-section block gap-0">
               <div className="step-heading">
                 <span>2</span>
                 <div>
@@ -1943,7 +1940,7 @@ function Monitors({
                 </label>
               )}
             </Card>
-            <Card className="panel builder-section block gap-0 p-5">
+            <Card className="panel builder-section block gap-0">
               <div className="step-heading">
                 <span>3</span>
                 <div>
@@ -1979,7 +1976,7 @@ function Monitors({
                   aria-describedby={errors.recipients ? 'error-recipients' : undefined}
                 />
                 {field('recipients')}
-                <small>Separate email addresses with commas. Notifications are simulated.</small>
+                <small>Separate email addresses with commas.</small>
               </label>
               <label className="form-field">
                 <span>
@@ -2056,10 +2053,6 @@ function Monitors({
                   </strong>
                   .
                 </p>
-                <span className="simulation-note">
-                  <CircleHelp size={14} />
-                  Evaluated locally using seeded telemetry.
-                </span>
               </div>
             </div>
           </Card>
@@ -2205,23 +2198,10 @@ function Monitors({
           />
         )}
       </Card>
-      <div className="monitor-explainer">
-        <Bell size={18} />
-        <div>
-          <strong>Less noise. More signal.</strong>
-          <p>
-            Monitors evaluate a rolling average, so a single spike won’t page your team. Add warning
-            thresholds to catch changes early.
-          </p>
-        </div>
-      </div>
       {deleteId && (
         <Dialog title="Delete monitor?" onClose={() => setDeleteId(null)}>
           <div className="dialog-body">
-            <p>
-              “{monitors.find((rule) => rule.id === deleteId)?.name}” will stop evaluating and be
-              removed from this session.
-            </p>
+            <p>“{monitors.find((rule) => rule.id === deleteId)?.name}” will be deleted.</p>
             <div className="dialog-actions">
               <Button onClick={() => setDeleteId(null)}>Cancel</Button>
               <Button

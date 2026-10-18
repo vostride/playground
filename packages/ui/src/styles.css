@@ -33,10 +33,14 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-xs: 1px;
+  --radius-sm: 1px;
+  --radius-md: var(--radius);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
 }
 
 @layer base {
@@ -60,7 +64,7 @@
     --border: #2a3648;
     --input: #344258;
     --ring: #7c9dff;
-    --radius: 0.625rem;
+    --radius: 2px;
     color: var(--foreground);
     background: var(--background);
     font-family: var(--font-sans);

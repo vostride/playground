@@ -63,7 +63,8 @@ for (const [path, name] of [
     await page.goto(`/${path}/`);
     await expect(page).toHaveTitle(new RegExp(name));
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
-    await expect(page.locator('.pg-banner')).toContainText('Playground');
+    await expect(page.getByRole('link', { name: 'All apps', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Test controls', exact: true })).toBeVisible();
     await page.waitForTimeout(600);
     expect(external).toEqual([]);
     expect(errors).toEqual([]);

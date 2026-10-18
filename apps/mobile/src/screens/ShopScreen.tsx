@@ -36,7 +36,6 @@ import {
   Chip,
   Heading,
   Empty,
-  PlaygroundNotice,
   SafeModalArea,
   useSessionState,
   type MobileScreenProps,
@@ -142,7 +141,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
         <Text style={s.bold}>Total</Text>
         <Text style={s.bold}>{money(totals.total)}</Text>
       </Row>
-      <Text style={s.small}>Taxes included. No payment will be collected.</Text>
+      <Text style={s.small}>Taxes included.</Text>
     </Card>
   );
   const header = (
@@ -190,7 +189,6 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
     >
       <SafeModalArea style={s.scrim}>
         <ScrollView style={s.sheetScroll} contentContainerStyle={s.sheetContent}>
-          <PlaygroundNotice />
           {selected && (
             <>
               <View style={s.largeArt}>
@@ -249,7 +247,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
                 setRefreshing(true);
                 setTimeout(() => {
                   setRefreshing(false);
-                  setNotice('Collection refreshed');
+                  setNotice('Products refreshed');
                 }, 400);
               }}
             />
@@ -257,18 +255,12 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
           ListHeaderComponent={
             <View style={s.listHeader}>
               {header}
-              <View style={s.hero}>
-                <Text style={s.eyebrow}>THE EVERYDAY COLLECTION</Text>
-                <Text style={s.heroTitle}>Good things.{`\n`}For the everyday.</Text>
-                <Text style={s.body}>
-                  Thoughtful essentials for the spaces you live in and the moments in between.
-                </Text>
-              </View>
+              <Heading title="Products" />
               <Field
                 label="Search products"
                 value={query}
                 onChangeText={setQuery}
-                placeholder="Search the collection"
+                placeholder="Search products"
               />
               <Row>
                 {['All products', 'Living', 'Kitchen', 'Workspace', 'Everyday'].map((c) => (
@@ -349,7 +341,8 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
       <Screen key={`${current}-${step}`}>
         {header}
         <Heading
-          title="Welcome back."
+          testID="shop-signin-heading"
+          title="Sign in"
           subtitle="Sign in to check out and keep track of your orders."
         />
         <Field
@@ -372,7 +365,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
           title="Sign in"
           onPress={() => {
             if (!authenticate(email, password)) {
-              setError('That email and password do not match. Use the demo credentials below.');
+              setError('That email and password do not match. Use the sign-in details below.');
               return;
             }
             setState({ ...state, signedIn: true });
@@ -386,11 +379,11 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
           }}
         />
         <Card>
-          <Text style={s.bold}>This is a playground. Use the demo account.</Text>
+          <Text style={s.bold}>Sign-in details</Text>
           <Text selectable>Email: {credentials.email}</Text>
           <Text selectable>Password: {credentials.password}</Text>
         </Card>
-        <Button title="Back to the collection" variant="secondary" onPress={() => nav('catalog')} />
+        <Button title="Back to products" variant="secondary" onPress={() => nav('catalog')} />
       </Screen>
     );
   if (current === 'cart')
@@ -400,11 +393,8 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
         <Heading title={`Your bag (${count})`} />
         {!state.cart.length ? (
           <>
-            <Empty
-              title="A little room for something good."
-              detail="Your bag is empty. Find your next everyday favorite."
-            />
-            <Button title="Explore the collection" onPress={() => nav('catalog')} />
+            <Empty title="Your bag is empty" />
+            <Button title="Browse products" onPress={() => nav('catalog')} />
           </>
         ) : (
           <>
@@ -447,7 +437,6 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
                 nav(state.signedIn ? 'checkout' : 'signin');
               }}
             />
-            <Text style={s.small}>A simulated checkout. No payment details needed.</Text>
           </>
         )}
       </Screen>
@@ -464,7 +453,6 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
         >
           <SafeModalArea style={s.scrim}>
             <View style={s.sheet}>
-              <PlaygroundNotice />
               <Heading title="Choose a country" />
               {['United States', 'United Kingdom', 'Canada', 'India', 'Australia'].map(
                 (country) => (
@@ -495,10 +483,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
           <>
             {step === 1 ? (
               <>
-                <Heading
-                  title="Where should we send it?"
-                  subtitle="Use fictional details. Nothing will be shipped."
-                />
+                <Heading title="Shipping address" />
                 {(Object.keys(blank) as (keyof Shipping)[]).map((key) =>
                   key === 'country' ? (
                     <Button
@@ -542,10 +527,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
               </>
             ) : step === 2 ? (
               <>
-                <Heading
-                  title="A good thing is on its way."
-                  subtitle="Choose your delivery method."
-                />
+                <Heading title="Delivery method" />
                 <Chip
                   label={`Standard delivery · 3–5 business days · ${totals.subtotal >= 10000 ? 'Free' : '$5.00'}`}
                   selected={delivery === 'standard'}
@@ -561,7 +543,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
               </>
             ) : (
               <>
-                <Heading title="One last look." subtitle="Make sure everything is just right." />
+                <Heading title="Review order" testID="shop-review-heading" />
                 <Card>
                   <Text style={s.cardTitle}>Ship to</Text>
                   <Text style={s.body}>
@@ -590,7 +572,6 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
                     {products.find((p) => p.id === i.productId)!.name} × {i.quantity}
                   </Text>
                 ))}
-                <Text style={s.small}>This order is simulated. You will not be charged.</Text>
               </>
             )}
             {summary}
@@ -618,10 +599,10 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
         <View style={s.success}>
           <Text style={s.successIcon}>✓</Text>
           <Heading
-            title="Good things are on their way."
+            title="Order confirmed"
             subtitle={`Your order ${state.orders[0]?.id || ''} is confirmed.`}
           />
-          <Text style={s.body}>This is a simulated order. Nothing will be shipped or charged.</Text>
+
           <Button title="View orders" onPress={() => nav('orders')} />
           <Button title="Continue shopping" variant="secondary" onPress={() => nav('catalog')} />
         </View>
@@ -630,14 +611,11 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
   return (
     <Screen key={`${current}-${step}`}>
       {header}
-      <Heading title="Your orders" subtitle="Good things, all in one place." />
+      <Heading title="Your orders" />
       {!state.signedIn ? (
         <Button title="Sign in to see your orders" onPress={() => nav('signin')} />
       ) : !state.orders.length ? (
-        <Empty
-          title="Your story starts here."
-          detail="When you place an order, you'll find it here."
-        />
+        <Empty title="No orders" detail="When you place an order, you'll find it here." />
       ) : (
         state.orders.map((o) => (
           <Card key={o.id}>
@@ -672,11 +650,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
       >
         <SafeModalArea style={s.scrim}>
           <View style={s.sheet}>
-            <PlaygroundNotice />
-            <Heading
-              title={`Cancel order ${cancel}?`}
-              subtitle="This will mark your simulated order as cancelled."
-            />
+            <Heading title={`Cancel order ${cancel}?`} subtitle="This will cancel your order." />
             <Button
               title="Confirm cancellation"
               variant="danger"
@@ -695,23 +669,20 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
 }
 const s = StyleSheet.create({
   fill: { flex: 1 },
+  brand: { fontSize: 20, fontWeight: '700', color: '#2e5140' },
   flex: { flex: 1 },
-  list: { padding: 20, paddingBottom: 40 },
+  list: { padding: 16, paddingBottom: 24 },
   columns: { gap: 14 },
-  listHeader: { gap: 16, paddingBottom: 20 },
-  brand: { fontFamily: 'Georgia', fontSize: 31, color: '#2e5140' },
-  hero: { padding: 24, backgroundColor: '#eaf0e3', borderRadius: 7, gap: 14, marginVertical: 6 },
-  eyebrow: { fontSize: 9, letterSpacing: 1.8, color: '#819374' },
-  heroTitle: { fontFamily: 'Georgia', fontSize: 34, lineHeight: 40, color: '#36523a' },
+  listHeader: { gap: 10, paddingBottom: 12 },
   body: { fontSize: 13, lineHeight: 22, color: '#788570' },
   small: { fontSize: 11, color: '#8c9783', lineHeight: 18 },
   bold: { fontSize: 13, fontWeight: '600', color: '#3b5137' },
-  product: { flex: 1, maxWidth: '50%', gap: 8, marginBottom: 25 },
+  product: { flex: 1, maxWidth: '50%', gap: 8, marginBottom: 16 },
   art: {
     height: 150,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 4,
+    borderRadius: 2,
     position: 'relative',
   },
   symbol: { fontSize: 72, color: '#748366' },
@@ -731,17 +702,17 @@ const s = StyleSheet.create({
   sheetScroll: {
     maxHeight: '92%',
     backgroundColor: '#fffef9',
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
   },
-  sheetContent: { padding: 24, paddingBottom: 34, gap: 17 },
+  sheetContent: { padding: 16, paddingBottom: 24, gap: 12 },
   sheet: {
     backgroundColor: '#fffef9',
-    padding: 24,
-    paddingBottom: 34,
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    gap: 17,
+    padding: 16,
+    paddingBottom: 24,
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+    gap: 12,
     maxHeight: '92%',
   },
   largeArt: {
@@ -749,7 +720,7 @@ const s = StyleSheet.create({
     backgroundColor: '#edf0e6',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 7,
+    borderRadius: 2,
   },
   largeSymbol: { fontSize: 95, color: '#75886a' },
   cardTitle: { fontSize: 16, fontWeight: '500', color: '#3b5137' },
@@ -757,7 +728,7 @@ const s = StyleSheet.create({
     backgroundColor: '#e9f1df',
     color: '#50723e',
     padding: 13,
-    borderRadius: 5,
+    borderRadius: 2,
     fontSize: 12,
   },
   error: {
@@ -765,16 +736,16 @@ const s = StyleSheet.create({
     color: '#a25438',
     padding: 14,
     lineHeight: 21,
-    borderRadius: 5,
+    borderRadius: 2,
     fontSize: 12,
   },
-  success: { gap: 22, paddingTop: 45, paddingBottom: 40 },
+  success: { gap: 16, paddingTop: 24, paddingBottom: 24 },
   successIcon: { fontSize: 42, color: '#5b8148' },
   status: {
     fontSize: 10,
     color: '#5f7e4f',
     backgroundColor: '#ecf2e4',
     padding: 6,
-    borderRadius: 10,
+    borderRadius: 2,
   },
 });

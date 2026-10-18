@@ -6,10 +6,10 @@ env:
     ${LINK.indexOf('playground://tasks/task/') === 0
       ? 'Close ' + LINK.split('/').pop().split('?')[0]
       : ({
-          'playground://home': 'Make yourself at home[.]',
+          'playground://home': 'Open Komazon',
           'playground://shop': 'Search products',
           'playground://shop/cart': 'Your bag [(][0-9]+[)]',
-          'playground://flights': 'A LITTLE FURTHER[.] A LITTLE FREER[.]',
+          'playground://flights': 'Flight search',
           'playground://flights/bookings': 'Find a booking',
           'playground://tasks': 'Search tasks',
           'playground://observability/logs': 'Log search query',

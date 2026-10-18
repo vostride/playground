@@ -205,10 +205,18 @@ export function Chip({
     </TouchableOpacity>
   );
 }
-export function Heading({ title, subtitle }: { title: string; subtitle?: string }) {
+export function Heading({
+  title,
+  subtitle,
+  testID,
+}: {
+  title: string;
+  subtitle?: string;
+  testID?: string;
+}) {
   return (
-    <View style={{ marginBottom: 22 }}>
-      <Text accessibilityRole="header" style={styles.heading}>
+    <View style={{ marginBottom: 12 }}>
+      <Text testID={testID} accessibilityRole="header" style={styles.heading}>
         {title}
       </Text>
       {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
@@ -217,19 +225,13 @@ export function Heading({ title, subtitle }: { title: string; subtitle?: string 
 }
 export function Empty({ title, detail }: { title: string; detail?: string }) {
   return (
-    <Card style={{ paddingVertical: 40, alignItems: 'center' }}>
+    <Card style={{ paddingVertical: 24, alignItems: 'center' }}>
       <Text style={styles.emptyTitle}>{title}</Text>
       {detail && <Text style={[styles.subtitle, { textAlign: 'center' }]}>{detail}</Text>}
     </Card>
   );
 }
-export function PlaygroundNotice() {
-  return (
-    <View style={styles.notice}>
-      <Text style={styles.noticeText}>PLAYGROUND · Simulated data. No real transactions.</Text>
-    </View>
-  );
-}
+
 const styles = StyleSheet.create({
   keyboardToolbar: {
     alignItems: 'flex-end',
@@ -240,19 +242,18 @@ const styles = StyleSheet.create({
   keyboardDismiss: { minHeight: 44, paddingHorizontal: 18, justifyContent: 'center' },
   keyboardDismissText: { color: '#1b5149', fontSize: 14, fontWeight: '600' },
   screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 20, paddingBottom: 40, gap: 14 },
+  content: { padding: 16, paddingBottom: 24, gap: 10 },
   card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
+    backgroundColor: 'transparent',
+    borderBottomWidth: 1,
     borderColor: colors.border,
-    borderRadius: 10,
-    padding: 18,
-    gap: 12,
+    paddingVertical: 12,
+    gap: 10,
   },
   row: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10 },
   button: {
     minHeight: 46,
-    borderRadius: 6,
+    borderRadius: 2,
     backgroundColor: colors.primary,
     paddingHorizontal: 18,
     paddingVertical: 13,
@@ -268,7 +269,7 @@ const styles = StyleSheet.create({
     height: 47,
     borderWidth: 1,
     borderColor: '#cad6c4',
-    borderRadius: 6,
+    borderRadius: 2,
     paddingHorizontal: 13,
     paddingVertical: 10,
     backgroundColor: '#fff',
@@ -278,7 +279,7 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 13,
     paddingVertical: 9,
-    borderRadius: 6,
+    borderRadius: 2,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: '#fff',
@@ -286,14 +287,12 @@ const styles = StyleSheet.create({
   chipSelected: { borderColor: colors.primary, backgroundColor: '#eaf1e5' },
   chipText: { fontSize: 11, color: colors.muted },
   heading: {
-    fontSize: 30,
-    lineHeight: 36,
+    fontSize: 24,
+    lineHeight: 30,
     letterSpacing: -1,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.ink,
   },
   subtitle: { fontSize: 13, lineHeight: 21, color: colors.muted, marginTop: 8 },
   emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.ink },
-  notice: { backgroundColor: '#eaf0e5', paddingVertical: 8, paddingHorizontal: 12 },
-  noticeText: { fontSize: 9, fontWeight: '500', color: '#52654b', textAlign: 'center' },
 });

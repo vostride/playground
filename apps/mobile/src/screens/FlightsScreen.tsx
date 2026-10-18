@@ -42,7 +42,6 @@ import {
   Empty,
   Field,
   Heading,
-  PlaygroundNotice,
   Row,
   SafeModalArea,
   Screen,
@@ -298,7 +297,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
   const cancel = (booking: Booking) =>
     Alert.alert(
       'Cancel this trip?',
-      `Booking ${booking.reference} will be cancelled for every traveler. ${booking.fare === 'flex' ? 'Your Flex fare is fully refundable. A simulated refund will be recorded.' : booking.fare === 'standard' ? 'Your Standard fare receives a simulated travel credit less a $40 cancellation fee.' : 'Your Light fare is non-refundable. You won’t receive a refund.'}`,
+      `Booking ${booking.reference} will be cancelled for every traveler. ${booking.fare === 'flex' ? 'Your Flex fare is fully refundable.' : booking.fare === 'standard' ? 'Your Standard fare receives a travel credit less a $40 cancellation fee.' : 'Your Light fare is non-refundable. You won’t receive a refund.'}`,
       [
         { text: 'Keep my trip', style: 'cancel' },
         {
@@ -316,7 +315,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
   return (
     <>
       <Row style={styles.subnav}>
-        <Chip label="Explore flights" selected={view !== 'bookings'} onPress={() => go('search')} />
+        <Chip label="Flights" selected={view !== 'bookings'} onPress={() => go('search')} />
         <Chip label="My trips" selected={view === 'bookings'} onPress={() => go('bookings')} />
       </Row>
       <Screen
@@ -335,18 +334,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
       >
         {view === 'search' && (
           <>
-            <View style={styles.hero}>
-              <Text style={styles.eyebrow}>A LITTLE FURTHER. A LITTLE FREER.</Text>
-              <Text style={styles.heroTitle}>
-                Find your next{`\n`}
-                <Text style={{ color: '#739371' }}>somewhere.</Text>
-              </Text>
-              <Text style={styles.heroCopy}>
-                Good journeys begin with a little possibility. Find a flight, make a plan, and go.
-              </Text>
-              <View style={styles.sun} />
-              <Text style={styles.plane}>↗</Text>
-            </View>
+            <Heading title="Flight search" />
             <Card>
               <Row>
                 <Chip
@@ -418,34 +406,6 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
               </TouchableOpacity>
               <Button title="Search flights" onPress={runSearch} />
             </Card>
-            <Text style={styles.note}>
-              Clear prices. No surprises. All taxes and fees included.
-            </Text>
-            <Heading title="A change of scenery" subtitle="A few places we keep coming back to." />
-            {['LHR', 'LIS', 'HND'].map((code) => (
-              <TouchableOpacity
-                accessibilityRole="button"
-                key={code}
-                onPress={() => setSearch({ ...search, to: code })}
-              >
-                <Card>
-                  <Row>
-                    <Text style={styles.airportCode}>{code}</Text>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.medium}>{airport(code).city}</Text>
-                      <Text style={styles.small}>
-                        {code === 'LHR'
-                          ? 'Old streets. New stories.'
-                          : code === 'LIS'
-                            ? 'Follow the golden light.'
-                            : 'Every turn, something new.'}
-                      </Text>
-                    </View>
-                    <Text style={styles.muted}>→</Text>
-                  </Row>
-                </Card>
-              </TouchableOpacity>
-            ))}
           </>
         )}
         {view === 'results' && (
@@ -626,17 +586,16 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
         {view === 'fare' && outbound && (
           <>
             <Heading
-              title="A fare that fits your plans"
-              subtitle="Choose what matters for your journey. Your fare applies to all travelers and flights."
+              title="Choose your fare"
+              subtitle="Your fare applies to all travelers and flights."
             />
             {fares.map((f) => (
               <Card
                 key={f.id}
-                style={fare === f.id ? { borderColor: colors.primary, borderWidth: 2 } : {}}
+                style={fare === f.id ? { borderColor: colors.primary, borderBottomWidth: 2 } : {}}
               >
                 <Row>
                   <Text style={[styles.price, { flex: 1 }]}>{f.name}</Text>
-                  {f.id === 'standard' && <Text style={styles.eyebrow}>MOST POPULAR</Text>}
                 </Row>
                 <Text style={styles.price}>
                   {f.extra ? `+${money(f.extra)}` : 'Included'}{' '}
@@ -671,7 +630,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
         {view === 'seats' && seatFlight && (
           <>
             <Heading
-              title="Find your favorite seat"
+              title="Choose your seats"
               subtitle={`${seatLeg === 'outbound' ? 'Outbound' : 'Return'} · ${seatFlight.from} to ${seatFlight.to} · ${seatFlight.aircraft}. Select ${passengerCount} seat${passengerCount > 1 ? 's' : ''}.`}
             />
             <Row style={{ justifyContent: 'center' }}>
@@ -779,18 +738,19 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
               ))}
             </Row>
             <Heading
+              testID={checkoutStep === 2 ? 'flight-review-heading' : undefined}
               title={
                 checkoutStep === 0
-                  ? 'Who’s coming along?'
+                  ? 'Traveler details'
                   : checkoutStep === 1
-                    ? 'One step closer to takeoff.'
-                    : 'Ready for your next chapter?'
+                    ? 'Payment details'
+                    : 'Review booking'
               }
               subtitle={
                 checkoutStep === 0
                   ? 'Enter each traveler’s details as they appear on their travel document.'
                   : checkoutStep === 1
-                    ? 'This is a practice booking. Use the sample payment details below.'
+                    ? 'Enter your payment details.'
                     : 'Take a moment to check the details before you book.'
               }
             />
@@ -805,7 +765,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
               <Text style={styles.price}>Total {money(total)}</Text>
               <Text style={styles.small}>
                 {search.passengers} traveler{search.passengers > 1 ? 's' : ''} ·{' '}
-                {fares.find((f) => f.id === fare)?.name} · All taxes and fees included
+                {fares.find((f) => f.id === fare)?.name}
               </Text>
             </Card>
             {checkoutStep === 0 && (
@@ -851,14 +811,13 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                     value={email}
                     onChangeText={setEmail}
                   />
-                  <Text style={styles.small}>Use sample details. No email will be sent.</Text>
                 </Card>
               </>
             )}
             {checkoutStep === 1 && (
               <Card>
                 <Text style={styles.medium}>Payment details</Text>
-                <Text style={styles.body}>Sample card · no real payment</Text>
+                <Text style={styles.body}>Sample card</Text>
                 <Text style={styles.small}>
                   4242 4242 4242 4242 · Expiry 12/30 · Security code 123
                 </Text>
@@ -924,7 +883,7 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                 </Card>
                 <Card>
                   <Text style={styles.medium}>Payment</Text>
-                  <Text style={styles.body}>Sample Visa ending in 4242 · {payment.name}</Text>
+                  <Text style={styles.body}>Visa ending in 4242 · {payment.name}</Text>
                   <Text style={styles.medium}>Fare conditions</Text>
                   <Text style={styles.body}>
                     {fare === 'flex'
@@ -972,12 +931,9 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
             <View style={styles.confirmationMark}>
               <Text style={{ fontSize: 34, color: colors.primary }}>✓</Text>
             </View>
-            <Heading
-              title={`You’re going to ${airport(confirmed.outbound.to).city}.`}
-              subtitle="Your booking is confirmed. Let the looking-forward begin."
-            />
+            <Heading title="Booking confirmed" />
             <Card>
-              <Text style={styles.eyebrow}>BOOKING REFERENCE</Text>
+              <Text style={styles.label}>Booking reference</Text>
               <Text style={styles.reference}>{confirmed.reference}</Text>
               <Text style={styles.price}>
                 {confirmed.outbound.from} → {confirmed.outbound.to}
@@ -997,15 +953,11 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
               <Text style={styles.price}>Total {money(confirmed.total)}</Text>
             </Card>
             <Button title="Manage your booking" onPress={() => go('bookings')} />
-            <Text style={styles.note}>This booking exists only in your current session.</Text>
           </>
         )}
         {view === 'bookings' && (
           <>
-            <Heading
-              title="My trips"
-              subtitle="All your plans, in one place. View a trip, choose a seat, or change direction."
-            />
+            <Heading title="My trips" subtitle="View bookings, change seats, or cancel a trip." />
             <Field
               label="Find a booking"
               placeholder="Search by reference or destination"
@@ -1090,9 +1042,9 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
                   ) : (
                     <Text style={styles.small}>
                       {b.fare === 'flex'
-                        ? `Refund of ${money(b.total)} recorded for this practice booking.`
+                        ? `Refund of ${money(b.total)} recorded.`
                         : b.fare === 'standard'
-                          ? `Travel credit of ${money(Math.max(0, b.total - 40))} recorded for this practice booking.`
+                          ? `Travel credit of ${money(Math.max(0, b.total - 40))} recorded.`
                           : 'Cancelled under Light fare conditions. No refund.'}
                     </Text>
                   )}
@@ -1126,7 +1078,6 @@ export default function FlightsScreen({ route, bug }: MobileScreenProps) {
         onRequestClose={() => setPicker('')}
       >
         <SafeModalArea style={{ backgroundColor: colors.background }}>
-          <PlaygroundNotice />
           <View style={styles.pickerHeader}>
             <Text style={styles.pickerTitle}>
               {picker === 'from'
@@ -1308,36 +1259,6 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     backgroundColor: '#fff',
   },
-  hero: { paddingVertical: 15, position: 'relative', overflow: 'hidden', minHeight: 225 },
-  eyebrow: { fontSize: 8, fontWeight: '700', letterSpacing: 1.5, color: colors.primary },
-  heroTitle: {
-    fontSize: 46,
-    lineHeight: 49,
-    fontFamily: 'Georgia',
-    color: colors.ink,
-    letterSpacing: -2,
-    marginTop: 15,
-    zIndex: 1,
-  },
-  heroCopy: {
-    fontSize: 12,
-    lineHeight: 20,
-    color: colors.muted,
-    width: '80%',
-    marginTop: 16,
-    zIndex: 1,
-  },
-  sun: {
-    position: 'absolute',
-    right: 2,
-    top: 55,
-    height: 100,
-    width: 100,
-    borderRadius: 60,
-    backgroundColor: '#ead8b9',
-    opacity: 0.5,
-  },
-  plane: { position: 'absolute', right: 25, top: 42, fontSize: 75, color: '#7d9a7d' },
   searchField: {
     paddingVertical: 10,
     borderBottomWidth: 1,
@@ -1350,37 +1271,30 @@ const styles = StyleSheet.create({
   muted: { color: colors.muted, fontSize: 15 },
   body: { fontSize: 12, color: colors.ink, lineHeight: 20 },
   airportCode: { fontSize: 19, fontWeight: '600', color: colors.primary, minWidth: 50 },
-  note: {
-    fontSize: 10,
-    color: colors.muted,
-    textAlign: 'center',
-    lineHeight: 18,
-    marginVertical: 8,
-  },
   datePrice: {
     width: 74,
     gap: 7,
     alignItems: 'center',
     paddingVertical: 13,
-    borderRadius: 6,
-    borderWidth: 1,
+    borderRadius: 0,
+    borderBottomWidth: 1,
     borderColor: colors.border,
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
   },
-  datePriceSelected: { backgroundColor: colors.soft, borderColor: colors.primary },
+  datePriceSelected: { borderBottomWidth: 2, borderColor: colors.primary },
   time: { fontSize: 25, letterSpacing: -0.5, color: colors.ink },
   price: { fontSize: 22, fontWeight: '600', letterSpacing: -0.6, color: colors.ink },
   airplane: {
     paddingHorizontal: 12,
     paddingVertical: 28,
-    borderTopLeftRadius: 100,
-    borderTopRightRadius: 100,
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
     gap: 9,
   },
   seat: {
     height: 35,
     width: 35,
-    borderRadius: 5,
+    borderRadius: 2,
     borderWidth: 1,
     borderBottomWidth: 3,
     borderColor: '#aac09d',
@@ -1396,8 +1310,8 @@ const styles = StyleSheet.create({
   confirmationMark: {
     height: 75,
     width: 75,
-    borderRadius: 40,
-    backgroundColor: '#e4efdb',
+    borderRadius: 2,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
@@ -1407,17 +1321,17 @@ const styles = StyleSheet.create({
   status: {
     fontSize: 10,
     fontWeight: '600',
-    backgroundColor: colors.soft,
-    paddingHorizontal: 9,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 0,
     paddingVertical: 6,
-    borderRadius: 4,
+    borderRadius: 2,
   },
   error: {
     backgroundColor: '#fbece4',
     borderWidth: 1,
     borderColor: '#ebc9ba',
     padding: 15,
-    borderRadius: 5,
+    borderRadius: 2,
   },
   pickerHeader: {
     padding: 20,
@@ -1443,7 +1357,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
-    borderRadius: 4,
+    borderRadius: 2,
   },
   calendarSelected: { backgroundColor: colors.primary },
   calendarRange: { backgroundColor: colors.soft },

@@ -19,13 +19,8 @@ body {
   min-width: 320px;
 }
 header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 24px max(24px, calc((100vw - 880px) / 2));
+  padding: 18px max(24px, calc((100vw - 880px) / 2));
   border-bottom: 1px solid #2a3648;
-  background: #101722;
 }
 h1 {
   font-size: 20px;
@@ -33,42 +28,29 @@ h1 {
   letter-spacing: -0.025em;
   margin: 0;
 }
-p {
-  margin: 0;
-  color: #a7b4c7;
-  font-size: 13px;
-  font-weight: 500;
-}
 main {
   max-width: 928px;
-  margin: 40px auto;
+  margin: 20px auto;
   padding: 0 24px;
 }
 .apps {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
 }
 .app-link {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   min-width: 0;
-  padding: 24px;
-  border: 1px solid #2a3648;
-  border-radius: 10px;
-  background: #141c29;
+  padding: 16px 0;
+  border-bottom: 1px solid #2a3648;
   color: #edf2f7;
   text-decoration: none;
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 650;
-  transition:
-    background 150ms,
-    border-color 150ms;
+  transition: color 150ms;
 }
 .app-link:hover {
-  background: #1b2739;
-  border-color: #5d7191;
+  color: #a5c8fc;
 }
 .app-link:focus-visible {
   outline: 2px solid #7c9dff;
@@ -77,52 +59,23 @@ main {
 .symbol {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
-  border: 1px solid #33425b;
-  border-radius: 10px;
-}
-.shop {
-  background: #173c30;
-  border-color: #2e5e4d;
-}
-.flights {
-  background: #183549;
-  border-color: #305c7b;
-}
-.observability {
-  background: #33264a;
-  border-color: #594477;
-}
-.tasks {
-  background: #2e2b4b;
-  border-color: #514c7b;
 }
 .arrow {
   margin-left: auto;
   color: #a7b4c7;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 500;
 }
 @media (max-width: 620px) {
   header {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 6px;
-    padding: 20px;
+    padding: 16px;
   }
   main {
-    margin-top: 24px;
-    padding: 0 20px;
-  }
-  .apps {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-  }
-  .app-link {
-    padding: 20px;
-    font-size: 18px;
+    margin-top: 12px;
+    padding: 0 16px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

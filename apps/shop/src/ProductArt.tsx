@@ -124,9 +124,6 @@ export function ProductArt({
             >
               Komazon
             </text>
-            <text x="160" y="181" fill="#6b755e" textAnchor="middle" fontSize="5" letterSpacing="2">
-              GOOD THINGS, EVERY DAY.
-            </text>
           </>
         )}
         {art === 'tray' && (

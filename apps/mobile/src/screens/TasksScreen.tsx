@@ -34,7 +34,7 @@ import {
   type TasksState,
   type TaskStatus,
 } from '@playground/core/tasks';
-import { PlaygroundNotice, SafeModalArea, useSessionState, type MobileScreenProps } from '../ui';
+import { SafeModalArea, useSessionState, type MobileScreenProps } from '../ui';
 
 const priorityOptions: TaskPriority[] = ['low', 'medium', 'high', 'urgent'];
 const theme = {
@@ -135,7 +135,6 @@ function Sheet({
           />
           <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
-            <PlaygroundNotice />
             <View style={styles.sheetHeader}>
               <Text accessibilityRole="header" style={styles.sheetTitle}>
                 {title}
@@ -302,13 +301,7 @@ function DraggableTask({
           {task.labels.map((id) => {
             const label = TASK_LABELS.find((item) => item.id === id);
             return label ? (
-              <View
-                key={id}
-                style={[
-                  styles.taskLabel,
-                  { borderColor: `${label.color}70`, backgroundColor: `${label.color}12` },
-                ]}
-              >
+              <View key={id} style={styles.taskLabel}>
                 <Text style={[styles.labelText, { color: label.color }]}>●</Text>
                 <Text style={styles.labelText}>{label.name}</Text>
               </View>
@@ -407,7 +400,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
       if (state.boards.some((item) => item.id === id)) setBoardId(id);
     }
     if (route === 'empty') {
-      setFilters({ query: 'No seeded task matches this phrase' });
+      setFilters({ query: 'No matching task' });
     }
     if (route === 'error') setError(true);
   }, [route]);
@@ -630,7 +623,6 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
             <Text style={styles.newButtonText}>＋</Text>
           </Pressable>
         </View>
-        <Text style={styles.boardDescription}>{board.description}</Text>
         <View style={styles.headerBottom}>
           <View style={styles.row}>
             <Choice title="Board" selected={view === 'board'} onPress={() => setView('board')} />
@@ -717,10 +709,8 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
           maxToRenderPerBatch={12}
           ListEmptyComponent={
             <View style={styles.emptyColumn}>
-              <Text style={styles.emptyTitle}>A fresh start</Text>
-              <Text style={styles.emptyDetail}>
-                Add a task to give your next idea a place to grow.
-              </Text>
+              <Text style={styles.emptyTitle}>No tasks in this board</Text>
+              <Text style={styles.emptyDetail}>Create a task to get started.</Text>
               <TaskButton title="New task" onPress={() => setSheet('new')} />
             </View>
           }
@@ -829,7 +819,7 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
         </View>
       )}
       {sheet === 'boards' && (
-        <Sheet title="Find your next focus" onClose={() => setSheet(null)} scroll={false}>
+        <Sheet title="All boards" onClose={() => setSheet(null)} scroll={false}>
           <View style={styles.boardSearch}>
             <TextInput
               accessibilityLabel="Search boards"
@@ -1018,7 +1008,7 @@ function NewTaskSheet({
         submitBehavior="blurAndSubmit"
         autoFocus
         accessibilityLabel="Title"
-        placeholder="What needs to be done?"
+        placeholder="Task title"
         value={title}
         onChangeText={(value) => {
           setTitle(value);
@@ -1035,7 +1025,7 @@ function NewTaskSheet({
       <TextInput
         accessibilityLabel="Description"
         multiline
-        placeholder="Add details, context, or an idea…"
+        placeholder="Add a description…"
         value={description}
         onChangeText={setDescription}
         style={[styles.input, styles.multiline]}
@@ -1242,7 +1232,7 @@ function TaskDetail({
         value={description}
         onChangeText={setDescription}
         onEndEditing={(event) => onPatch({ ...draft(), description: event.nativeEvent.text })}
-        placeholder="Add a little context…"
+        placeholder="Add a description…"
         style={[styles.input, styles.multiline]}
       />
       <View style={styles.spreadRow}>
@@ -1316,7 +1306,6 @@ function TaskDetail({
           }}
         />
       </View>
-      <Text style={styles.detailNote}>Changes save automatically for this session.</Text>
       {canUndo && (
         <TaskButton
           testID="task-detail-undo"
@@ -1408,25 +1397,25 @@ function TaskCalendar({ value, onChange }: { value: string; onChange: (value: st
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.background },
-  header: { backgroundColor: '#fff', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 15 },
+  header: { backgroundColor: '#fff', paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10 },
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 8,
   },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   brandMark: {
     backgroundColor: theme.pale,
     width: 27,
     height: 27,
-    borderRadius: 6,
+    borderRadius: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   brandMarkText: { color: theme.purple, fontSize: 22 },
   brandText: { color: theme.ink, fontWeight: '700', fontSize: 17, letterSpacing: -0.5 },
-  browseButton: { padding: 8 },
+  browseButton: { padding: 8, minHeight: 44, justifyContent: 'center' },
   browseText: { color: theme.muted, fontSize: 11 },
   titleRow: {
     flexDirection: 'row',
@@ -1434,24 +1423,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  boardTitle: { color: theme.ink, fontSize: 26, fontWeight: '600', letterSpacing: -0.8, flex: 1 },
+  boardTitle: { color: theme.ink, fontSize: 24, fontWeight: '600', letterSpacing: -0.6, flex: 1 },
   newButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 7,
+    width: 44,
+    height: 44,
+    borderRadius: 2,
     backgroundColor: theme.purple,
     alignItems: 'center',
     justifyContent: 'center',
   },
   newButtonText: { color: '#fff', fontSize: 25, lineHeight: 28 },
-  boardDescription: {
-    color: theme.muted,
-    fontSize: 12,
-    lineHeight: 19,
-    marginTop: 10,
-    marginBottom: 20,
-  },
   headerBottom: {
+    marginTop: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1464,54 +1447,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingHorizontal: 18,
-    paddingVertical: 11,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: theme.border,
     backgroundColor: '#fefdfF',
   },
-  search: { flex: 1, fontSize: 12, color: theme.ink, paddingVertical: 8 },
+  search: { flex: 1, fontSize: 14, color: theme.ink, paddingVertical: 8, minHeight: 44 },
   filterButton: {
-    borderWidth: 1,
+    minHeight: 44,
+    justifyContent: 'center',
+    borderBottomWidth: 1,
     borderColor: theme.border,
-    borderRadius: 5,
+    borderRadius: 2,
     paddingHorizontal: 11,
     paddingVertical: 9,
   },
   filterText: { fontSize: 11, color: theme.muted },
-  undoButton: { width: 30, alignItems: 'center', paddingVertical: 4 },
+  undoButton: { width: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   undoText: { fontSize: 25, color: theme.purple },
-  boardColumns: { paddingHorizontal: 17, paddingTop: 19, paddingBottom: 15, gap: 15 },
+  boardColumns: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 12, gap: 16 },
   column: { width: 270 },
   columnHeading: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 14,
+    marginBottom: 0,
     paddingHorizontal: 4,
+    minHeight: 36,
+    borderBottomWidth: 1,
+    borderColor: theme.border,
   },
   statusDot: { width: 9, height: 9, borderRadius: 5 },
   columnTitle: { fontSize: 12, fontWeight: '600', color: theme.ink },
   columnCount: { fontSize: 11, color: theme.muted },
-  columnContent: { paddingBottom: 40, gap: 10 },
+  columnContent: { paddingBottom: 40, gap: 0 },
   taskCard: {
-    borderWidth: 1,
+    borderBottomWidth: 1,
     borderColor: theme.border,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 2,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
   },
-  cardPressable: { padding: 13, gap: 10 },
+  cardPressable: { paddingHorizontal: 4, paddingVertical: 10, gap: 6 },
   cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   taskId: { fontSize: 10, color: theme.muted, letterSpacing: 0.3 },
   pencil: { color: '#b4a5bf', fontSize: 16 },
   cardTitle: { fontSize: 14, fontWeight: '500', lineHeight: 21, color: theme.ink, minHeight: 42 },
   taskLabel: {
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
+    borderWidth: 0,
+    borderRadius: 0,
+    paddingHorizontal: 0,
+    paddingVertical: 2,
     flexDirection: 'row',
     gap: 5,
   },
@@ -1531,23 +1518,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarText: { fontSize: 9, color: '#5b5064', fontWeight: '600' },
-  addTask: { padding: 12 },
+  addTask: { padding: 12, minHeight: 44 },
   addTaskText: { fontSize: 12, color: theme.muted },
   emptyColumn: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 25,
     gap: 10,
-    borderWidth: 1,
-    borderStyle: 'dashed',
+    borderBottomWidth: 1,
     borderColor: theme.border,
-    borderRadius: 8,
   },
-  emptyTitle: { color: theme.ink, fontSize: 19, fontWeight: '600', textAlign: 'center' },
+  emptyTitle: { color: theme.ink, fontSize: 18, fontWeight: '600', textAlign: 'center' },
   emptyDetail: { color: theme.muted, fontSize: 12, lineHeight: 19, textAlign: 'center' },
   emptyHint: { color: theme.muted, fontSize: 10, lineHeight: 16, textAlign: 'center' },
   center: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 30 },
-  listContent: { padding: 17, gap: 12 },
+  listContent: { padding: 12, gap: 0 },
   dragPreview: {
     position: 'absolute',
     top: 0,
@@ -1556,7 +1541,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderWidth: 2,
     borderColor: '#b59bc9',
-    borderRadius: 8,
+    borderRadius: 2,
     backgroundColor: '#fff',
     elevation: 14,
     shadowColor: '#3b2450',
@@ -1573,7 +1558,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderColor: theme.border,
     borderWidth: 1,
-    borderRadius: 7,
+    borderRadius: 2,
     padding: 13,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1583,21 +1568,23 @@ const styles = StyleSheet.create({
   noticeText: { flex: 1, fontSize: 11, color: theme.muted },
   noticeUndo: { color: theme.purple, fontSize: 12 },
   button: {
-    minHeight: 43,
+    minHeight: 44,
     backgroundColor: theme.purple,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 6,
+    borderRadius: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
   buttonText: { fontSize: 12, fontWeight: '600', color: '#fff' },
   secondaryButton: { backgroundColor: '#fff', borderWidth: 1, borderColor: theme.border },
   choice: {
-    borderWidth: 1,
+    minHeight: 44,
+    justifyContent: 'center',
+    borderBottomWidth: 1,
     borderColor: theme.border,
     backgroundColor: '#fff',
-    borderRadius: 5,
+    borderRadius: 2,
     paddingHorizontal: 10,
     paddingVertical: 9,
   },
@@ -1610,8 +1597,8 @@ const styles = StyleSheet.create({
     maxHeight: '93%',
     minHeight: '55%',
     backgroundColor: '#fff',
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
     paddingBottom: 18,
     overflow: 'hidden',
   },
@@ -1619,13 +1606,13 @@ const styles = StyleSheet.create({
     width: 35,
     height: 4,
     backgroundColor: '#d6ccde',
-    borderRadius: 3,
+    borderRadius: 2,
     alignSelf: 'center',
     marginVertical: 10,
   },
   sheetHeader: {
-    paddingHorizontal: 22,
-    paddingVertical: 17,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1633,9 +1620,15 @@ const styles = StyleSheet.create({
     borderColor: theme.border,
   },
   sheetTitle: { fontSize: 20, fontWeight: '600', color: theme.ink, letterSpacing: -0.4 },
-  closeButton: { paddingHorizontal: 8 },
+  closeButton: {
+    paddingHorizontal: 8,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   closeText: { fontSize: 25, color: theme.muted },
-  sheetContent: { padding: 22, paddingBottom: 30, gap: 13 },
+  sheetContent: { padding: 16, paddingBottom: 20, gap: 10 },
   sectionLabel: {
     fontSize: 10,
     color: theme.muted,
@@ -1645,10 +1638,10 @@ const styles = StyleSheet.create({
   },
   fieldLabel: { fontSize: 12, color: theme.ink, fontWeight: '500' },
   input: {
-    borderWidth: 1,
+    borderBottomWidth: 1,
     borderColor: theme.border,
     backgroundColor: '#fefdfF',
-    borderRadius: 6,
+    borderRadius: 2,
     paddingHorizontal: 12,
     paddingVertical: 11,
     fontSize: 14,
@@ -1659,13 +1652,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#b39bc7',
     padding: 5,
-    borderRadius: 4,
+    borderRadius: 2,
     color: theme.ink,
     fontSize: 14,
   },
   multiline: { minHeight: 120, textAlignVertical: 'top', lineHeight: 21 },
   detailTitle: { fontSize: 21, fontWeight: '500', lineHeight: 29, minHeight: 80 },
-  boardSearch: { padding: 17 },
+  boardSearch: { padding: 16 },
   boardList: { paddingHorizontal: 16, paddingBottom: 35 },
   boardOption: {
     flexDirection: 'row',
@@ -1680,7 +1673,7 @@ const styles = StyleSheet.create({
     height: 37,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 7,
+    borderRadius: 2,
   },
   boardOptionTitle: { fontSize: 13, color: theme.ink, marginBottom: 5 },
   boardOptionDetail: { fontSize: 10, color: theme.muted },
@@ -1692,6 +1685,7 @@ const styles = StyleSheet.create({
   },
   checklistRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   checklistToggle: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
@@ -1703,7 +1697,7 @@ const styles = StyleSheet.create({
     width: 19,
     borderWidth: 1,
     borderColor: '#b9a6c7',
-    borderRadius: 4,
+    borderRadius: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1712,24 +1706,17 @@ const styles = StyleSheet.create({
   checklistText: { flex: 1, fontSize: 12, lineHeight: 19, color: theme.muted },
   completedText: { textDecorationLine: 'line-through', color: '#ac9cb7' },
   textButton: { color: theme.purple, fontSize: 12, padding: 3 },
-  detailNote: {
-    color: theme.muted,
-    fontSize: 10,
-    lineHeight: 17,
-    textAlign: 'center',
-    marginTop: 10,
-  },
-  deleteButton: { alignItems: 'center', padding: 9 },
+  deleteButton: { alignItems: 'center', justifyContent: 'center', minHeight: 44, padding: 9 },
   error: { color: theme.danger, fontSize: 12 },
   deleteBox: {
     backgroundColor: '#fbf3f5',
-    borderRadius: 8,
+    borderRadius: 2,
     padding: 15,
     gap: 14,
     alignItems: 'center',
   },
-  calendar: { borderWidth: 1, borderColor: theme.border, borderRadius: 8, padding: 10 },
-  calendarArrow: { paddingHorizontal: 14, paddingVertical: 4 },
+  calendar: { borderTopWidth: 1, borderColor: theme.border, paddingVertical: 10 },
+  calendarArrow: { paddingHorizontal: 14, paddingVertical: 4, minHeight: 44, minWidth: 44 },
   calendarGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   calendarWeekday: {
     width: '14.2857%',
@@ -1740,10 +1727,10 @@ const styles = StyleSheet.create({
   },
   calendarCell: {
     width: '14.2857%',
-    height: 40,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 6,
+    borderRadius: 2,
   },
   calendarSelected: { backgroundColor: theme.purple },
   calendarDay: { fontSize: 13, color: theme.ink },

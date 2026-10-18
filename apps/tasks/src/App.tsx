@@ -159,8 +159,8 @@ function Modal({
       <DialogContent
         className={
           panel
-            ? 'task-panel top-[42px] bottom-0 left-auto right-0 flex h-[calc(100dvh-42px)] w-full max-w-[560px] translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-y-0 border-r-0 p-0 sm:max-w-[560px]'
-            : 'modal block max-h-[calc(100dvh-48px)] overflow-y-auto p-0 sm:max-w-[560px]'
+            ? 'task-panel top-[36px] bottom-0 left-auto right-0 flex h-[calc(100dvh-36px)] w-full max-w-[560px] translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-y-0 border-r-0 p-0 sm:max-w-[560px]'
+            : 'modal block max-h-[calc(100dvh-48px)] overflow-y-auto rounded-[2px] p-0 sm:max-w-[560px]'
         }
         aria-label={label}
         aria-describedby={undefined}
@@ -401,7 +401,7 @@ export default function App() {
         role="article"
         key={task.id}
         data-task-id={task.id}
-        className={`task-card gap-0 rounded-lg p-4 shadow-sm ${draggingId === task.id ? 'is-dragging' : ''} ${keyboardMove?.id === task.id ? 'is-lifted' : ''} ${dropTarget === task.id ? 'drop-before' : ''}`}
+        className={`task-card gap-0 ${draggingId === task.id ? 'is-dragging' : ''} ${keyboardMove?.id === task.id ? 'is-lifted' : ''} ${dropTarget === task.id ? 'drop-before' : ''}`}
         tabIndex={0}
         aria-label={`${task.id}: ${task.title}. ${task.status === 'done' ? 'Completed. ' : ''}Press Enter to open or Space to move.`}
         aria-describedby="drag-instructions"
@@ -485,7 +485,7 @@ export default function App() {
               <Badge
                 variant="outline"
                 key={id}
-                className="task-label rounded-md px-2 py-0.5 text-xs font-semibold"
+                className="task-label rounded-none border-0 px-0 py-0 text-xs font-medium"
                 style={{ '--label-color': label.color } as CSSProperties}
               >
                 <span />
@@ -737,12 +737,12 @@ export default function App() {
             </div>
             <div className="board-tabs">
               <Tabs value={view} onValueChange={(value) => setView(value as 'board' | 'list')}>
-                <TabsList aria-label="Board view" className="board-view-tabs">
-                  <TabsTrigger value="board" className="px-4 font-semibold">
+                <TabsList variant="line" aria-label="Board view" className="board-view-tabs">
+                  <TabsTrigger value="board" className="px-3 font-semibold">
                     <Columns3 size={16} />
                     Board
                   </TabsTrigger>
-                  <TabsTrigger value="list" className="px-4 font-semibold">
+                  <TabsTrigger value="list" className="px-3 font-semibold">
                     <List size={16} />
                     List
                   </TabsTrigger>
@@ -1308,7 +1308,7 @@ function TaskPanel({
         </label>
         <Textarea
           id="task-title"
-          className="panel-title min-h-0 border-transparent bg-transparent px-0 text-2xl font-bold leading-snug shadow-none md:text-2xl"
+          className="panel-title min-h-0 border-transparent bg-transparent px-0 text-xl font-semibold leading-snug shadow-none md:text-xl"
           rows={2}
           value={title}
           onChange={(event) => setTitle(event.target.value)}
@@ -1433,7 +1433,7 @@ function TaskPanel({
                           <Badge
                             variant="outline"
                             key={id}
-                            className="task-label rounded-md px-2 py-0.5 text-xs font-semibold"
+                            className="task-label rounded-none border-0 px-0 py-0 text-xs font-medium"
                             style={{ '--label-color': label.color } as CSSProperties}
                           >
                             <span />
@@ -1558,10 +1558,6 @@ function TaskPanel({
             </Button>
           </form>
         </section>
-        <div className="detail-note">
-          <Check size={13} />
-          Changes save automatically for this session.
-        </div>
       </div>
       <div className="panel-footer">
         {confirmDelete ? (

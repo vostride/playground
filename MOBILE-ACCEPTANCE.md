@@ -2,7 +2,7 @@
 
 Run on the GitHub-built APK and zipped iOS simulator app. TypeScript/Metro checks do not prove native runtime behavior. These checks are required before declaring a mobile release verified.
 
-- Fresh launch: Playground opens without a network connection, permission prompt or sign-in requirement. Every screen and modal shows the playground notice.
+- Fresh launch: Playground opens without a network connection, permission prompt or sign-in requirement. Screens open on product functions without promotional or simulation notices.
 - Navigation: open each of Komazon, Looking.com, Brello and PepaPog from Home. Exercise bottom tabs, back navigation, Android hardware back and the offline WebView guide.
 - Deep links: open `playground://shop`, `playground://flights`, `playground://tasks`, `playground://observability`; also open each app's nested routes and an explicit `?bug=<id>` link.
 - Komazon: sign in with the printed demo credentials, find Everyday Ceramic Mug, add two, verify $48 subtotal/$53 standard total. Reject incomplete shipping. Complete delivery/review, place order, view orders, cancel. Pull to refresh the catalog, scroll through the long list, operate detail sheets and fields with the keyboard open.

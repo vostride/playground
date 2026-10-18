@@ -34,7 +34,7 @@ import {
   type Trace,
   type TraceSpan,
 } from '@playground/core/observability';
-import { PlaygroundNotice, SafeModalArea, useSessionState, type MobileScreenProps } from '../ui';
+import { SafeModalArea, useSessionState, type MobileScreenProps } from '../ui';
 
 type Page = 'overview' | 'logs' | 'traces' | 'monitors';
 const pages: { key: Page; label: string }[] = [
@@ -205,7 +205,6 @@ function Sheet({
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <PlaygroundNotice />
           <View style={s.sheetHeader}>
             <Text accessibilityRole="header" style={s.sheetTitle}>
               {title}
@@ -370,11 +369,6 @@ export default function ObservabilityScreen({ route, bug, navigate }: MobileScre
           <Text style={s.brand}>
             PepaPog<Text style={{ color: '#d1a35f' }}>.</Text>
           </Text>
-          <Text style={s.workspace}>ACME ENGINEERING</Text>
-        </View>
-        <View style={s.region}>
-          <View style={s.liveDot} />
-          <Text style={s.regionText}>US East</Text>
         </View>
       </View>
       <View>
@@ -421,7 +415,7 @@ export default function ObservabilityScreen({ route, bug, navigate }: MobileScre
       {loading ? (
         <View style={s.empty}>
           <ActivityIndicator color="#b58a49" />
-          <Text style={s.description}>Loading workspace telemetry…</Text>
+          <Text style={s.description}>Loading telemetry…</Text>
         </View>
       ) : page === 'overview' ? (
         <ScrollView
@@ -430,10 +424,7 @@ export default function ObservabilityScreen({ route, bug, navigate }: MobileScre
           }
           contentContainerStyle={s.content}
         >
-          <Title
-            title="Production overview"
-            detail="A clear view of application health, from requests to resources."
-          />
+          <Title title="Production overview" />
           <Select
             label="Environment"
             value={environment}
@@ -596,7 +587,6 @@ function MobileOverview({
           </Pressable>
         ))}
       </Panel>
-      <Text style={s.footnote}>Simulated telemetry · October 18, 2026 · UTC</Text>
     </>
   );
 }
@@ -671,7 +661,7 @@ function MobileLogs({
         contentContainerStyle={s.listContent}
         ListHeaderComponent={
           <View style={s.listHeader}>
-            <Title title="Log explorer" detail="Search events across your services." />
+            <Title title="Log explorer" />
             <Field
               label="Log search query"
               value={draft}
@@ -722,9 +712,6 @@ function MobileLogs({
             detail="Try a wider time range or remove a filter."
             clear={clear}
           />
-        }
-        ListFooterComponent={
-          <Text style={s.footnote}>6,000 seeded events · Scroll to explore</Text>
         }
       />
       {filters && (
@@ -866,7 +853,7 @@ function MobileTraces({
         contentContainerStyle={s.listContent}
         ListHeaderComponent={
           <View style={s.listHeader}>
-            <Title title="Distributed traces" detail="Follow every request across your services." />
+            <Title title="Distributed traces" />
             <Field
               label="Search traces"
               value={query}
@@ -936,7 +923,6 @@ function MobileTraces({
             }}
           />
         }
-        ListFooterComponent={<Text style={s.footnote}>240 deterministic distributed traces</Text>}
       />
       {selected && (
         <Sheet title="Trace details" onClose={() => setSelected(null)}>
@@ -1101,21 +1087,17 @@ function MobileMonitors({
     }, 200);
   }
   function remove(rule: AlertRule) {
-    Alert.alert(
-      'Delete monitor?',
-      `“${rule.name}” will stop evaluating and be removed from this session.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete monitor',
-          style: 'destructive',
-          onPress: () => {
-            setMonitors((old) => old.filter((item) => item.id !== rule.id));
-            notify('Monitor deleted.');
-          },
+    Alert.alert('Delete monitor?', `“${rule.name}” will be deleted.`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete monitor',
+        style: 'destructive',
+        onPress: () => {
+          setMonitors((old) => old.filter((item) => item.id !== rule.id));
+          notify('Monitor deleted.');
         },
-      ],
-    );
+      },
+    ]);
   }
   return (
     <>
@@ -1126,10 +1108,7 @@ function MobileMonitors({
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
           <View style={s.listHeader}>
-            <Title
-              title="Monitors"
-              detail="Keep the right people informed when systems need attention."
-            />
+            <Title title="Monitors" />
             <View style={s.monitorStats}>
               {['ok', 'warning', 'alert', 'paused'].map((status) => (
                 <View key={status} style={s.monitorStat}>
@@ -1309,9 +1288,7 @@ function MobileMonitors({
                 error={errors.recipients}
                 placeholder="oncall@example.test"
               />
-              <Text style={s.smallLabel}>
-                Separate addresses with commas. Notifications are simulated.
-              </Text>
+              <Text style={s.smallLabel}>Separate addresses with commas.</Text>
               <Field
                 label="Message (optional)"
                 value={editing.message}
@@ -1398,14 +1375,14 @@ const s = StyleSheet.create({
     borderBottomColor: '#e7ebf0',
   },
   liveControl: { alignItems: 'center', gap: 3 },
-  content: { padding: 20, gap: 18, paddingBottom: 35 },
-  title: { color: '#3b485b', fontSize: 26, fontWeight: '600', letterSpacing: -0.7, lineHeight: 33 },
+  content: { padding: 16, gap: 12, paddingBottom: 24 },
+  title: { color: '#3b485b', fontSize: 24, fontWeight: '600', letterSpacing: -0.7, lineHeight: 30 },
   description: { color: '#8c9aae', fontSize: 12, lineHeight: 20 },
   action: {
-    minHeight: 42,
+    minHeight: 44,
     borderWidth: 1,
     borderColor: '#dfe5ed',
-    borderRadius: 5,
+    borderRadius: 2,
     paddingHorizontal: 13,
     paddingVertical: 11,
     alignItems: 'center',
@@ -1416,11 +1393,12 @@ const s = StyleSheet.create({
   actionDanger: { backgroundColor: '#b86f75', borderColor: '#b86f75' },
   actionText: { color: '#8695a9', fontSize: 11, fontWeight: '600' },
   panel: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
+    backgroundColor: 'transparent',
+    borderBottomWidth: 1,
     borderColor: '#e2e7ef',
-    borderRadius: 7,
-    padding: 17,
+    borderRadius: 0,
+    paddingVertical: 12,
+    paddingHorizontal: 0,
     gap: 10,
   },
   panelTitle: { color: '#6f7e93', fontSize: 13, fontWeight: '600' },
@@ -1431,7 +1409,7 @@ const s = StyleSheet.create({
     height: 46,
     borderWidth: 1,
     borderColor: '#dce3ed',
-    borderRadius: 5,
+    borderRadius: 2,
     paddingHorizontal: 12,
     paddingVertical: 10,
     backgroundColor: '#fff',
@@ -1439,10 +1417,10 @@ const s = StyleSheet.create({
     fontSize: 12,
   },
   select: {
-    minHeight: 42,
+    minHeight: 44,
     borderWidth: 1,
     borderColor: '#dce3ed',
-    borderRadius: 5,
+    borderRadius: 2,
     paddingHorizontal: 12,
     paddingVertical: 10,
     backgroundColor: '#fff',
@@ -1481,7 +1459,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 7,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 2,
     borderWidth: 1,
   },
   chevron: { color: '#b1bbc8', fontSize: 20 },
@@ -1493,14 +1471,15 @@ const s = StyleSheet.create({
     lineHeight: 16,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  listContent: { padding: 20, paddingBottom: 35 },
+  listContent: { padding: 16, paddingBottom: 24 },
   listHeader: { gap: 14, marginBottom: 17 },
   logRow: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
+    backgroundColor: 'transparent',
+    borderBottomWidth: 1,
     borderColor: '#e5eaf1',
-    borderRadius: 5,
-    padding: 12,
+    borderRadius: 0,
+    paddingVertical: 12,
+    paddingHorizontal: 0,
     gap: 10,
     marginBottom: 7,
     minHeight: 86,
@@ -1533,7 +1512,7 @@ const s = StyleSheet.create({
     borderBottomColor: '#e5eaf1',
   },
   sheetTitle: { fontSize: 15, fontWeight: '600', color: '#7d8da4' },
-  sheetContent: { padding: 20, gap: 17, paddingBottom: 40 },
+  sheetContent: { padding: 16, gap: 12, paddingBottom: 28 },
   option: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1542,7 +1521,7 @@ const s = StyleSheet.create({
     borderColor: '#e1e7f0',
     backgroundColor: '#fff',
     padding: 16,
-    borderRadius: 5,
+    borderRadius: 2,
   },
   optionSelected: { borderColor: '#c8ae86', backgroundColor: '#fbf8f2' },
   optionText: { fontSize: 13, color: '#8192aa' },
@@ -1563,11 +1542,12 @@ const s = StyleSheet.create({
   },
   traceRow: {
     gap: 12,
-    padding: 15,
-    backgroundColor: '#fff',
-    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 0,
+    backgroundColor: 'transparent',
+    borderBottomWidth: 1,
     borderColor: '#e1e7ef',
-    borderRadius: 6,
+    borderRadius: 0,
     marginBottom: 10,
   },
   traceResource: {
@@ -1583,7 +1563,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 5,
     borderBottomWidth: 1,
     borderBottomColor: '#edf1f5',
-    borderRadius: 4,
+    borderRadius: 2,
   },
   spanName: {
     color: '#8c9db4',
@@ -1601,11 +1581,12 @@ const s = StyleSheet.create({
   },
   monitorStats: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderWidth: 1,
+    backgroundColor: 'transparent',
+    borderBottomWidth: 1,
     borderColor: '#e3e9f1',
-    borderRadius: 6,
-    padding: 16,
+    borderRadius: 0,
+    paddingVertical: 12,
+    paddingHorizontal: 0,
   },
   monitorStat: { flex: 1, alignItems: 'center', gap: 7 },
   monitorStatValue: { fontSize: 24, color: '#8293ab', fontWeight: '500' },
@@ -1618,7 +1599,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#f0dfe3',
     padding: 13,
-    borderRadius: 5,
+    borderRadius: 2,
     fontSize: 11,
     lineHeight: 18,
   },
@@ -1633,7 +1614,7 @@ const s = StyleSheet.create({
     backgroundColor: '#edf4ef',
     borderWidth: 1,
     borderColor: '#d5e4d9',
-    borderRadius: 6,
+    borderRadius: 2,
     padding: 14,
     gap: 12,
   },

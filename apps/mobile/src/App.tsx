@@ -27,7 +27,6 @@ import {
   colors,
   Heading,
   KeyboardDismissButton,
-  PlaygroundNotice,
   resetSession,
   Row,
   SafeModalArea,
@@ -39,9 +38,7 @@ const apps = [
     id: 'shop' as const,
     logo: require('./assets/brands/shop.png'),
     name: 'Komazon',
-    category: 'THE EVERYDAY, CONSIDERED',
     symbol: 'f',
-    description: 'Thoughtful things for living well.',
     color: '#516347',
     tint: '#e4eadc',
   },
@@ -49,9 +46,7 @@ const apps = [
     id: 'flights' as const,
     logo: require('./assets/brands/flights.png'),
     name: 'Looking.com',
-    category: 'YOUR NEXT SOMEWHERE',
     symbol: '↗',
-    description: 'Good journeys start here.',
     color: '#1b5149',
     tint: '#dce8e0',
   },
@@ -59,9 +54,7 @@ const apps = [
     id: 'tasks' as const,
     logo: require('./assets/brands/tasks.png'),
     name: 'Brello',
-    category: 'A LITTLE MORE IN SYNC',
     symbol: '▥',
-    description: 'Make room for your next idea.',
     color: '#85583d',
     tint: '#f0e5d6',
   },
@@ -69,9 +62,7 @@ const apps = [
     id: 'observability' as const,
     logo: require('./assets/brands/observability.png'),
     name: 'PepaPog',
-    category: 'SEE THE WHOLE PICTURE',
     symbol: 'v',
-    description: 'A clear view of your systems.',
     color: '#5a568d',
     tint: '#e7e5f2',
   },
@@ -95,8 +86,7 @@ const bugDefinitions: Record<string, { id: string; label: string }[]> = {
   ],
 };
 type Location = { app: AppId; route: string };
-const helpHtml =
-  '<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><style>body{font:15px -apple-system,BlinkMacSystemFont,sans-serif;color:#233a35;background:#f7f8f4;padding:24px;line-height:1.7}h1{font-size:32px;line-height:1.2;letter-spacing:-1px}h2{font-size:18px;margin-top:30px}.pill{font-size:10px;letter-spacing:1px;background:#e7eee0;padding:10px;border-radius:5px}code{background:#e7eee0;padding:3px 6px}</style></head><body><div class="pill">PLAYGROUND · ALL DATA IS SIMULATED</div><h1>A place to try things.</h1><p>Four complete products, one self-contained playground. Search a flight, check out a cart, move a task, or follow a trace.</p><h2>Make yourself at home</h2><p>Everything works on your device. No accounts are created, no emails are sent, and no payments are made. Sample sign-in and payment details appear where you need them.</p><h2>Start fresh</h2><p>Use Test controls to reset the session or enable a labelled deliberate bug. Normal flows run with all bugs disabled.</p><h2>Go straight there</h2><p>Open <code>playground://shop</code>, <code>playground://flights</code>, <code>playground://tasks</code>, or <code>playground://observability</code>.</p><p>This guide is bundled locally and displayed in a native WebView. It makes no network requests.</p></body></html>';
+const helpHtml = `<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><style>body{font:15px -apple-system,BlinkMacSystemFont,sans-serif;color:#233a35;background:#f7f8f4;padding:16px;line-height:1.6}h1{font-size:24px;line-height:1.25}h2{font-size:18px;margin-top:20px;padding-top:16px;border-top:1px solid #dfe5dc}code{font-size:12px}</style></head><body><h1>Navigation</h1><p>Choose an app from Home or use the bottom tabs. Use the back button to return to the previous screen.</p><h2>Session controls</h2><p>Open Test controls to reset changes or enable a deliberate bug. Bugs are off by default.</p><h2>Direct links</h2><p><code>playground://shop</code><br><code>playground://flights</code><br><code>playground://tasks</code><br><code>playground://observability</code></p></body></html>`;
 export default function App() {
   const [stack, setStack] = useState<Location[]>([{ app: 'home', route: '' }]),
     [bugs, setBugs] = useState<Record<string, string>>({}),
@@ -154,7 +144,7 @@ export default function App() {
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <SafeAreaView style={styles.safe}>
         <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
-        <PlaygroundNotice />
+
         <View style={styles.header}>
           <TouchableOpacity
             accessibilityRole="button"
@@ -190,13 +180,6 @@ export default function App() {
         <View style={{ flex: 1 }} key={session}>
           {current.app === 'home' ? (
             <Screen>
-              <View style={styles.homeIntro}>
-                <Text style={styles.eyebrow}>FOUR PRODUCTS. ENDLESS POSSIBILITIES.</Text>
-                <Heading
-                  title="Make yourself at home."
-                  subtitle="A collection of real-feeling apps, made for exploring, practicing, and putting things to the test."
-                />
-              </View>
               {apps.map((app) => (
                 <TouchableOpacity
                   key={app.id}
@@ -209,21 +192,17 @@ export default function App() {
                     <Image source={app.logo} style={{ width: 31, height: 31 }} accessible={false} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.appCategory}>{app.category}</Text>
                     <Text style={styles.appName}>{app.name}</Text>
-                    <Text style={styles.appDescription}>{app.description}</Text>
                   </View>
                   <Text style={styles.arrow}>›</Text>
                 </TouchableOpacity>
               ))}
               <Button
-                title="A quick guide to the playground"
+                title="Help"
+                testID="button-a-quick-guide-to-the-playground"
                 variant="secondary"
                 onPress={() => setGuide(true)}
               />
-              <Text style={styles.localNote}>
-                Everything stays on your device. Fresh sessions start with the same data.
-              </Text>
             </Screen>
           ) : current.app === 'shop' ? (
             <ShopScreen route={current.route} bug={bugs.shop || ''} navigate={navigate} />
@@ -287,7 +266,6 @@ export default function App() {
           onRequestClose={() => setControls(false)}
         >
           <SafeModalArea style={styles.safe}>
-            <PlaygroundNotice />
             <Screen>
               <Heading
                 title="Test controls"
@@ -324,9 +302,7 @@ export default function App() {
                   setControls(false);
                 }}
               />
-              <Text style={styles.localNote}>
-                Reset clears changes in all four apps and restores the seeded sample data.
-              </Text>
+              <Text style={styles.localNote}>Reset clears changes in every app.</Text>
               <Button
                 title="Close controls"
                 variant="secondary"
@@ -337,9 +313,8 @@ export default function App() {
         </Modal>
         <Modal visible={guide} animationType="slide" onRequestClose={() => setGuide(false)}>
           <SafeModalArea style={styles.safe}>
-            <PlaygroundNotice />
             <View style={styles.header}>
-              <Text style={styles.headerTitle}>A quick guide</Text>
+              <Text style={styles.headerTitle}>Help</Text>
               <Button title="Close" variant="secondary" onPress={() => setGuide(false)} />
             </View>
             <WebView
@@ -362,8 +337,8 @@ export default function App() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   header: {
-    height: 62,
-    paddingHorizontal: 20,
+    height: 54,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -375,32 +350,22 @@ const styles = StyleSheet.create({
   controlsLabel: { fontSize: 10, color: colors.muted },
   bugBanner: { backgroundColor: '#fff0db', paddingVertical: 7, paddingHorizontal: 15 },
   bugText: { fontSize: 10, color: '#866022' },
-  homeIntro: { marginTop: 13, marginBottom: 2 },
-  eyebrow: {
-    fontSize: 9,
-    fontWeight: '600',
-    letterSpacing: 1.1,
-    color: colors.primary,
-    marginBottom: 14,
-  },
   appCard: {
-    padding: 18,
-    borderRadius: 10,
-    borderWidth: 1,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
     borderColor: colors.border,
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
   },
   appIcon: {
-    height: 66,
-    width: 59,
-    borderRadius: 8,
+    height: 40,
+    width: 40,
+    borderRadius: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  appCategory: { fontSize: 7, letterSpacing: 1, fontWeight: '600', color: colors.muted },
   appName: {
     fontSize: 21,
     fontWeight: '600',
@@ -408,7 +373,6 @@ const styles = StyleSheet.create({
     color: colors.ink,
     marginVertical: 5,
   },
-  appDescription: { fontSize: 11, color: colors.muted, lineHeight: 17 },
   arrow: { fontSize: 28, color: '#96a18f' },
   localNote: {
     fontSize: 11,

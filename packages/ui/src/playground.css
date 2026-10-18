@@ -7,8 +7,8 @@
     justify-content: space-between;
     gap: 8px 20px;
     flex-wrap: wrap;
-    min-height: 42px;
-    padding: 4px 28px;
+    min-height: 36px;
+    padding: 2px 24px;
     color: #d1dbea;
     background: #090e16;
     border-bottom: 1px solid #273244;
@@ -17,25 +17,12 @@
       Inter,
       sans-serif;
   }
-  .pg-dot {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    margin-right: 8px;
-    background: #50d3ad;
-    box-shadow: 0 0 0 3px #50d3ad16;
-  }
-  .pg-muted {
-    color: #a7b4c7;
-    font-weight: 450;
-  }
   .pg-tools {
     display: flex;
     align-items: center;
     gap: 8px;
   }
-  .pg-tools a {
+  .pg-home {
     padding: 5px 8px;
     color: #d1dbea;
     text-decoration: none;
@@ -45,7 +32,7 @@
     font-size: 12px;
   }
   .pg-menu {
-    padding: 28px;
+    padding: 20px;
   }
   .pg-menu p {
     color: #acb9cc;
@@ -62,7 +49,7 @@
     width: 100%;
     padding: 10px 12px;
     border: 1px solid #344258;
-    border-radius: 7px;
+    border-radius: 2px;
     background: #101824;
     color: #edf2f7;
   }
@@ -79,7 +66,7 @@
     display: inline-block;
     padding: 3px 7px;
     margin-top: 9px;
-    border-radius: 4px;
+    border-radius: 2px;
     background: #233045;
     color: #a5c8fc;
     font-size: 12px;
@@ -95,11 +82,8 @@
   }
   @media (max-width: 600px) {
     .pg-banner {
-      padding: 4px 12px;
+      padding: 2px 12px;
       gap: 4px;
-    }
-    .pg-muted {
-      display: none;
     }
     .pg-tools {
       gap: 2px;
