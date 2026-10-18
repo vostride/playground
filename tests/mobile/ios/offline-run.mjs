@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { createServer, get } from 'node:http';
 import {
   appendFileSync,
+  copyFileSync,
   existsSync,
   lstatSync,
   mkdirSync,
@@ -252,6 +253,7 @@ export async function runOffline(device) {
     const runs = readdirSync(products).filter((name) => name.endsWith('.xctestrun'));
     if (runs.length !== 1) throw new Error('Expected one prebuilt xctestrun file.');
     const runFile = join(products, runs[0]);
+    copyFileSync(runFile, join(directory, 'generated.xctestrun'));
 
     report.mainRules = (await pf(['-s', 'rules'])).stdout;
     assertMainRules(report.mainRules);
@@ -403,8 +405,10 @@ export async function runOffline(device) {
     };
     writeFileSync(hostInfo, JSON.stringify(hostProperties));
     await required('/usr/bin/plutil', ['-convert', 'binary1', hostInfo]);
+    copyFileSync(hostInfo, join(directory, 'test-host-Info.plist'));
     writeFileSync(runFile, JSON.stringify(prepared.value));
     await required('/usr/bin/plutil', ['-convert', 'xml1', runFile]);
+    copyFileSync(runFile, join(directory, 'prepared.xctestrun'));
     const result = join(directory, 'offline.xcresult');
     report.resultBundle = result;
     report.test = await execute(
