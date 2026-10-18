@@ -95,8 +95,34 @@ appId: dev.vostride.playground
 - assertVisible:
     id: shop-tab-cart
     selected: true
+# Reselecting the current tab must not add a duplicate Back-stack entry.
+- tapOn:
+    id: shop-tab-cart
+- assertVisible: '^Your bag [(]0[)]$'
+- tapOn:
+    id: navigation-back
+- assertVisible:
+    id: field-search-products
+- assertVisible:
+    id: shop-tab-catalog
+    selected: true
 - tapOn:
     id: shop-tab-orders
+- assertVisible: '^Your orders$'
+- assertVisible: '^Sign in to see your orders$'
+- assertVisible:
+    id: shop-tab-orders
+    selected: true
+# Authentication stays in the Orders context and Back restores that page.
+- tapOn:
+    id: button-sign-in-to-see-your-orders
+- assertVisible:
+    id: shop-signin-heading
+- assertVisible:
+    id: shop-tab-orders
+    selected: true
+- tapOn:
+    id: navigation-back
 - assertVisible: '^Your orders$'
 - assertVisible: '^Sign in to see your orders$'
 - assertVisible:

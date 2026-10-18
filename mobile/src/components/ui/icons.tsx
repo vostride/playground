@@ -11,6 +11,7 @@ const paths = {
   chevronRight: 'm9 5 7 7-7 7',
   arrowLeft: 'M20 12H4m6-6-6 6 6 6',
   arrowRight: 'M4 12h16m-6-6 6 6-6 6',
+  arrowUpRight: 'M7 17 17 7M7 7h10v10',
   plus: 'M12 5v14M5 12h14',
   check: 'm5 12 4 4L19 6',
   x: 'm6 6 12 12M6 18 18 6',

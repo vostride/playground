@@ -17,8 +17,15 @@
 body {
   margin: 0;
   min-width: 320px;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
 }
 header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 18px max(24px, calc((100vw - 880px) / 2));
   border-bottom: 1px solid #2a3648;
 }
@@ -29,6 +36,7 @@ h1 {
   margin: 0;
 }
 main {
+  width: 100%;
   max-width: 928px;
   margin: 20px auto;
   padding: 0 24px;
@@ -52,7 +60,9 @@ main {
 .app-link:hover {
   color: #a5c8fc;
 }
-.app-link:focus-visible {
+.app-link:focus-visible,
+.agent-banner:focus-visible,
+footer a:focus-visible {
   outline: 2px solid #7c9dff;
   outline-offset: 4px;
 }
@@ -69,6 +79,44 @@ main {
   font-size: 20px;
   font-weight: 500;
 }
+.agent-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid #2a3648;
+  color: #a7b4c7;
+  text-decoration: none;
+}
+.agent-banner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+}
+.agent-banner img {
+  display: block;
+  object-fit: contain;
+}
+.agent-banner:hover,
+footer a:hover {
+  color: #edf2f7;
+}
+footer {
+  width: 100%;
+  max-width: 928px;
+  margin: auto auto 0;
+  padding: 20px 24px;
+}
+footer a {
+  color: #a7b4c7;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
 @media (max-width: 620px) {
   header {
     padding: 16px;
@@ -76,6 +124,9 @@ main {
   main {
     margin-top: 12px;
     padding: 0 16px;
+  }
+  footer {
+    padding: 16px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

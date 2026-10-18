@@ -25,7 +25,9 @@ Komazon retains a responsive product grid with flat tiles and no enclosing card 
 Brello’s draggable tasks use compact cards with subtle fills, thin borders and 2px corners; its columns and shell stay flat.
 Open directly on the catalog, flight search, metrics dashboard, or task board. The directory is
 an app launcher with names and logos. Omit marketing heroes, slogans, welcome copy, and decorative
-introductory sections. Looking's calendar supports any valid past or future date, with direct
+introductory sections. The web and mobile launchers include a compact agent-qa banner and
+a “by Vostride” footer linking to `https://vostride.com/`, as requested by the owner.
+Looking's calendar supports any valid past or future date, with direct
 date entry and month/year navigation.
 
 | App | Path | Inspired by | What it exercises |
@@ -41,6 +43,13 @@ One bare React Native app called Playground: a super app whose home screen opens
 Looking, Brello, PepaPog and Komazon. Together they cover tab and stack navigation, forms with the
 keyboard, date and option pickers, switches, bottom sheets and modals, long lists, pull to refresh,
 drag and drop by touch, gestures, a WebView screen, and a deep link into each flow.
+
+Use a compact dark interface with readable typography and locally owned shadcn-style
+native components. Each product has its own bottom tabs, such as Komazon's Shop,
+Cart, Orders and Profile; the header app chooser switches between products.
+Playground's app icon is a cyan P formed from Vostride's original spiral and a
+straight stem, following the supplied sketch. Bundle its vector and raster assets
+locally, including Android adaptive/themed icons and the iOS icon catalog.
 
 | Platform | Form | Where |
 |---|---|---|
@@ -76,7 +85,9 @@ drag and drop by touch, gestures, a WebView screen, and a deep link into each fl
    Login credentials are printed on the page.
 4. **Nothing hidden.** Everything the apps need ships with them: fonts, icons, images and data. No
    analytics, trackers or outside network calls. The mobile app asks for no permissions.
-5. **Product-focused screens.** Show only functional product copy and controls. Omit promotional introductions and simulation disclaimers. Web pages remain `noindex`.
+   Launcher brand links open the external browser only after the user selects them;
+   they are never fetched or prefetched by the apps.
+5. **Product-focused screens.** Show only functional product copy and controls. Apart from the requested agent-qa launcher banner and Vostride attribution, omit promotional introductions and simulation disclaimers. Web pages remain `noindex`.
    Bot challenges are off, because automated agents are the intended visitors.
 6. **Stable.** Released names, paths, texts and flows never change in place, because people's tests
    depend on them. The repo keeps a list of what has been released, and the site check walks it. A

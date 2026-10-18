@@ -74,6 +74,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [afterSignIn, setAfterSignIn] = useState('catalog');
   const current = route || 'catalog';
+  const activeRoute = current === 'signin' ? afterSignIn : current;
   const totals = cartTotals(state.cart, delivery, bug);
   const count = state.cart.reduce((n, i) => n + i.quantity, 0);
   const filtered = useMemo(() => {
@@ -769,13 +770,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
           { id: 'profile', label: 'Profile', icon: 'user', testID: 'shop-tab-profile' },
         ]}
         active={
-          current === 'signin'
-            ? 'profile'
-            : current === 'checkout'
-              ? 'cart'
-              : current === 'success'
-                ? 'orders'
-                : current
+          activeRoute === 'checkout' ? 'cart' : activeRoute === 'success' ? 'orders' : activeRoute
         }
         onSelect={nav}
       />

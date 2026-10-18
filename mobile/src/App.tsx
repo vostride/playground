@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  Alert,
   BackHandler,
   Appearance,
   Image,
@@ -36,6 +37,11 @@ import {
   Screen,
   type AppId,
 } from './ui';
+function openVostride() {
+  void Linking.openURL('https://vostride.com/').catch(() =>
+    Alert.alert('Unable to open browser', 'Visit vostride.com in your browser.'),
+  );
+}
 const apps = [
   {
     id: 'shop' as const,
@@ -92,7 +98,14 @@ export default function App() {
   const current = stack[stack.length - 1];
   const product = apps.find((a) => a.id === current.app);
   const navigate = useCallback(
-    (app: AppId, route = '') => setStack((previous) => [...previous, { app, route }]),
+    (app: AppId, route = '') =>
+      setStack((previous) => {
+        const active = previous[previous.length - 1];
+        const nextRoute = app === 'shop' ? route || 'catalog' : route;
+        const activeRoute = active.app === 'shop' ? active.route || 'catalog' : active.route;
+        if (active.app === app && activeRoute === nextRoute) return previous;
+        return [...previous, { app, route: nextRoute }];
+      }),
     [],
   );
   useEffect(() => {
@@ -160,7 +173,12 @@ export default function App() {
                 }
               />
             )}
-            {product && <Image source={product.logo} style={styles.brandLogo} accessible={false} />}
+            <Image
+              source={product?.logo || require('./assets/brands/playground.png')}
+              style={styles.brandLogo}
+              resizeMode="contain"
+              accessible={false}
+            />
             <Text accessibilityRole="header" style={styles.headerTitle}>
               {product?.name || 'Playground'}
             </Text>
@@ -193,7 +211,7 @@ export default function App() {
         <KeyboardDismissButton />
         <View style={{ flex: 1 }} key={session}>
           {current.app === 'home' ? (
-            <Screen>
+            <Screen contentContainerStyle={styles.homeContent}>
               {apps.map((app) => (
                 <TouchableOpacity
                   key={app.id}
@@ -212,12 +230,41 @@ export default function App() {
                   <Icon name="chevronRight" size={18} color={colors.muted} />
                 </TouchableOpacity>
               ))}
+              <TouchableOpacity
+                testID="home-agent-qa"
+                accessibilityRole="link"
+                accessibilityLabel="agent-qa. Test web and mobile apps. Opens in your browser."
+                onPress={openVostride}
+                style={styles.agentBanner}
+              >
+                <View style={styles.agentBannerContent}>
+                  <Image
+                    source={require('./assets/brands/agent-qa.png')}
+                    style={styles.agentWordmark}
+                    resizeMode="contain"
+                    accessible={false}
+                  />
+                  <Text style={styles.agentDescription}>Test web and mobile apps.</Text>
+                </View>
+                <Icon name="arrowUpRight" color={colors.muted} />
+              </TouchableOpacity>
               <Button
                 title="Help"
                 testID="button-a-quick-guide-to-the-playground"
                 variant="secondary"
                 onPress={() => setGuide(true)}
               />
+              <TouchableOpacity
+                testID="home-by-vostride"
+                accessibilityRole="link"
+                accessibilityLabel="by Vostride. Opens in your browser."
+                onPress={openVostride}
+                style={styles.attribution}
+              >
+                <Text style={styles.attributionText}>
+                  by <Text style={styles.attributionBrand}>Vostride</Text>
+                </Text>
+              </TouchableOpacity>
             </Screen>
           ) : current.app === 'shop' ? (
             <ShopScreen route={current.route} bug={bugs.shop || ''} navigate={navigate} />
@@ -404,6 +451,27 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   appIcon: { height: 40, width: 40, alignItems: 'center', justifyContent: 'center' },
+  homeContent: { flexGrow: 1 },
+  agentBanner: {
+    minHeight: 88,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  agentBannerContent: { flex: 1, gap: 8 },
+  agentWordmark: { width: 148, height: 25 },
+  agentDescription: { color: colors.muted, fontSize: 14, lineHeight: 20 },
+  attribution: {
+    marginTop: 'auto',
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  attributionText: { color: colors.muted, fontSize: 12 },
+  attributionBrand: { color: colors.ink, fontSize: 12, fontWeight: '600' },
   appName: {
     fontSize: 18,
     lineHeight: 24,
