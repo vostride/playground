@@ -115,6 +115,16 @@ jobs:
         id: build
         working-directory: apps/mobile/android
         run: ./gradlew assembleRelease --no-daemon
+      - name: Preserve the compiled APK for diagnostic retests
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostic-android-apk-unverified
+          path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+
       - name: Verify final APK permissions and native architectures
         run: node tests/mobile/inspect-apk.mjs apps/mobile/android/app/build/outputs/apk/release/app-release.apk
       - name: Install the pinned Maestro CLI
@@ -170,15 +180,6 @@ jobs:
         with:
           name: mobile-android-release
           path: release/
-          compression-level: 0
-          retention-days: 7
-          if-no-files-found: error
-      - name: Preserve the unverified APK when later checks fail
-        if: failure() && steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
-        with:
-          name: diagnostic-android-apk-unverified
-          path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
           compression-level: 0
           retention-days: 7
           if-no-files-found: error
@@ -240,6 +241,24 @@ jobs:
             MARKETING_VERSION="$PLAYGROUND_VERSION" \
             CURRENT_PROJECT_VERSION="$PLAYGROUND_BUILD_NUMBER" \
             build
+      - name: Package the compiled simulator app for diagnostic retests
+        id: diagnostic-package
+        continue-on-error: true
+        run: |
+          mkdir -p diagnostics
+          ditto -c -k --sequesterRsrc --keepParent \
+            apps/mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app \
+            "diagnostics/playground-ios-simulator-${PLAYGROUND_VERSION}-unverified.zip"
+      - name: Preserve the unverified simulator app
+        if: steps.diagnostic-package.outcome == 'success'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostic-ios-simulator-unverified
+          path: diagnostics/*.zip
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
       - name: Verify the simulator binary contains both architectures
         run: |
           node --input-type=module <<'NODE'
@@ -333,23 +352,6 @@ jobs:
         with:
           name: mobile-ios-release
           path: release/
-          compression-level: 0
-          retention-days: 7
-          if-no-files-found: error
-      - name: Package the unverified simulator app when later checks fail
-        id: diagnostic-package
-        if: failure() && steps.build.outcome == 'success'
-        run: |
-          mkdir -p diagnostics
-          ditto -c -k --sequesterRsrc --keepParent \
-            apps/mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app \
-            "diagnostics/playground-ios-simulator-${PLAYGROUND_VERSION}-unverified.zip"
-      - name: Preserve the unverified simulator app
-        if: failure() && steps.diagnostic-package.outcome == 'success'
-        uses: actions/upload-artifact@v4
-        with:
-          name: diagnostic-ios-simulator-unverified
-          path: diagnostics/*.zip
           compression-level: 0
           retention-days: 7
           if-no-files-found: error

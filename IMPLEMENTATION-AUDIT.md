@@ -40,6 +40,7 @@ The four web products, their shared product models, and the four native product 
 
 - **Corkboard rapid keyboard movement:** a delayed animation frame could leave focus on the document after moving a card, losing the final Space press. Focus now restores during layout; the regression delays animation frames and verifies placement, undo, and Escape rollback.
 - **Native card drafts:** closing or moving a card now flushes text drafts explicitly; undoing the move preserves the edited title.
+- **Native drag coordinates:** Android's held drag activated but failed to save a visible drop. The native code mixed React-root touch coordinates with window-relative measurements. All three drag measurement sites now use root-relative `View.measure` coordinates for hit testing, edge scrolling, and the drag preview. Native typechecking and 11 relevant core/harness tests pass; fresh platform binaries must verify this correction.
 - **Native system insets:** the shell and each modal now use native safe-area providers and views so Android edge-to-edge system bars cannot cover controls.
 - **Production static routing:** exact directory redirects preserve JavaScript assets; a labelled 404 disables implicit SPA fallback. The preview server exercises the deployed headers and routing rules.
 - **Native keyboard dismissal:** forms expose a keyboard-visible “Done typing” action; single-line fields submit with Done. Acceptance helpers wait for the control to disappear after dismissal.

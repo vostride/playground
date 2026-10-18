@@ -339,8 +339,12 @@ function formatDate(value: string) {
   });
 }
 function measured(node: View): Promise<{ x: number; y: number; width: number; height: number }> {
+  // Touch pageX/pageY are React-root-relative. Window measurements include a
+  // different viewport offset under Android edge-to-edge system bars.
   return new Promise((resolve) =>
-    node.measureInWindow((x, y, width, height) => resolve({ x, y, width, height })),
+    node.measure((_x, _y, width, height, pageX, pageY) =>
+      resolve({ x: pageX, y: pageY, width, height }),
+    ),
   );
 }
 
@@ -503,8 +507,8 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
   }
   const dragCallbacks: DragCallbacks = {
     onStart: (task, x, y) => {
-      columns.current.get(task.status)?.measureInWindow((_, top, __, height) => {
-        columnViewport.current = { top, height };
+      columns.current.get(task.status)?.measure((_x, _y, _width, height, _pageX, pageY) => {
+        columnViewport.current = { top: pageY, height };
       });
       setDragTask(task);
       positionDrag(x, y);
@@ -589,8 +593,8 @@ export default function TasksScreen({ route, bug, navigate }: MobileScreenProps)
       ref={screenRef}
       onLayout={(event) => {
         screenWidth.current = event.nativeEvent.layout.width;
-        screenRef.current?.measureInWindow((_, y) => {
-          screenTop.current = y;
+        screenRef.current?.measure((_x, _y, _width, _height, _pageX, pageY) => {
+          screenTop.current = pageY;
         });
       }}
       style={styles.screen}
