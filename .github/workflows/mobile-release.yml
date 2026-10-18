@@ -304,7 +304,7 @@ jobs:
         run: |
           mkdir -p maestro-reports/ios
           maestro --device "$PLAYGROUND_SIMULATOR_ID" test --format JUNIT --output maestro-reports/ios/results.xml --debug-output maestro-reports/ios/debug --test-output-dir maestro-reports/ios/artifacts tests/mobile/flows/
-      - name: Verify continuous touch dragging on the simulator build
+      - name: Verify native URL routing and continuous touch dragging on the simulator build
         env:
           PLAYGROUND_SIMULATOR_ID: ${{ steps.simulator.outputs.id }}
         run: |

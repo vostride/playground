@@ -9,6 +9,7 @@ const commands=new Set(['launchApp','extendedWaitUntil','assertVisible','assertN
 const files=['flows','helpers','expected-failure'].flatMap(directory=>fs.readdirSync(path.join(root,directory)).filter(file=>file.endsWith('.yaml')).map(file=>path.join(root,directory,file)));
 const dependencies=new Map();
 const launchPlatforms=new Set();
+const routes=new Set(['playground://home','playground://shop','playground://shop/cart','playground://shop?bug=cart-total','playground://flights','playground://flights/bookings','playground://tasks','playground://tasks/task/CKB-001','playground://tasks/task/CKB-2401','playground://observability/logs','playground://observability/monitors']);
 function checkSteps(steps,file,platform){
  assert.ok(Array.isArray(steps)&&steps.length>0,`${file}: commands must be a nonempty list`);
  for(const step of steps){
@@ -17,8 +18,9 @@ function checkSteps(steps,file,platform){
   if(typeof step==='object')assert.equal(Object.keys(step).length,1,`${file}: each command must have exactly one key`);
   const value=typeof step==='object'?step[name]:undefined;
   if(name==='runFlow'){
+   if(value?.env?.LINK)assert.ok(routes.has(value.env.LINK),`${file}: route needs an explicit navigation mapping: ${value.env.LINK}`);
    const target=typeof value==='string'?value:value.file;
-   if(target){const resolved=path.resolve(path.dirname(file),target);assert.ok(resolved.startsWith(root+path.sep),`${file}: helper outside test suite`);assert.ok(fs.existsSync(resolved),`${file}: missing helper ${target}`);dependencies.get(file).push(resolved)}
+   if(target){const resolved=path.resolve(path.dirname(file),target);assert.ok(resolved.startsWith(root+path.sep),`${file}: helper outside test suite`);assert.ok(fs.existsSync(resolved),`${file}: missing helper ${target}`);dependencies.get(file).push(resolved);if(path.basename(resolved)==='navigate-ios.yaml')assert.equal(value.when?.platform,'iOS',`${file}: visible-control routing is iOS-only`)}
    else {assert.ok(value.when,`${file}: inline flow requires a condition`);checkSteps(value.commands,file,value.when.platform||platform)}
   }
   if(name==='scrollUntilVisible')assert.ok(value.element&&['DOWN','UP','LEFT','RIGHT'].includes(value.direction),`${file}: scroll needs a selector and direction`);
@@ -34,7 +36,10 @@ function checkSteps(steps,file,platform){
     assert.ok(!Object.hasOwn(value,'clearState'),`${file}: iOS must preserve installed URL-scheme registration`);
    }
   }
-  if(name==='openLink')assert.match(value,/^(playground:\/\/|\$\{LINK\})/,`${file}: test must not navigate to an external service`);
+  if(name==='openLink'){
+   assert.match(value,/^(playground:\/\/|\$\{LINK\})/,`${file}: test must not navigate to an external service`);
+   assert.equal(platform,'Android',`${file}: iOS URL coverage belongs to mandatory NativeLinkTests, not simctl-backed Maestro openLink`);
+  }
   if(name==='tapOn'||name==='longPressOn'||name.startsWith('assert')){
    assert.ok(typeof value==='string'||(value&&(value.id||value.text)),`${file}: selector needs stable text or id`);
    assert.ok(!value?.point,`${file}: coordinate-only selectors are not allowed`);

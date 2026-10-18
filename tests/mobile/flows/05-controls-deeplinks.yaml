@@ -1,5 +1,5 @@
 appId: dev.vostride.playground
-name: Warm deep links, local WebView, opt-in defect, and session reset
+name: Warm navigation, local WebView, opt-in defect, and session reset
 ---
 - runFlow: ../helpers/launch.yaml
 - runFlow:

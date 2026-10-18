@@ -15,7 +15,7 @@ on:
         default: ios
         options: [android, ios]
       scenario:
-        description: 'Focused diagnostic scenario. Release verification always runs the full suite.'
+        description: 'Focused scenario; iOS drag includes native URL tests. Releases run the full suite.'
         type: choice
         required: true
         default: all

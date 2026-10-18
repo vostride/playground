@@ -16,30 +16,19 @@ env:
           'playground://observability/monitors': 'New monitor'
         })[LINK.split('?')[0]]}
 ---
-- openLink: '${LINK}'
-# iOS can present its first custom-scheme confirmation after openLink returns.
-# Wait for a real destination or that dialog before checking which path occurred.
-- extendedWaitUntil:
-    visible: '(?:Open.*Playground.*)|(?:${LINK_DESTINATION})'
-    timeout: 30000
+# Android retains actual custom-scheme navigation. iOS business scenarios use
+# the visible app controls; mandatory NativeLinkTests separately covers URL
+# delivery and query flags through XCUIApplication.open on the same candidate.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - openLink: '${LINK}'
 - runFlow:
     when:
       platform: iOS
-      visible: 'Open.*Playground.*'
-    commands:
-      - tapOn: '^Open$'
-      - extendedWaitUntil:
-          notVisible: 'Open.*Playground.*'
-          timeout: 10000
-      # On the CI simulator, first consent can dismiss without delivering a
-      # UIOpenURLAction (confirmed against a successful-link native log).
-      # Re-dispatch once only in this consent branch if navigation is absent.
-      - runFlow:
-          when:
-            notVisible: '${LINK_DESTINATION}'
-          commands:
-            - openLink: '${LINK}'
-# This remains mandatory on both platforms; dismissing a dialog is not success.
+    file: navigate-ios.yaml
+# Every route still requires its actual product landmark on both platforms.
 - extendedWaitUntil:
     visible: '${LINK_DESTINATION}'
     timeout: 30000

@@ -114,13 +114,45 @@ name: Wayline round trip, both seat maps, validated checkout, and booking
     direction: DOWN
 - tapOn:
     id: button-continue-to-payment
-- scrollUntilVisible:
-    centerElement: true
-    element:
-      id: button-use-sample
-    direction: DOWN
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - scrollUntilVisible:
+          centerElement: true
+          element:
+            id: button-use-sample
+          direction: DOWN
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      # The button already fits the content viewport on iOS. Maestro's extra
+      # centering swipe moves it behind Wayline's pinned navigation (run39138069470).
+      - scrollUntilVisible:
+          centerElement: false
+          element:
+            id: button-use-sample
+          direction: DOWN
+- takeScreenshot: wayline-sample-card-before-tap
 - tapOn:
     id: button-use-sample
+- scrollUntilVisible:
+    centerElement: false
+    element:
+      id: field-name-on-card
+    direction: DOWN
+- assertVisible:
+    id: field-name-on-card
+    text: '^Alex Morgan$'
+- scrollUntilVisible:
+    centerElement: false
+    element:
+      id: field-card-number
+    direction: DOWN
+- assertVisible:
+    id: field-card-number
+    text: '^4242 4242 4242 4242$'
 - scrollUntilVisible:
     centerElement: true
     element:
@@ -128,6 +160,7 @@ name: Wayline round trip, both seat maps, validated checkout, and booking
     direction: DOWN
 - tapOn:
     id: button-review-booking
+- assertVisible: 'Ready for your next chapter\?'
 - scrollUntilVisible:
     centerElement: true
     element:

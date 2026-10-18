@@ -1,0 +1,77 @@
+appId: dev.vostride.playground
+env:
+  UI_ROUTE: '${LINK.split("?")[0]}'
+  UI_TASK_ID: '${LINK.split("/").pop().split("?")[0]}'
+  # These exact grouped tab labels are recorded in the real iOS hierarchy.
+  UI_TAB: >-
+    ${({home:'^⌂, Home$',shop:'^f, Fernwood$',flights:'^↗, Wayline$',tasks:'^▥, Corkboard$',observability:'^v, Vigil$'})[LINK.replace('playground://','').split('/')[0].split('?')[0]]}
+---
+# Tapping the current product's tab changes its route without unmounting the
+# screen, preserving Corkboard's component-local undo stack and task filters.
+- tapOn: '${UI_TAB}'
+- runFlow:
+    when:
+      true: '${UI_ROUTE === "playground://shop/cart"}'
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: 'chip-bag-[0-9]+'
+          direction: UP
+          centerElement: false
+      - tapOn:
+          id: 'chip-bag-[0-9]+'
+- runFlow:
+    when:
+      true: '${LINK === "playground://shop?bug=cart-total"}'
+    commands:
+      - tapOn: '^Test controls$'
+      - tapOn: '^Fernwood: Quantity ignored in totals$'
+      - scrollUntilVisible:
+          element:
+            id: button-close-controls
+          direction: DOWN
+          centerElement: true
+      - tapOn:
+          id: button-close-controls
+      - assertVisible: '^Deliberate bug: Quantity ignored in totals$'
+- runFlow:
+    when:
+      true: '${UI_ROUTE === "playground://flights/bookings"}'
+    commands:
+      - tapOn:
+          id: chip-my-trips
+- runFlow:
+    when:
+      true: '${UI_ROUTE === "playground://observability/logs"}'
+    commands:
+      - tapOn: '^Log explorer$'
+- runFlow:
+    when:
+      true: '${UI_ROUTE === "playground://observability/monitors"}'
+    commands:
+      - tapOn: '^Monitors$'
+- runFlow:
+    when:
+      true: '${UI_ROUTE.indexOf("playground://tasks/task/") === 0}'
+    commands:
+      - extendedWaitUntil:
+          visible: '^Search tasks$'
+          timeout: 10000
+      - tapOn: '^(?:✓ )?List$'
+      # The created task is beyond the initially rendered list. Search by its
+      # real ID once; reopening the visible card keeps the same warm session.
+      - runFlow:
+          when:
+            notVisible:
+              id: 'task-card-${UI_TASK_ID}'
+          commands:
+            - tapOn: '^Search tasks$'
+            - eraseText
+            - inputText: '${UI_TASK_ID}'
+            - runFlow: dismiss-keyboard.yaml
+      - extendedWaitUntil:
+          visible:
+            id: 'task-card-${UI_TASK_ID}'
+          timeout: 10000
+      - tapOn:
+          id: 'task-card-${UI_TASK_ID}'

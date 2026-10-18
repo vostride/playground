@@ -2,6 +2,10 @@
 
 These Maestro flows exercise the installed bare React Native app on both Android and iOS. They operate through rendered controls, accessibility labels, test IDs, real keyboard input, sheets, deep links, and a native WebView. They do not invoke product functions or inject application state.
 
+Android route setup uses `openLink` and retains custom-scheme coverage within Maestro. iOS business journeys use the app's actual bottom tabs, product navigation, task search/cards, and labelled Test controls switch through `helpers/navigate-ios.yaml`. Every route still requires its product landmark. This avoids a measured iOS 18.5 simulator issue where Maestro's `simctl openurl` returns successfully without delivering a URL, sometimes followed by a delayed first-consent alert. There are no retries or optional business assertions in this navigation path.
+
+**`NativeLinkTests` is a mandatory companion iOS gate.** The [independent XCTest target](ios/README.md) opens the installed candidate with `XCUIApplication.open`, verifies every required product/subroute and the `?bug=cart-total` label, and checks that the flag survives later URLs without a query. Maestro proves the business outcomes, visible bug arithmetic, and reset; XCTest proves native URL/query routing. Neither substitutes for the other. These direct-target URL tests do not claim coverage of SpringBoard's custom-scheme first-consent chooser.
+
 The mobile release workflow runs `flows/` against the release APK in an Android emulator and the simulator `.app` in an iOS simulator before publishing either artifact. Runtime results, JUnit XML, screenshots, and Maestro diagnostics are retained as CI artifacts. Parsing YAML and creating JavaScript bundles are separate checks and do not prove native behavior.
 
 ## Run
@@ -53,7 +57,9 @@ Reports retain the original run, artifact ID, both commits, source comparison, b
 | `02-flights-booking.yaml`    | A round trip selected; occupied seats disabled; seats on both legs; empty traveler rejected; sample payment; booking WL006Q confirmed and listed. |
 | `03-tasks-workflow.yaml`     | Task created and edited; moved to In progress; undo restores To do; checklist completion persists after reopening.                                |
 | `04-vigil-monitor.yaml`      | Service/status query returns matching event; event opens a trace waterfall; monitor saves its threshold; pause and deletion update state.         |
-| `05-controls-deeplinks.yaml` | Warm links open each flow; bundled WebView loads; labelled quantity bug produces $29; reset clears its flag and cart.                             |
+| `05-controls-deeplinks.yaml` | Warm Android links / iOS app controls open each flow; bundled WebView loads; labelled quantity bug produces $29; reset clears its flag and cart.  |
+
+On iOS, a created task is found through **List → Search tasks → its card**. Closing and reopening that card keeps the same mounted Corkboard session, preserving undo history and the edited checklist. Fernwood's bug is enabled through its named Test controls switch; the separate XCTest verifies the URL query that enables the same flag. The five business scenarios alone are insufficient evidence for an iOS release without the native URL and held-touch tests.
 
 ## Deliberately failing sample
 
