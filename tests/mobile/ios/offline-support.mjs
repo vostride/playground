@@ -220,10 +220,18 @@ export function evidenceFailures(report) {
     'Assertions and the final blocked-network probes did not finish before recovery.',
   );
   need(report.cleanup?.empty && report.cleanup?.released, 'Own PF anchor/token were not restored.');
+  const flushedAtMs = report.cleanup?.flushedAtMs;
   need(
-    report.cleanup?.flushedAtMs >= report.provedAtMs &&
-      report.cleanup.flushedAtMs - report.blockedAtMs < MAX_OUTAGE_MS,
-    'Outage exceeded 45 seconds.',
+    flushedAtMs >= report.provedAtMs,
+    Number.isFinite(flushedAtMs) && Number.isFinite(report.provedAtMs)
+      ? 'Recovery occurred before final blocked-network proof.'
+      : 'Final blocked-network proof or recovery timestamp is missing or invalid; recovery ordering cannot be verified.',
+  );
+  need(
+    flushedAtMs - report.blockedAtMs < MAX_OUTAGE_MS,
+    Number.isFinite(flushedAtMs) && Number.isFinite(report.blockedAtMs)
+      ? 'Measured outage reached or exceeded 45 seconds.'
+      : 'Outage duration could not be verified from recorded timestamps.',
   );
   need(report.restored?.ipv4?.code === 0, 'External Internet did not recover.');
   if (report.online?.ipv6?.code === 0)

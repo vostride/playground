@@ -236,6 +236,42 @@ test('a watchdog-restored successful XCTest can never count as an offline pass',
     assert.ok(evidenceFailures({ ...validEvidence(), ...patch }).length > 0, JSON.stringify(patch));
 });
 
+test('unfinished XCTest with a 40.150s recovery fails without claiming an excessive outage', () => {
+  // Run 39153387404 completed the journey but stalled in teardown before final probes.
+  const report = validEvidence();
+  report.blockedAtMs = 3_862_355;
+  report.cleanup.flushedAtMs = 3_902_505;
+  report.test = { code: null, signal: 'SIGTERM', timedOut: false };
+  delete report.provedAtMs;
+  delete report.afterTest;
+
+  const failures = evidenceFailures(report);
+  assert.ok(failures.includes('XCTest did not finish successfully.'));
+  assert.ok(failures.some((reason) => reason.includes('recovery ordering cannot be verified')));
+  assert.ok(failures.some((reason) => reason.startsWith('afterTest:')));
+  assert.ok(!failures.some((reason) => reason.includes('45 seconds')));
+});
+
+test('recovery reasons distinguish ordering, unknown duration, and the unchanged 45s limit', () => {
+  const report = validEvidence();
+  report.cleanup.flushedAtMs = report.provedAtMs - 1;
+  assert.ok(
+    evidenceFailures(report).includes('Recovery occurred before final blocked-network proof.'),
+  );
+
+  report.cleanup.flushedAtMs = report.blockedAtMs + 44_999;
+  assert.deepEqual(evidenceFailures(report), []);
+  report.cleanup.flushedAtMs++;
+  assert.deepEqual(evidenceFailures(report), ['Measured outage reached or exceeded 45 seconds.']);
+
+  delete report.blockedAtMs;
+  const unknownDuration = evidenceFailures(report);
+  assert.ok(
+    unknownDuration.includes('Outage duration could not be verified from recorded timestamps.'),
+  );
+  assert.ok(!unknownDuration.some((reason) => reason.includes('45 seconds')));
+});
+
 test('working IPv6 must recover; missing baseline is explicitly distinct from a successful route', () => {
   const report = validEvidence();
   report.online.ipv6 = success();
