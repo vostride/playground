@@ -10,13 +10,19 @@ on:
         type: string
         required: true
         default: '0.1.0'
+      platform:
+        description: 'Native candidate platform to verify.'
+        type: choice
+        required: true
+        default: all
+        options: [all, android, ios]
 
 permissions:
   contents: read
 
 # A tag gets one release. A rerun cannot replace an existing release or its assets.
 concurrency:
-  group: mobile-release-${{ github.event_name }}-${{ github.ref }}-${{ inputs.version || github.ref_name }}
+  group: mobile-release-${{ github.event_name }}-${{ github.ref }}-${{ inputs.version || github.ref_name }}-${{ inputs.platform || 'all' }}
   cancel-in-progress: false
 
 env:
@@ -74,6 +80,7 @@ jobs:
   android:
     name: Build and attest the Android APK
     needs: prepare
+    if: github.event_name == 'push' || inputs.platform != 'ios'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -97,6 +104,8 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
       - name: Install the pinned Android toolchain
         run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;27.1.12297006'
       - uses: gradle/actions/setup-gradle@v4
@@ -177,6 +186,7 @@ jobs:
   ios:
     name: Build and attest the iOS simulator app
     needs: prepare
+    if: github.event_name == 'push' || inputs.platform != 'android'
     runs-on: macos-15
     timeout-minutes: 90
     permissions:
@@ -304,7 +314,7 @@ jobs:
   publish:
     name: Publish both artifacts once
     needs: [prepare, android, ios]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/mobile-v')
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/mobile-v') && needs.android.result == 'success' && needs.ios.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
