@@ -20,6 +20,17 @@ appId: dev.vostride.playground
           clearState: true
           permissions:
             all: deny
+# The emulator's Pixel Launcher can leave its own ANR above the launched app.
+# Match that system app exactly; Playground and other ANRs must still fail.
+- runFlow:
+    when:
+      platform: Android
+      visible: "^Pixel Launcher isn't responding$"
+    commands:
+      - tapOn: '^Close app$'
+      - extendedWaitUntil:
+          notVisible: "^Pixel Launcher isn't responding$"
+          timeout: 10000
 # Product/session state is process-local (the Map in ui.tsx). Restart iOS
 # without clearState's uninstall/reinstall, preserving installed URL-scheme
 # registration while retaining a clean seeded session.
