@@ -19,7 +19,7 @@ env:
 jobs:
   check:
     name: Typecheck, product tests, and browser journeys
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -72,7 +72,7 @@ jobs:
     needs: check
     # Fork pull requests get all local checks without access to deployment secrets.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
       CLOUDFLARE_PAGES_PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT || 'playground' }}

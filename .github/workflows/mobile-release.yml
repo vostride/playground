@@ -35,7 +35,7 @@ env:
 jobs:
   prepare:
     name: Validate the candidate or release version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -82,7 +82,7 @@ jobs:
     name: Build and attest the Android APK
     needs: prepare
     if: github.event_name == 'push' || inputs.platform != 'ios'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -386,7 +386,7 @@ jobs:
     name: Publish both artifacts once
     needs: [prepare, android, ios]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/mobile-v') && needs.android.result == 'success' && needs.ios.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: write
