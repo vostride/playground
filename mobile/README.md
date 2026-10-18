@@ -1,19 +1,10 @@
 # Playground mobile
 
-A bare React Native 0.83.1 application with four bundled products: Komazon, Looking, Brello, and PepaPog. The native projects are based on the MIT-licensed [official React Native Community Template](https://github.com/react-native-community/template/tree/0.83-stable); its license is retained in `TEMPLATE-LICENSE`. There is no Expo runtime.
+A bare React Native application with four bundled products: Komazon, Looking, Brello, and PepaPog. The native projects are based on the MIT-licensed [official React Native Community Template](https://github.com/react-native-community/template/tree/0.83-stable); its license is retained in `TEMPLATE-LICENSE`. There is no Expo runtime.
 
 ## Interface and navigation
 
-The UI uses locally owned native adaptations of [React Native Reusables](https://github.com/founded-labs/react-native-reusables). Button variants, contextual text, inputs and semantic theme tokens live in `src/components/ui/`; the upstream MIT notice is retained there. Native StyleSheet replaces NativeWind and its class utilities. No UI-library dependency is installed. The dark zinc palette, 2px corners, compact spacing and outline icons are shared across products.
-
-Home opens a product. The header grid button opens the app switcher; each product owns its bottom navigation:
-
-- Komazon: Shop, Cart, Orders and Profile.
-- Looking: Search and My trips.
-- Brello: Board and List.
-- PepaPog: Overview, Logs, Traces and Monitors.
-
-Profile shows Komazon's signed-in account and shipping details, orders and sign-out. Product filters and sorting use sheets; the catalogue remains a two-column grid and Brello retains draggable cards. Test controls are available from the header sliders button.
+The UI uses locally owned native adaptations of [React Native Reusables](https://github.com/founded-labs/react-native-reusables). Button variants, contextual text, inputs and semantic theme tokens live in `src/components/ui/`; the upstream MIT notice is retained there. Components use native StyleSheet rather than NativeWind, with no UI-library dependency. Home and the header app switcher open products; each product owns its bottom tabs. The header sliders button opens Test controls.
 
 ## Development
 
@@ -37,7 +28,7 @@ npm run bundle:android -w @playground/mobile
 npm run bundle:ios -w @playground/mobile
 ```
 
-Bundles are written to the ignored `.bundle/` directory. Native release artifacts, simulator launch validation, checksums, and attestations are produced by the repository's mobile release workflow.
+Bundles are written to the ignored `.bundle/` directory. Native release artifacts, acceptance checks, checksums, and attestations run in GitHub Actions. See [native acceptance](../tests/mobile/README.md) for the required gates and [distribution](../DEPLOYMENT.md) for automatic releases from `main`.
 
 ## Deep links and controls
 

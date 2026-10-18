@@ -1,12 +1,12 @@
 # Shared web UI
 
-The four web applications use locally owned [shadcn/ui](https://ui.shadcn.com/) components from the official `new-york-v4` registry, downloaded on 2026-10-18. Component source lives in `src/components/ui`; imports of sibling registry components resolve locally. Their Radix primitives, Tailwind styles, icons, and Inter variable fonts are bundled with each app. No font CDN or runtime component service is used.
+The four web applications use locally owned [shadcn/ui](https://ui.shadcn.com/) components from the official `new-york-v4` registry. Component source lives in `src/components/ui`; imports of sibling registry components resolve locally. Their Radix primitives, Tailwind styles, icons, and Inter variable fonts are bundled with each app. No font CDN or runtime component service is used.
 
 The package exports the shared Button, Input, Textarea, Badge, Card, Dialog, Tabs, Select, Separator, and Label families alongside `PlaygroundBanner`, `useSessionState`, and `BrandMark`. Product-specific rendering such as canvas charts, virtualized logs, drag handles, and seat maps stays in each app. Native selects remain where browser automation depends on their standard selection behavior.
 
 `src/styles.css` defines readable typography, semantic theme colors, and Tailwind's layer order. Product styles belong in `@layer product` so component utilities can override them intentionally. Product accents use `--primary` and `--ring`; `--muted` and `--accent` remain surface colors, while `--muted-foreground` is secondary text.
 
-The default design is dark: charcoal panels, clear borders, 14–15px body text, and stronger headings and controls. A 16px root keeps Tailwind's `text-sm` at 14px. The shared button uses semibold text as a local readability adjustment. Dialogs scroll within the viewport, and the test-controls trigger restores keyboard focus after closing.
+The default design is dark, with 14–15px body text and a 16px root that keeps Tailwind's `text-sm` at 14px. Dialogs scroll within the viewport, and the test-controls trigger restores keyboard focus after closing.
 
 Rectangular UI uses 0–2px corners, including buttons, fields, dialogs, badges, and the app launcher. Navigation uses flat rows and active text/icon color, without a boxed active background or accent strip. Use compact transparent sections and divider-separated rows instead of card containers. Brello’s draggable task items are the exception: compact cards with a subtle fill, thin border and 2px corners. Circular avatars, status dots, radio controls, and spinners retain their functional shapes.
 

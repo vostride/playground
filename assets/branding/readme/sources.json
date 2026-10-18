@@ -1,0 +1,27 @@
+{
+  "description": "Original owner-supplied branding assets, copied without modification. Geist Mono is distributed under the bundled SIL Open Font License.",
+  "assets": [
+    {
+      "file": "background.png",
+      "source": "Branding/04-Backgrounds/Homepage/dark-grain-background.png",
+      "sha256": "1e262e2afc2890633d036aff52198a1be9b25f325cb49e0ad6fe63bfc6a59acb"
+    },
+    {
+      "file": "vostride.svg",
+      "source": "Branding/99-Production/Compositions/wordmark-grain-v1/wordmark-white.svg",
+      "sha256": "4bd8a7f3ba0ab9a3e65cc7d84e03a738516947c4dbefa4856a8bcb42515b6c5e"
+    },
+    {
+      "file": "GeistMono-Regular.ttf",
+      "source": "Branding/99-Production/Compositions/factory-mono-v4/GeistMono-Regular.ttf",
+      "sha256": "42d8ad2e610238e64e8abfcde3037c63f7850a73928742b7ab7229d897bcb155"
+    },
+    {
+      "file": "Geist-OFL.txt",
+      "source": "Branding/99-Production/Compositions/factory-mono-v4/Geist-OFL.txt",
+      "sha256": "930853ee1daa68554d9e35c8a9175affb74f699fad9a5da6ee5ebe76379d9137"
+    }
+  ],
+  "playgroundMark": "../playground-mark.svg",
+  "export": "node scripts/export-readme-banner.mjs"
+}

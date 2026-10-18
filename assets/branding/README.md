@@ -13,5 +13,15 @@ Playwright Chromium and contain no external assets.
 
 The launchers' `agent-qa.png` is the owner's unmodified light wordmark from
 `Branding/05-Products/agent-qa/agent-qa with logo - light.png`, bundled in the
-web and native apps. Its banner and the Vostride attribution link open
-`https://vostride.com/` only when selected.
+web and native apps. The banner opens `https://github.com/vostride/agent-qa`;
+the Vostride attribution opens `https://vostride.com/`. Both require a user selection.
+
+## Repository banner
+
+`playground-banner.png` is generated from the owner's dark grain background and
+white Vostride wordmark, with the bundled Geist Mono font. Inputs and their source
+paths are recorded in `readme/sources.json`; preserve the font license in
+`readme/Geist-OFL.txt` alongside `readme/GeistMono-Regular.ttf`.
+
+Regenerate with `node scripts/export-readme-banner.mjs` from the repository root.
+Set `PLAYWRIGHT_CHROME_PATH` only when using an alternate local Chromium executable.
