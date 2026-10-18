@@ -4,7 +4,7 @@ Audited against `SPEC.md` on 2026-10-18. This records source, local, and GitHub 
 
 ## Outcome
 
-The four web products, their shared product models, and the four native product screens are implemented. The current names are **Komazon**, **Looking**, **PepaPog**, and **Brello**. Current native source including the latest logos compiled on GitHub runners for Android and the unsigned universal iOS simulator. Device acceptance of these new binaries remains in progress. Complete native acceptance, the hosted custom domain, and published immutable release assets remain outstanding. The registry labels the web apps as candidates and has no invented mobile release entries.
+The four web products, their shared product models, and the four native product screens are implemented. The current names are **Komazon**, **Looking**, **PepaPog**, and **Brello**. Current native source including the latest logos compiled on GitHub runners for Android and the unsigned universal iOS simulator. The current Android binary passed its complete device gate; iOS acceptance remains in progress. Complete native acceptance, the hosted custom domain, and published immutable release assets remain outstanding. The registry labels the web apps as candidates and has no invented mobile release entries.
 
 ## Current redesign and local verification
 
@@ -43,6 +43,8 @@ Commit `a00cc51` passed [web CI 39153739490](https://github.com/vostride/playgro
 Authenticated GitHub reads at 18:28:05 UTC verified the repository is public and MIT-licensed. `GET /repos/vostride/playground/immutable-releases` returned HTTP 200 with `enabled: true` and `enforced_by_owner: false`; `GET /repos/vostride/playground/license` confirmed MIT. The retained response record is `test-results/release-preflight/github-repository-state-2026-10-18.json`. This verifies repository settings, not published mobile assets.
 
 Independent inspection of the two compiled `a00cc51` artifacts verified all four new logos in each binary. iOS preserves the source PNG bytes; Android rewrites PNG encodings and resource filenames, but every decoded RGBA pixel matches. All eight packaged images retain their 128×128 dimensions and transparency, and Android resource names resolve to the correct brands. The inspected APK SHA-256 is `fa30a7d0980e1c8fe8ecf7c128c3e078761c35d361f4da3808b28079e480406f`; the diagnostic simulator ZIP SHA-256 is `f6bb8593600deb562c122bd54f4fca4d9cc5d3a776e94e60409dc551eb061911`. These are candidate hashes, not published release hashes. Evidence is in `test-results/native-audit/logo-candidate-39153739148/logo-asset-audit.json`; device acceptance remains separate.
+
+The Android job in [candidate 39153739148](https://github.com/vostride/playground/actions/runs/39153739148) subsequently **passed its full device gate**: all five product/control journeys, both continuous drag/Undo checks and offline checks. Downloaded artifact `12147248249` matches the APK hash above and its checksum file; `gh attestation verify` passed for attestation `57177645` and source `a00cc51`. Offline observations before the journeys and after dragging both show airplane mode enabled, Wi-Fi off and no active default network, 40 minutes 23.197 seconds apart. These snapshots do not claim continuous network sampling. Exact journey durations and retained evidence are recorded in [MOBILE-ACCEPTANCE.md](MOBILE-ACCEPTANCE.md). The iOS gate is still running, and no immutable release has been published.
 
 ### Native diagnostics before the logo revision
 

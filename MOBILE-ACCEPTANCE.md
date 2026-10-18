@@ -13,3 +13,19 @@ Run on the GitHub-built APK and zipped iOS simulator app. TypeScript/Metro check
 - Restart: force-stop and relaunch. The fixed initial data and baseline simulated timestamps must match a fresh install.
 
 Record device/OS, artifact hash, result and any failure evidence before promoting a mobile entry in the registry. Do not mark these checks complete solely from successful source compilation or JS bundling.
+
+## Current-logo Android evidence
+
+[Candidate 39153739148](https://github.com/vostride/playground/actions/runs/39153739148), commit `a00cc51`, passed the complete Android gate on Android 15/API 35. The downloaded `mobile-android-release` artifact `12147248249` contains `playground-android-0.1.0.apk`; its independently calculated SHA-256 matches the checksum file and [build attestation 57177645](https://github.com/vostride/playground/attestations/57177645): `fa30a7d0980e1c8fe8ecf7c128c3e078761c35d361f4da3808b28079e480406f`. The APK includes both required architectures, `arm64-v8a` and `x86_64`, and requests no system permissions; the sole app-owned AndroidX receiver permission has signature protection `0x2`.
+
+| Passing Maestro journey | Seconds |
+| --- | ---: |
+| Komazon catalog refresh, exact totals, checkout bug recovery, and cancellation | 278.793 |
+| Brello boards, task properties, refresh, move, undo, and both bug switches | 402.218 |
+| Looking search controls, two travelers, bug recovery, checkout, seat changes, cancellation | 589.771 |
+| PepaPog range, live metrics, log facets and refresh, span inspection, monitor validation and persistence, both bug controls | 548.723 |
+| Home and tab navigation, Back, WebView, deep links, bug recovery, all-product reset and process restart | 536.392 |
+
+Both continuous touch checks also passed: within-column reorder followed by Undo, then cross-column movement followed by Undo. Retained hierarchies verify the order and selected status before and after each operation. The offline setup waited for the active default network to disappear before starting the journeys. Its final pre-suite snapshot at 18:26:40.636 UTC and post-drag snapshot at 19:07:03.833 UTC on 2026-10-18 both show airplane mode enabled, Wi-Fi off and no active default network, 40 minutes 23.197 seconds apart. These are before/after observations, not continuous network sampling.
+
+The acceptance report is artifact `12147945112`; inspected evidence, downloaded APK and job log are retained under `test-results/native-audit/android-candidate-39153739148/`. This verifies the Android candidate with the new logos. iOS acceptance and immutable release publication remain separate requirements; the candidate artifact is not a published release.
