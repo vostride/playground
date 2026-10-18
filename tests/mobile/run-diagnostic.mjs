@@ -11,6 +11,7 @@ const scenarios = {
   observability: { flow: 'tests/mobile/flows/04-vigil-monitor.yaml', drag: false },
   controls: { flow: 'tests/mobile/flows/05-controls-deeplinks.yaml', drag: false },
   drag: { flow: '', drag: true },
+  offline: { flow: '', drag: false },
 };
 
 export function diagnosticSelection(scenario) {
@@ -24,6 +25,9 @@ export function diagnosticCommands({ platform, device, scenario }) {
     throw new Error('A supported platform and device ID are required.');
   }
   const selection = diagnosticSelection(scenario);
+  if (scenario === 'offline' && platform !== 'ios') {
+    throw new Error('The focused offline smoke is iOS-only; Android all includes offline checks.');
+  }
   const directory = `maestro-reports/${platform}`;
   const commands = [];
   if (platform === 'android' && scenario === 'all') {
@@ -95,6 +99,13 @@ export function diagnosticCommands({ platform, device, scenario }) {
       name: 'offline-end',
       command: process.execPath,
       args: ['tests/mobile/android-offline.mjs', device, 'verify'],
+    });
+  }
+  if (platform === 'ios' && ['all', 'offline'].includes(scenario)) {
+    commands.push({
+      name: 'offline',
+      command: process.execPath,
+      args: ['tests/mobile/ios/offline-run.mjs', device],
     });
   }
   return commands;

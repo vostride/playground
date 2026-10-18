@@ -1,0 +1,122 @@
+// !$*UTF8*$!
+{
+    archiveVersion = 1;
+    classes = {};
+    objectVersion = 56;
+    objects = {
+        B20000000000000000000001 = {
+            isa = PBXProject;
+            attributes = { LastUpgradeCheck = 1640; };
+            buildConfigurationList = B20000000000000000000002;
+            compatibilityVersion = "Xcode 14.0";
+            developmentRegion = en;
+            hasScannedForEncodings = 0;
+            knownRegions = (en, Base);
+            mainGroup = B20000000000000000000003;
+            productRefGroup = B20000000000000000000004;
+            projectDirPath = "";
+            projectRoot = "";
+            targets = (B20000000000000000000005);
+        };
+        B20000000000000000000002 = {
+            isa = XCConfigurationList;
+            buildConfigurations = (B20000000000000000000006);
+            defaultConfigurationIsVisible = 0;
+            defaultConfigurationName = Debug;
+        };
+        B20000000000000000000003 = {
+            isa = PBXGroup;
+            children = (B20000000000000000000007, B20000000000000000000004);
+            sourceTree = "<group>";
+        };
+        B20000000000000000000004 = {
+            isa = PBXGroup;
+            children = (B20000000000000000000008);
+            name = Products;
+            sourceTree = "<group>";
+        };
+        B20000000000000000000005 = {
+            isa = PBXNativeTarget;
+            buildConfigurationList = B20000000000000000000009;
+            buildPhases = (B20000000000000000000010, B20000000000000000000011, B20000000000000000000012);
+            buildRules = ();
+            dependencies = ();
+            name = OfflineLaunch;
+            productName = OfflineLaunch;
+            productReference = B20000000000000000000008;
+            productType = "com.apple.product-type.bundle.ui-testing";
+        };
+        B20000000000000000000006 = {
+            isa = XCBuildConfiguration;
+            name = Debug;
+            buildSettings = {
+                CLANG_ENABLE_MODULES = YES;
+                CODE_SIGNING_ALLOWED = NO;
+                CODE_SIGNING_REQUIRED = NO;
+                IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+                SDKROOT = iphonesimulator;
+                SWIFT_VERSION = 5.0;
+            };
+        };
+        B20000000000000000000007 = {
+            isa = PBXFileReference;
+            lastKnownFileType = sourcecode.swift;
+            path = OfflineLaunchTests.swift;
+            sourceTree = "<group>";
+        };
+        B20000000000000000000008 = {
+            isa = PBXFileReference;
+            explicitFileType = wrapper.cfbundle;
+            includeInIndex = 0;
+            path = OfflineLaunch.xctest;
+            sourceTree = BUILT_PRODUCTS_DIR;
+        };
+        B20000000000000000000009 = {
+            isa = XCConfigurationList;
+            buildConfigurations = (B20000000000000000000013);
+            defaultConfigurationIsVisible = 0;
+            defaultConfigurationName = Debug;
+        };
+        B20000000000000000000010 = {
+            isa = PBXSourcesBuildPhase;
+            buildActionMask = 2147483647;
+            files = (B20000000000000000000014);
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        B20000000000000000000011 = {
+            isa = PBXFrameworksBuildPhase;
+            buildActionMask = 2147483647;
+            files = ();
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        B20000000000000000000012 = {
+            isa = PBXResourcesBuildPhase;
+            buildActionMask = 2147483647;
+            files = ();
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        B20000000000000000000013 = {
+            isa = XCBuildConfiguration;
+            name = Debug;
+            buildSettings = {
+                CURRENT_PROJECT_VERSION = 1;
+                ENABLE_TESTING_SEARCH_PATHS = YES;
+                FRAMEWORK_SEARCH_PATHS = ("$(inherited)", "$(PLATFORM_DIR)/Developer/Library/Frameworks");
+                GENERATE_INFOPLIST_FILE = YES;
+                LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@loader_path/Frameworks");
+                MARKETING_VERSION = 1.0;
+                PRODUCT_BUNDLE_IDENTIFIER = dev.vostride.playground.offlinetests;
+                PRODUCT_NAME = "$(TARGET_NAME)";
+                SUPPORTED_PLATFORMS = iphonesimulator;
+                SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+                TARGETED_DEVICE_FAMILY = "1,2";
+                TEST_TARGET_NAME = "";
+            };
+        };
+        B20000000000000000000014 = {
+            isa = PBXBuildFile;
+            fileRef = B20000000000000000000007;
+        };
+    };
+    rootObject = B20000000000000000000001;
+}

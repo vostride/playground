@@ -12,6 +12,7 @@ env:
           'playground://flights': 'Flight search',
           'playground://flights/bookings': 'Find a booking',
           'playground://tasks': 'Search tasks',
+          'playground://observability': 'Production overview',
           'playground://observability/logs': 'Log search query',
           'playground://observability/monitors': 'New monitor'
         })[LINK.split('?')[0]]}

@@ -130,6 +130,11 @@ appId: dev.vostride.playground
 - runFlow:
     file: open-link.yaml
     env:
+      LINK: playground://observability
+- assertVisible: '^Production overview$'
+- runFlow:
+    file: open-link.yaml
+    env:
       LINK: playground://observability/logs
 - assertVisible:
     id: vigil-field-log-search-query

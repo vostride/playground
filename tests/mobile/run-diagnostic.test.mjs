@@ -132,3 +132,33 @@ test('full Android acceptance requires offline evidence before and after product
     assert.equal(final.passed, failedCommand === -1);
   }
 });
+
+test('iOS full acceptance retains offline evidence and cannot pass a failed offline check', () => {
+  for (const scenario of ['all', 'offline']) {
+    let final;
+    const calls = [];
+    const exitCode = runDiagnostics(
+      { platform: 'ios', device: 'test-simulator', scenario },
+      {
+        execute(command, args) {
+          calls.push({ command, args });
+          return { status: args[0] === 'tests/mobile/ios/offline-run.mjs' ? 1 : 0 };
+        },
+        save(report) {
+          final = structuredClone(report);
+        },
+      },
+    );
+    assert.deepEqual(
+      final.commands.map(({ name }) => name),
+      scenario === 'all' ? ['maestro', 'drag', 'offline'] : ['offline'],
+    );
+    assert.equal(calls.at(-1).args[0], 'tests/mobile/ios/offline-run.mjs');
+    assert.equal(final.passed, false);
+    assert.equal(exitCode, 1);
+  }
+  assert.throws(
+    () => runDiagnostics({ platform: 'android', device: 'emulator-5554', scenario: 'offline' }),
+    /iOS-only/,
+  );
+});

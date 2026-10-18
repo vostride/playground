@@ -34,6 +34,12 @@ final class NativeLinkTests: XCTestCase {
             self.requireElement(self.app.buttons["Open Komazon"], "Home product launcher")
         }
 
+        visit("playground://shop", named: "Komazon catalog") {
+            self.requireText("Products")
+            self.requireElement(self.element("field-search-products"), "Catalog search field")
+            XCTAssertFalse(self.app.staticTexts[self.bugLabel].exists)
+        }
+
         visit("playground://flights", named: "Looking search") {
             self.requireText("Flight search")
             self.requireElement(self.app.buttons["Flights"], "Looking navigation")
@@ -42,6 +48,10 @@ final class NativeLinkTests: XCTestCase {
         visit("playground://flights/bookings", named: "Looking bookings") {
             self.requireElement(self.element("field-find-a-booking"), "Booking search field")
             self.requireText("Booking WL6P2K")
+        }
+
+        visit("playground://observability", named: "PepaPog dashboard") {
+            self.requireText("Production overview")
         }
 
         visit("playground://observability/logs", named: "PepaPog logs") {

@@ -11,7 +11,7 @@ const files=['flows','helpers','expected-failure'].flatMap(directory=>fs.readdir
 const dependencies=new Map();
 const launchPlatforms=new Set();
 const restartPlatforms=new Set();
-const routes=new Set(['playground://home','playground://shop','playground://shop/cart','playground://shop?bug=cart-total','playground://flights','playground://flights/bookings','playground://tasks','playground://tasks/task/CKB-001','playground://tasks/task/CKB-2401','playground://observability/logs','playground://observability/monitors']);
+const routes=new Set(['playground://home','playground://shop','playground://shop/cart','playground://shop?bug=cart-total','playground://flights','playground://flights/bookings','playground://tasks','playground://tasks/task/CKB-001','playground://tasks/task/CKB-2401','playground://observability','playground://observability/logs','playground://observability/monitors']);
 function checkSteps(steps,file,platform){
  assert.ok(Array.isArray(steps)&&steps.length>0,`${file}: commands must be a nonempty list`);
  for(const step of steps){

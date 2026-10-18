@@ -15,11 +15,11 @@ on:
         default: ios
         options: [android, ios]
       scenario:
-        description: 'Focused scenario; iOS drag includes native URL tests. Releases run the full suite.'
+        description: 'Focused scenario; offline is iOS-only, drag includes native URL tests. Releases run all.'
         type: choice
         required: true
         default: all
-        options: [all, shop, flights, tasks, observability, controls, drag]
+        options: [all, shop, flights, tasks, observability, controls, drag, offline]
 
 permissions:
   contents: read
@@ -63,6 +63,7 @@ jobs:
           const {CANDIDATE_RUN_ID: runId, CANDIDATE_PLATFORM: platform, CANDIDATE_SCENARIO: scenario, GITHUB_REPOSITORY: repository} = process.env;
           if (!/^[1-9]\d*$/.test(runId) || !['android', 'ios'].includes(platform)) throw new Error('Select a numeric candidate run ID and a supported platform.');
           const selection = diagnosticSelection(scenario);
+          if (scenario === 'offline' && platform !== 'ios') throw new Error('The focused offline scenario is iOS-only.');
           const api = async (path) => {
             const response = await fetch(`${process.env.GITHUB_API_URL}/repos/${repository}/${path}`, {headers: {Accept: 'application/vnd.github+json', Authorization: `Bearer ${process.env.GH_TOKEN}`, 'X-GitHub-Api-Version': '2022-11-28'}});
             if (!response.ok) throw new Error(`GitHub candidate lookup failed: HTTP ${response.status}.`);
@@ -84,7 +85,7 @@ jobs:
           if (artifact.workflow_run?.head_sha && artifact.workflow_run.head_sha !== run.head_sha) throw new Error('Artifact and candidate source commits differ.');
           const directory = `maestro-reports/${platform}`;
           mkdirSync(directory, {recursive: true});
-          writeFileSync(`${directory}/provenance.json`, JSON.stringify({purpose: 'Diagnostic acceptance only; not release verification', repository, candidateRunId: runId, candidateRunUrl: run.html_url, candidateRunAttempt: run.run_attempt, candidateCommit: run.head_sha, harnessCommit: process.env.GITHUB_SHA, platform, scenario, maestroFlow: selection.flow || null, continuousTouch: selection.drag, artifactId: artifact.id, artifactName: name, artifactDigest: artifact.digest || null, artifactCreatedAt: artifact.created_at}, null, 2));
+          writeFileSync(`${directory}/provenance.json`, JSON.stringify({purpose: 'Diagnostic acceptance only; not release verification', repository, candidateRunId: runId, candidateRunUrl: run.html_url, candidateRunAttempt: run.run_attempt, candidateCommit: run.head_sha, harnessCommit: process.env.GITHUB_SHA, platform, scenario, maestroFlow: selection.flow || null, continuousTouch: selection.drag, offline: scenario === 'all' || scenario === 'offline', artifactId: artifact.id, artifactName: name, artifactDigest: artifact.digest || null, artifactCreatedAt: artifact.created_at}, null, 2));
           appendFileSync(process.env.GITHUB_OUTPUT, `source-sha=${run.head_sha}\nartifact-id=${artifact.id}\nscenario=${scenario}\n`);
           appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Diagnostic acceptance only. Candidate run: ${run.html_url}\n\nScenario: ${scenario}; Maestro: ${selection.flow || 'none'}; continuous touch: ${selection.drag}.\n\nBinary commit: ${run.head_sha}\n\nHarness commit: ${process.env.GITHUB_SHA}\n\nArtifact: ${name} (${artifact.id}). No app build, attestation, or publication occurs.\n`);
           NODE
@@ -162,7 +163,7 @@ jobs:
           NODE
       - run: npm ci --ignore-scripts
       - run: npm run test:mobile:flows
-      - run: node --test tests/mobile/*.test.mjs
+      - run: node --test tests/mobile/*.test.mjs tests/mobile/ios/offline-*.test.mjs
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -242,6 +243,7 @@ jobs:
           path: |
             maestro-reports/
             !maestro-reports/ios/gesture-build/**
+            !maestro-reports/ios/offline/*/build/**
           retention-days: 14
           if-no-files-found: ignore
       - name: Shut down the test simulator

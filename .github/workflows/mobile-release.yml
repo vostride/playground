@@ -75,7 +75,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run test:mobile:flows
-      - run: node --test tests/mobile/*.test.mjs
+      - run: node --test tests/mobile/*.test.mjs tests/mobile/ios/offline-*.test.mjs
       - run: npm run typecheck --workspace @playground/mobile
 
   android:
@@ -309,6 +309,7 @@ jobs:
           path: |
             maestro-reports/ios/
             !maestro-reports/ios/gesture-build/**
+            !maestro-reports/ios/offline/*/build/**
           retention-days: 14
           if-no-files-found: ignore
       - name: Shut down the test simulator
