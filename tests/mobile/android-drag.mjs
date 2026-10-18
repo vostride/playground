@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -81,6 +81,7 @@ export async function runAndroidDrag({
     startedAt: new Date().toISOString(),
     passed: false,
     actions: [],
+    captures: [],
   };
   let originalTimeout;
   let changedTimeout = false;
@@ -122,9 +123,11 @@ export async function runAndroidDrag({
     const point = pointIn(visibleBounds(node, screen));
     shell('input', 'touchscreen', 'tap', `${point.x}`, `${point.y}`);
   };
-  const drag = (start, end) => {
+  const drag = async (start, end, label) => {
     // Android counts the initial long-press pause inside this total duration.
-    shell(
+    // Keep this exact gesture independent of the diagnostic screenshot schedule.
+    const args = [
+      'shell',
       'input',
       'touchscreen',
       'draganddrop',
@@ -133,7 +136,42 @@ export async function runAndroidDrag({
       `${end.x}`,
       `${end.y}`,
       '2000',
+    ];
+    report.actions.push({
+      at: new Date().toISOString(),
+      command: ['adb', '-s', device, ...args].join(' '),
+    });
+    const started = Date.now();
+    const completion = new Promise((done) => {
+      execFile(
+        process.env.ADB || 'adb',
+        ['-s', device, ...args],
+        { timeout: 30000, maxBuffer: 12 * 1024 * 1024 },
+        (error) => done(error),
+      );
+    });
+    for (const milliseconds of [600, 1500]) {
+      await new Promise((done) =>
+        setTimeout(done, Math.max(0, milliseconds - (Date.now() - started))),
+      );
+      const name = `${label}-held-${milliseconds}ms.png`;
+      try {
+        report.captures.push({ name, elapsedMs: Date.now() - started });
+        writeFileSync(resolve(output, name), adb(['exec-out', 'screencap', '-p'], true));
+      } catch (error) {
+        report.captures.at(-1).error = String(error);
+      }
+    }
+    const error = await completion;
+    if (error) throw error;
+    // Capture before the polling loop can outlive the six-second pickup/drop
+    // notice. Keep both files separate from latest.xml and the eventual failure.
+    writeFileSync(
+      resolve(output, `${label}-released.png`),
+      adb(['exec-out', 'screencap', '-p'], true),
     );
+    const { xml } = hierarchy();
+    writeFileSync(resolve(output, `${label}-released.xml`), xml);
   };
   const open = (route) =>
     shell(
@@ -197,9 +235,10 @@ export async function runAndroidDrag({
     );
     capture('01-before-drag');
 
-    drag(
+    await drag(
       pointIn(visibleBounds(findById(nodes, sourceId), screen)),
       pointIn(visibleBounds(findById(nodes, secondId), screen), 0.5, 0.75),
+      '02-reorder',
     );
     nodes = await waitFor('held-finger drag moves CKB-001 below CKB-002', (items) =>
       hasOrder(items, screen, secondId, sourceId),
@@ -219,9 +258,10 @@ export async function runAndroidDrag({
     assert.ok(targetBounds, 'The adjacent To do card is not visible');
     // Use the left quarter of the visible adjacent column: its full card can
     // extend off-screen, and the right screen edge deliberately auto-scrolls.
-    drag(
+    await drag(
       pointIn(visibleBounds(findById(nodes, sourceId), screen)),
       pointIn(targetBounds, 0.25, 0.5),
+      '04-cross-column',
     );
     await waitFor('cross-column drag completes', (items) =>
       items.some((node) =>
