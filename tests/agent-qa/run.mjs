@@ -10,6 +10,9 @@ const platform = Object.values(config.registry.targets)[0].platform;
 const reportDir = resolve(root, 'tests/agent-qa/reports');
 await mkdir(reportDir, { recursive: true });
 const args = [
+  ...(process.env.GITHUB_ACTIONS === 'true'
+    ? ['--import', resolve(root, 'tests/agent-qa/ci-analytics.mjs')]
+    : []),
   resolve(root, 'node_modules/agent-qa/dist/cli.js'),
   '--config',
   'agent-qa.ci.generated.yaml',
@@ -22,7 +25,14 @@ const args = [
   ...(platform === 'web' ? [] : ['--device', 'playground-ci']),
 ];
 const start = new Date().toISOString();
-const child = spawn(process.execPath, args, { cwd: root, stdio: 'inherit' });
+const child = spawn(process.execPath, args, {
+  cwd: root,
+  stdio: 'inherit',
+  env: {
+    ...process.env,
+    PLAYGROUND_AGENT_QA_ANALYTICS_PRELOAD: process.env.GITHUB_ACTIONS === 'true' ? '1' : '0',
+  },
+});
 const result = await new Promise((resolveResult) => {
   child.on('error', () => resolveResult({ exitCode: 1, signal: null, launchError: true }));
   child.on('exit', (code, signal) => resolveResult({ exitCode: code ?? 1, signal }));

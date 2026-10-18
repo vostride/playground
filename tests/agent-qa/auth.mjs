@@ -3,6 +3,7 @@ import { chmod, mkdir, readFile, writeFile, rm, readdir } from 'node:fs/promises
 import { homedir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { writeAnalyticsIdentity } from '@vostride/agent-qa-core';
 
 export const profileName = 'playground-codex';
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -157,11 +158,21 @@ async function main() {
   }
   const directory = ciDirectory();
   if (mode === 'prepare') {
+    assert.ok(
+      /^u_([a-z]+-){9}[a-z]+$/.test(process.env.AGENT_QA_ANALYTICS_ID || ''),
+      'Configure the persistent AGENT_QA_ANALYTICS_ID repository variable.',
+    );
     assert.ok(process.env.AGENT_QA_AUTH_JSON, 'Configure the AGENT_QA_AUTH_JSON Actions secret.');
     const store = selectCredential(process.env.AGENT_QA_AUTH_JSON);
     mask(store);
     await save(directory, store);
+    await writeAnalyticsIdentity(
+      process.env.AGENT_QA_ANALYTICS_ID,
+      join(directory, 'agent-qa/analytics.json'),
+      true,
+    );
     console.log('Prepared the isolated agent-qa subscription credential.');
+    console.log('Prepared the persistent internal CI analytics identity.');
   } else if (mode === 'sanitize-reports') {
     await sanitizeReports(directory);
   } else if (mode === 'cleanup') {

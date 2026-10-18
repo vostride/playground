@@ -8,6 +8,15 @@ const root = fileURLToPath(new URL('../../', import.meta.url));
 const platform = process.argv[2];
 assert.ok(['web', 'android', 'ios'].includes(platform), 'Choose web, android, or ios.');
 const config = YAML.parse(await readFile(resolve(root, 'agent-qa.config.yaml'), 'utf8'));
+if (process.env.GITHUB_ACTIONS === 'true') {
+  assert.ok(
+    /^u_([a-z]+-){9}[a-z]+$/.test(process.env.AGENT_QA_ANALYTICS_ID || ''),
+    'Configure the persistent AGENT_QA_ANALYTICS_ID repository variable.',
+  );
+  // CI has an explicitly requested internal telemetry identity. Local privacy
+  // remains unchanged in the checked-in dashboard configuration.
+  delete config.analytics;
+}
 const allTargets = config.registry.targets;
 config.registry.targets = Object.fromEntries(
   Object.entries(allTargets).filter(([, target]) => target.platform === platform),

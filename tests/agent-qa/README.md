@@ -71,6 +71,12 @@ $RUNNER_TEMP/playground-agent-qa-auth/agent-qa/auth.json
 
 It sets `XDG_DATA_HOME` to the containing `playground-agent-qa-auth` directory, masks token values, sanitizes reports before upload, and removes the auth directory during cleanup. No OpenAI API key or additional release credential is required for these tests. If authentication expires or a refresh token is rotated/revoked, log in again and replace `AGENT_QA_AUTH_JSON`: refreshes on ephemeral runners do not update the stored GitHub secret. Platform jobs are serial within each advisory run; separate workflow runs may overlap.
 
+## Internal CI analytics identity
+
+The repository variable `AGENT_QA_ANALYTICS_ID` holds one generated analytics user ID. Keep it stable across runs and platforms. CI writes it to `$XDG_DATA_HOME/agent-qa/analytics.json` with `is_internal: true`, and removes that runner-local file with the auth directory after execution. This does not read or change a developer's `~/.agent-qa/analytics.json`.
+
+agent-qa 0.1.21 normally hardcodes `u_CI`, ignoring the file in CI. Its CLI also creates separate analytics services for run reports. The CI runner therefore preloads `ci-analytics.mjs`, a compatibility shim for the pinned SDK that applies the repository's fixed ID and internal person flag at capture time, scoped to agent-qa's project. This is not a documented agent-qa configuration option; recheck it when upgrading agent-qa. `CI`, `GITHUB_ACTIONS`, and the `ci` runtime context stay intact, and no installed package files are changed. The generated CI config enables telemetry for these requested internal runs; the checked-in local config retains `analytics.privacy: true`. The identity file, auth files, and dashboard database are never cached or uploaded.
+
 ## Execution and reports
 
 ```sh
@@ -89,5 +95,5 @@ Manual dispatch requires a completed main-push source run ID. Choosing `all` res
 Validate helper behavior without model calls or device execution:
 
 ```sh
-node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs
+node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs tests/agent-qa/ci-analytics.test.mjs
 ```

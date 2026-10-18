@@ -58,9 +58,18 @@ jobs:
           script: |
             const repositoryId = String(context.payload.repository.id);
             const workflows = {
-              web: {file: 'web.yml', name: 'Web checks and Pages deployment'},
-              mobile: {file: 'mobile-release.yml', name: 'Mobile CI build and release'},
+              web: {file: 'web.yml'},
+              mobile: {file: 'mobile-release.yml'},
             };
+            await Promise.all(Object.values(workflows).map(async (workflow) => {
+              const {data} = await github.rest.actions.getWorkflow({...context.repo, workflow_id: workflow.file});
+              const path = `.github/workflows/${workflow.file}`;
+              if (data.path !== path || !Number.isSafeInteger(data.id) || data.id < 1) {
+                throw new Error('Registered workflow identity differs from the expected repository file.');
+              }
+              workflow.id = data.id;
+              workflow.path = path;
+            }));
             const artifactNames = {
               web: 'web-dist',
               android: 'diagnostic-android-apk-unverified',
@@ -68,7 +77,7 @@ jobs:
             };
             const validateRun = (run) => {
               const kind = Object.keys(workflows).find((key) =>
-                run.path?.split('@')[0] === `.github/workflows/${workflows[key].file}` && run.name === workflows[key].name);
+                run.path === workflows[key].path && run.workflow_id === workflows[key].id);
               if (!kind || String(run.repository?.id) !== repositoryId || String(run.head_repository?.id) !== repositoryId ||
                   run.event !== 'push' || run.head_branch !== 'main' || run.status !== 'completed' ||
                   !/^[a-f0-9]{40}$/.test(run.head_sha)) {
@@ -99,7 +108,7 @@ jobs:
               const kind = platform === 'web' ? 'web' : 'mobile';
               if (!Object.hasOwn(runs, kind)) {
                 const candidates = await github.paginate(github.rest.actions.listWorkflowRuns, {
-                  ...context.repo, workflow_id: workflows[kind].file, event: 'push', branch: 'main',
+                  ...context.repo, workflow_id: workflows[kind].id, event: 'push', branch: 'main',
                   head_sha: source.head_sha, status: 'completed', per_page: 100,
                 });
                 runs[kind] = candidates.filter((run) => run.head_sha === source.head_sha)
@@ -143,6 +152,7 @@ jobs:
     timeout-minutes: 110
     continue-on-error: true
     env:
+      AGENT_QA_ANALYTICS_ID: ${{ vars.AGENT_QA_ANALYTICS_ID }}
       PLAYGROUND_PLATFORM: ${{ matrix.platform }}
       PLAYGROUND_SOURCE_SHA: ${{ matrix.sourceSha }}
       PLAYGROUND_BASE_URL: http://127.0.0.1:4173
@@ -287,7 +297,7 @@ jobs:
           xcrun simctl install "$PLAYGROUND_SIMULATOR_ID" "$RUNNER_TEMP/playground-agent-qa-app/Playground.app"
       - name: Configure and validate the selected test target
         run: |
-          node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs
+          node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs tests/agent-qa/ci-analytics.test.mjs
           node tests/agent-qa/configure.mjs "$PLAYGROUND_PLATFORM"
           npm run agent-qa:validate
       - name: Prepare isolated Codex subscription authentication
