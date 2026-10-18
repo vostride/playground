@@ -99,7 +99,20 @@ final class CorkboardDragTests: XCTestCase {
     }
 
     private func openSourceDetails() {
-        app.open(URL(string: "playground://tasks/task/CKB-001")!)
+        let source = card("CKB-001")
+        XCTAssertTrue(source.waitForExistence(timeout: 10))
+        XCTAssertTrue(source.isHittable, "The moved card must be reachable without restarting the app")
+        // The adjacent column is only partially visible. Tap its visible card
+        // area without an automatic scroll, preserving the viewport and undo
+        // history used by the assertions below. Deep links have a separate flow.
+        let reachable = source.frame.intersection(app.frame.insetBy(dx: 8, dy: 8))
+        XCTAssertFalse(reachable.isNull, "The moved card must intersect the app viewport")
+        XCTAssertGreaterThan(reachable.width, 8)
+        XCTAssertGreaterThan(reachable.height, 8)
+        let point = CGPoint(x: reachable.midX, y: reachable.minY + reachable.height * 0.35)
+        app.coordinate(withNormalizedOffset: .zero).withOffset(
+            CGVector(dx: point.x - app.frame.minX, dy: point.y - app.frame.minY)
+        ).tap()
         XCTAssertTrue(
             app.descendants(matching: .any).matching(identifier: "task-detail-title")
                 .firstMatch.waitForExistence(timeout: 10)

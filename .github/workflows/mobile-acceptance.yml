@@ -1,5 +1,5 @@
 name: Mobile diagnostic acceptance
-run-name: Retest ${{ inputs.platform }} candidate ${{ inputs.candidate_run_id }} with current harness
+run-name: Retest ${{ inputs.platform }} ${{ inputs.scenario }} candidate ${{ inputs.candidate_run_id }} with current harness
 
 on:
   workflow_dispatch:
@@ -14,13 +14,19 @@ on:
         required: true
         default: ios
         options: [android, ios]
+      scenario:
+        description: 'Focused diagnostic scenario. Release verification always runs the full suite.'
+        type: choice
+        required: true
+        default: all
+        options: [all, shop, flights, tasks, observability, controls, drag]
 
 permissions:
   contents: read
   actions: read
 
 concurrency:
-  group: mobile-acceptance-${{ github.ref }}-${{ inputs.candidate_run_id }}-${{ inputs.platform }}
+  group: mobile-acceptance-${{ github.ref }}-${{ inputs.candidate_run_id }}-${{ inputs.platform }}-${{ inputs.scenario || 'all' }}
   cancel-in-progress: false
 
 env:
@@ -49,11 +55,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
           CANDIDATE_PLATFORM: ${{ inputs.platform }}
+          CANDIDATE_SCENARIO: ${{ inputs.scenario }}
         run: |
           node --input-type=module <<'NODE'
           import {appendFileSync, mkdirSync, writeFileSync} from 'node:fs';
-          const {CANDIDATE_RUN_ID: runId, CANDIDATE_PLATFORM: platform, GITHUB_REPOSITORY: repository} = process.env;
+          import {diagnosticSelection} from './tests/mobile/run-diagnostic.mjs';
+          const {CANDIDATE_RUN_ID: runId, CANDIDATE_PLATFORM: platform, CANDIDATE_SCENARIO: scenario, GITHUB_REPOSITORY: repository} = process.env;
           if (!/^[1-9]\d*$/.test(runId) || !['android', 'ios'].includes(platform)) throw new Error('Select a numeric candidate run ID and a supported platform.');
+          const selection = diagnosticSelection(scenario);
           const api = async (path) => {
             const response = await fetch(`${process.env.GITHUB_API_URL}/repos/${repository}/${path}`, {headers: {Accept: 'application/vnd.github+json', Authorization: `Bearer ${process.env.GH_TOKEN}`, 'X-GitHub-Api-Version': '2022-11-28'}});
             if (!response.ok) throw new Error(`GitHub candidate lookup failed: HTTP ${response.status}.`);
@@ -75,9 +84,9 @@ jobs:
           if (artifact.workflow_run?.head_sha && artifact.workflow_run.head_sha !== run.head_sha) throw new Error('Artifact and candidate source commits differ.');
           const directory = `maestro-reports/${platform}`;
           mkdirSync(directory, {recursive: true});
-          writeFileSync(`${directory}/provenance.json`, JSON.stringify({purpose: 'Diagnostic acceptance only; not release verification', repository, candidateRunId: runId, candidateRunUrl: run.html_url, candidateRunAttempt: run.run_attempt, candidateCommit: run.head_sha, harnessCommit: process.env.GITHUB_SHA, platform, artifactId: artifact.id, artifactName: name, artifactDigest: artifact.digest || null, artifactCreatedAt: artifact.created_at}, null, 2));
-          appendFileSync(process.env.GITHUB_OUTPUT, `source-sha=${run.head_sha}\nartifact-id=${artifact.id}\n`);
-          appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Diagnostic acceptance only. Candidate run: ${run.html_url}\n\nBinary commit: ${run.head_sha}\n\nHarness commit: ${process.env.GITHUB_SHA}\n\nArtifact: ${name} (${artifact.id}). No app build, attestation, or publication occurs.\n`);
+          writeFileSync(`${directory}/provenance.json`, JSON.stringify({purpose: 'Diagnostic acceptance only; not release verification', repository, candidateRunId: runId, candidateRunUrl: run.html_url, candidateRunAttempt: run.run_attempt, candidateCommit: run.head_sha, harnessCommit: process.env.GITHUB_SHA, platform, scenario, maestroFlow: selection.flow || null, continuousTouch: selection.drag, artifactId: artifact.id, artifactName: name, artifactDigest: artifact.digest || null, artifactCreatedAt: artifact.created_at}, null, 2));
+          appendFileSync(process.env.GITHUB_OUTPUT, `source-sha=${run.head_sha}\nartifact-id=${artifact.id}\nscenario=${scenario}\n`);
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Diagnostic acceptance only. Candidate run: ${run.html_url}\n\nScenario: ${scenario}; Maestro: ${selection.flow || 'none'}; continuous touch: ${selection.drag}.\n\nBinary commit: ${run.head_sha}\n\nHarness commit: ${process.env.GITHUB_SHA}\n\nArtifact: ${name} (${artifact.id}). No app build, attestation, or publication occurs.\n`);
           NODE
       - name: Read the original candidate source tree
         uses: actions/checkout@v4
@@ -183,7 +192,10 @@ jobs:
           sudo udevadm trigger --name-match=kvm
       - name: Run the current Android acceptance harness
         if: inputs.platform == 'android'
+        timeout-minutes: 35
         uses: reactivecircus/android-emulator-runner@v2
+        env:
+          DIAGNOSTIC_SCENARIO: ${{ steps.candidate.outputs.scenario }}
         with:
           api-level: 35
           target: google_apis
@@ -193,8 +205,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: |
             adb install "$CANDIDATE_BINARY"
-            maestro --device emulator-5554 test --format JUNIT --output maestro-reports/android/results.xml --debug-output maestro-reports/android/debug --test-output-dir maestro-reports/android/artifacts tests/mobile/flows/
-            node tests/mobile/android-drag.mjs emulator-5554
+            node tests/mobile/run-diagnostic.mjs android emulator-5554 "$DIAGNOSTIC_SCENARIO"
       - name: Select Xcode 16.4 and unpack the preserved simulator app
         if: inputs.platform == 'ios'
         run: |
@@ -217,20 +228,8 @@ jobs:
         if: inputs.platform == 'ios'
         env:
           PLAYGROUND_SIMULATOR_ID: ${{ steps.simulator.outputs.id }}
-        run: |
-          maestro --device "$PLAYGROUND_SIMULATOR_ID" test --format JUNIT --output maestro-reports/ios/results.xml --debug-output maestro-reports/ios/debug --test-output-dir maestro-reports/ios/artifacts tests/mobile/flows/
-          xcodebuild test \
-            -project tests/mobile/ios/CorkboardGestures.xcodeproj \
-            -scheme CorkboardGestures \
-            -configuration Debug \
-            -sdk iphonesimulator \
-            -destination "platform=iOS Simulator,id=$PLAYGROUND_SIMULATOR_ID" \
-            -parallel-testing-enabled NO \
-            -maximum-concurrent-test-simulator-destinations 1 \
-            -derivedDataPath maestro-reports/ios/gesture-build \
-            -resultBundlePath maestro-reports/ios/corkboard-gestures.xcresult \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
+          DIAGNOSTIC_SCENARIO: ${{ steps.candidate.outputs.scenario }}
+        run: node tests/mobile/run-diagnostic.mjs ios "$PLAYGROUND_SIMULATOR_ID" "$DIAGNOSTIC_SCENARIO"
       - name: Preserve diagnostic acceptance evidence
         if: always()
         uses: actions/upload-artifact@v4

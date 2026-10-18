@@ -26,10 +26,15 @@ name: Corkboard create, edit, move, undo, checklist, and persistence
 - assertVisible:
     id: task-detail-title
     text: Native regression task
-- tapOn:
+- longPressOn:
     id: task-detail-title
-- eraseText
+- tapOn:
+    text: '(?i)^Select all$'
+- eraseText: 1
 - inputText: Native regression task edited
+- assertVisible:
+    id: task-detail-title
+    text: '^Native regression task edited$'
 - runFlow: ../helpers/dismiss-keyboard.yaml
 - tapOn:
     id: task-status-progress
@@ -75,7 +80,7 @@ name: Corkboard create, edit, move, undo, checklist, and persistence
       LINK: playground://tasks/task/CKB-2401
 - assertVisible:
     id: task-detail-title
-    text: Native regression task edited
+    text: '^Native regression task edited$'
 - scrollUntilVisible:
     centerElement: true
     element:
