@@ -1738,36 +1738,35 @@ function Monitors({
   notify: (message: string) => void;
 }) {
   const [editing, setEditing] = useState<AlertRule | null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [validationAttempted, setValidationAttempted] = useState(false);
   const [search, setSearch] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [warningEnabled, setWarningEnabled] = useState(true);
   const values = { 'error-rate': 0.42, latency: 264, throughput: 112 };
+  const draft = editing
+    ? {
+        ...editing,
+        name: editing.name.trim(),
+        warningThreshold: warningEnabled ? editing.warningThreshold : null,
+      }
+    : null;
+  const errors: Record<string, string> = validationAttempted && draft ? validateAlert(draft) : {};
   function start(rule = newMonitor()) {
     setEditing({ ...rule });
     setWarningEnabled(rule.warningThreshold !== null);
-    setErrors({});
+    setValidationAttempted(false);
   }
   function patch<K extends keyof AlertRule>(key: K, value: AlertRule[K]) {
     setEditing((old) => (old ? { ...old, [key]: value } : old));
-    setErrors((old) => {
-      const next = { ...old };
-      delete next[key];
-      return next;
-    });
   }
   function save(event: FormEvent) {
     event.preventDefault();
-    if (!editing) return;
-    const next = {
-      ...editing,
-      name: editing.name.trim(),
-      warningThreshold: warningEnabled ? editing.warningThreshold : null,
-    };
+    if (!draft) return;
+    const next = draft;
     const validation = validateAlert(next);
-    setErrors(validation);
     if (Object.keys(validation).length) {
+      setValidationAttempted(true);
       document.getElementById(`monitor-${Object.keys(validation)[0]}`)?.focus();
       return;
     }

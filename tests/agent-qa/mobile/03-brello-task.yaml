@@ -26,7 +26,9 @@ steps:
   - Set the due date to October 28, 2026 using the task calendar and verify Due Oct 28, 2026 is displayed.
   - Add a checklist item named Verify mobile release and mark that exact item complete. Verify its checkbox is checked and checklist progress is 1 / 1.
   - Close the task with Done, then reopen the exact CKB-2401 search result.
-  - Verify the saved title, To do status, High priority, Maya Chen assignment, Design label, Oct 28, 2026 due date, and checked Verify mobile release checklist item all persisted.
+  - Verify the reopened CKB-2401 task still has title Agent QA release review, To do status, and High priority.
+  - Verify the reopened task still has Maya Chen assigned, the Design label selected, and Due Oct 28, 2026 displayed.
+  - Verify the reopened task's Verify mobile release checklist item is still checked and checklist progress is 1 / 1.
   - Close the detail sheet and clear the search. Open Filters, select the Design label and Maya Chen assignee, then choose Show matching tasks. Verify CKB-2401 remains in the matching results.
   - Search within those filtered results for a title that does not exist, release-review-no-such-task. Verify the empty results state is shown.
   - Clear the search and filters, return to Board, then return to List and search for CKB-2401. Verify the task is still present with its saved title.
