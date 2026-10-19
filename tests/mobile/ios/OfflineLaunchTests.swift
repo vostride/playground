@@ -23,7 +23,7 @@ final class OfflineLaunchTests: XCTestCase {
     func testFreshLaunchEveryProductAndLocalWebViewWithoutNetwork() async throws {
         // The independent host harness verifies the real PF block before replying.
         // With no harness URL this test fails; running its scheme online cannot claim offline proof.
-        try await control("begin")
+        let offlineDeadline = try await control("begin")
         app.terminate()
         app.launch()
         try require(element("home-open-shop"), "Home product launcher")
@@ -53,21 +53,29 @@ final class OfflineLaunchTests: XCTestCase {
         try tap("button-a-quick-guide-to-the-playground")
         let web = app.webViews.firstMatch
         try require(web, "Local help WebView")
+        // WKWebView initializes separately from the native sheet. Both HTML
+        // checks share the remaining offline budget, reserving ten seconds for
+        // completion, XCTest exit and the host's final blocked-network probes.
+        let htmlDeadline = offlineDeadline - 10
         // Require actual DOM text within the WebView, not the native sheet's Help heading.
-        try require(web.staticTexts["Navigation"].firstMatch, "Local help HTML heading")
+        try require(web.staticTexts["Navigation"].firstMatch, "Local help HTML heading", until: htmlDeadline)
         // XCTest's string-identifier subscript rejects text longer than 128 characters.
         // Match the full rendered paragraph explicitly, still scoped to the WebView.
         let navigationHelp = "Choose an app from Home. Use the grid button to switch apps and the bottom tabs to navigate within each app. The back button returns to the previous screen."
         try require(web.staticTexts.matching(
             NSPredicate(format: "label == %@", navigationHelp)
-        ).firstMatch, "Local help HTML content")
+        ).firstMatch, "Local help HTML content", until: htmlDeadline)
         attach("Offline local WebView content")
         try await control("complete")
         // Completion only records a marker. The host still waits for XCTest to exit and
         // repeats blocked-network probes before restoring its own anchor/reference.
     }
 
-    private func control(_ operation: String) async throws {
+    @discardableResult
+    private func control(_ operation: String) async throws -> TimeInterval {
+        // Anchor before the request so transit time cannot extend the host's
+        // remaining budget. The host/watchdog remain the source of truth.
+        let requestedAt = ProcessInfo.processInfo.systemUptime
         guard let raw = ProcessInfo.processInfo.environment["PLAYGROUND_OFFLINE_CONTROL_URL"],
               let base = URL(string: raw), base.scheme == "http", base.host == "127.0.0.1",
               let port = base.port, port > 0,
@@ -88,6 +96,7 @@ final class OfflineLaunchTests: XCTestCase {
               let remaining = value["remainingMs"] as? Double, remaining > 0 else {
             throw SmokeError.harness("PF offline interval is not active: \(String(decoding: data, as: UTF8.self))")
         }
+        return requestedAt + remaining / 1_000
     }
 
     private func element(_ id: String) -> XCUIElement {
@@ -108,10 +117,13 @@ final class OfflineLaunchTests: XCTestCase {
         target.tap()
     }
 
-    private func require(_ target: XCUIElement, _ description: String) throws {
+    private func require(_ target: XCUIElement, _ description: String, until deadline: TimeInterval? = nil) throws {
         // Avoid an unnecessary polling interval for an already-rendered control;
-        // missing controls retain the same bounded wait and mandatory assertion.
-        guard target.exists || target.waitForExistence(timeout: 3) else { throw SmokeError.missing(description) }
+        // ordinary controls keep their three-second bound. HTML checks share
+        // the readiness deadline derived from the remaining offline budget.
+        if target.exists { return }
+        let timeout = deadline.map { max(0, $0 - ProcessInfo.processInfo.systemUptime) } ?? 3
+        guard timeout > 0, target.waitForExistence(timeout: timeout) else { throw SmokeError.missing(description) }
     }
 
     private func attach(_ name: String) {

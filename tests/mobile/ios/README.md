@@ -48,6 +48,8 @@ The wrapper refuses other operating systems, non-GitHub environments, and aliase
 
 The test runner starts online and calls the host harness over `127.0.0.1` before terminating and fresh-launching the candidate. This keeps Xcode startup outside the outage. The smoke checks the rendered Komazon catalog/product, Looking search/departure picker, Brello seeded board/task, PepaPog request metric, and actual HTML text inside the local Help WebView. It records screenshots and an accessibility hierarchy in its own `.xcresult`. It does not dismiss permission prompts or enable app test flags.
 
+The Help heading and full paragraph share the host's remaining offline interval, conservatively anchored before the `/begin` request and reserving ten seconds for completion, XCTest exit and final probes. Already-rendered text proceeds immediately; other controls retain three-second waits. The reserve is a scheduling bound, not a guarantee of XCTest exit time. The exact WebView-scoped assertions and the independent recovery deadlines remain mandatory.
+
 The offline test does not explicitly terminate the candidate during teardown. Candidate cleanup is left to the workflow's simulator shutdown after the wrapper restores networking. Startup termination and fresh launch, all assertions, XCTest exit validation, probes, and recovery deadlines remain mandatory.
 
 Only the separate `OfflineLaunch` test action disables Debug Executable. The original and prepared `.xctestrun` files and patched test-host `Info.plist` are retained outside the excluded build directory for comparison. Candidate settings are unchanged.

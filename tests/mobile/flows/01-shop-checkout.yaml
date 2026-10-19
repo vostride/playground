@@ -51,7 +51,8 @@ name: Komazon catalog refresh, exact totals, checkout bug recovery, and cancella
 - tapOn:
     id: button-continue-to-delivery
 - scrollUntilVisible:
-    centerElement: true
+    # The validation banner can be fully visible above the scroll-centering band.
+    centerElement: false
     element:
       text: 'Enter a street address\.[\s\S]*'
     direction: UP

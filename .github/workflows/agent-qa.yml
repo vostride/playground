@@ -297,7 +297,7 @@ jobs:
           xcrun simctl install "$PLAYGROUND_SIMULATOR_ID" "$RUNNER_TEMP/playground-agent-qa-app/Playground.app"
       - name: Configure and validate the selected test target
         run: |
-          node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs tests/agent-qa/ci-analytics.test.mjs
+          node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs tests/agent-qa/ci-analytics.test.mjs tests/agent-qa/appium.test.mjs
           node tests/agent-qa/configure.mjs "$PLAYGROUND_PLATFORM"
           npm run agent-qa:validate
       - name: Prepare isolated Codex subscription authentication
@@ -399,7 +399,13 @@ jobs:
         id: sanitize
         env:
           AGENT_QA_AUTH_JSON: ${{ secrets.AGENT_QA_AUTH_JSON }}
-        run: node tests/agent-qa/auth.mjs sanitize-reports
+        run: |
+          node --input-type=module <<'NODE'
+          import {resolve} from 'node:path';
+          import {assertAppiumStopped} from './tests/agent-qa/appium.mjs';
+          await assertAppiumStopped(resolve('tests/agent-qa/reports'));
+          NODE
+          node tests/agent-qa/auth.mjs sanitize-reports
       - name: Save sanitized product memory for subsequent platforms and runs
         if: always() && steps.sanitize.outcome == 'success' && steps.memory-executed.outputs.eligible == 'true'
         id: memory-save

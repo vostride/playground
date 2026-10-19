@@ -92,8 +92,12 @@ Set `PLAYGROUND_BASE_URL` before configuration to test another web deployment. T
 
 Manual dispatch requires a completed main-push source run ID. Choosing `all` resolves the counterpart web/mobile workflow at the exact same source SHA. Reports, screenshots, source identity, and exit status are retained as `agent-qa-<platform>-<run-id>` artifacts for 14 days. Report sanitization must succeed before upload. Generated local evidence stays under ignored `tests/agent-qa/reports/`.
 
+CI mobile runs own one pinned Appium 3.8.0 server for all four journeys, bound to `127.0.0.1:4723` with the existing relaxed-security capability. Startup refuses an occupied port and requires the owned listener plus a ready `/status` response within 30 seconds. Only the agent-qa CLI receives `AGENT_QA_APPIUM_URL`. Local dashboard and web execution keep their existing Appium behavior.
+
+Appium debug output is retained in `reports/appium/server.log`; startup stdout/stderr is retained in `reports/appium/process.log`, including failures before the server becomes ready. The log directory is mode 0700, including when Appium replaces its log file during startup. These logs use the same credential sanitizer as other reports and are never printed raw by the wrapper. The wrapper preserves the agent's exit code and stops only its owned children, including on SIGINT/SIGTERM. Cleanup allows five seconds for TERM and five for KILL. An `appium-writer-active.json` marker prevents sanitation, report upload, and memory caching unless the child processes and log handles are confirmed closed. These diagnostics do not change journey assertions or session timeouts and do not establish that the previously observed session-start failures are fixed.
+
 Validate helper behavior without model calls or device execution:
 
 ```sh
-node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs tests/agent-qa/ci-analytics.test.mjs
+node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs tests/agent-qa/ci-analytics.test.mjs tests/agent-qa/appium.test.mjs
 ```

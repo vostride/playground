@@ -82,7 +82,8 @@ appId: dev.vostride.playground
     element:
       text: 'Enter a street address\.[\s\S]*'
     direction: UP
-    centerElement: true
+    # Require visibility without trying to center a banner at the content's top.
+    centerElement: false
 - assertVisible: 'Enter a street address\.[\s\S]*'
 - assertNotVisible: '^Delivery method$'
 - takeScreenshot: komazon-shipping-validation-restored
