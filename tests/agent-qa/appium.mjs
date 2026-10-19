@@ -17,11 +17,151 @@ import {
 import { createRequire } from 'node:module';
 import { createServer } from 'node:net';
 import { dirname, isAbsolute, join, parse, relative, resolve, sep } from 'node:path';
+import { StringDecoder } from 'node:string_decoder';
 import { setTimeout as delay } from 'node:timers/promises';
 
 const url = 'http://127.0.0.1:4723';
 const listenerMessage = `Appium REST http interface listener started on ${url}`;
 const markerName = 'appium-writer-active.json';
+const logLimitBytes = 8 * 1024 * 1024;
+const logLineLimitBytes = 64 * 1024;
+const truncationNotice = Buffer.from(
+  '\n[Appium diagnostics truncated: capture or line limit exceeded; see status.json.]\n',
+);
+
+function captureLog(handle, { limitBytes, lineLimitBytes, write, onText = () => {} }) {
+  assert.ok(Number.isSafeInteger(limitBytes) && limitBytes > truncationNotice.length);
+  assert.ok(Number.isSafeInteger(lineLimitBytes) && lineLimitBytes > 0);
+  const state = {
+    limitBytes,
+    lineLimitBytes,
+    receivedBytes: 0,
+    writtenBytes: 0,
+    truncated: false,
+    capped: false,
+    droppedLongLines: 0,
+    nulEscapes: 0,
+    replacementCharacters: 0,
+    writeFailed: false,
+  };
+  const streams = [];
+  let closing;
+  let failResolve;
+  const failed = new Promise((resolveFailure) => {
+    failResolve = resolveFailure;
+  });
+  function fail() {
+    state.writeFailed = true;
+    failResolve({ type: 'log' });
+  }
+  function writeBytes(bytes) {
+    if (state.writeFailed) return;
+    try {
+      let offset = 0;
+      while (offset < bytes.length) {
+        const count = write(handle.fd, bytes, offset);
+        if (!Number.isInteger(count) || count <= 0) throw failure('APPIUM_LOG_WRITE_FAILED');
+        offset += count;
+        state.writtenBytes += count;
+      }
+    } catch {
+      fail();
+    }
+  }
+  function writeLine(line) {
+    if (state.capped || state.writeFailed) return;
+    const bytes = Buffer.from(line);
+    if (state.writtenBytes + bytes.length > limitBytes - truncationNotice.length) {
+      state.capped = true;
+      state.truncated = true;
+      return;
+    }
+    writeBytes(bytes);
+  }
+  function attach(child) {
+    for (const [name, stream] of [
+      ['stdout', child.stdout],
+      ['stderr', child.stderr],
+    ]) {
+      const decoder = new StringDecoder('utf8');
+      let pending = '';
+      let pendingBytes = 0;
+      let droppingLine = false;
+      let ended = false;
+      function record(text) {
+        state.replacementCharacters += text.split('\ufffd').length - 1;
+        state.nulEscapes += text.split('\0').length - 1;
+        text = text.replaceAll('\0', '\\u0000');
+        onText(name, text);
+        // Continue decoding/draining after the cap, but retain no more lines.
+        if (state.capped || state.writeFailed) return;
+        let start = 0;
+        while (start < text.length) {
+          const newline = text.indexOf('\n', start);
+          const end = newline < 0 ? text.length : newline + 1;
+          const part = text.slice(start, end);
+          if (!droppingLine) {
+            pendingBytes += Buffer.byteLength(part);
+            if (pendingBytes > lineLimitBytes) {
+              pending = '';
+              droppingLine = true;
+              state.droppedLongLines += 1;
+              state.truncated = true;
+            } else pending += part;
+          }
+          if (newline >= 0) {
+            if (!droppingLine) writeLine(pending);
+            pending = '';
+            pendingBytes = 0;
+            droppingLine = false;
+          }
+          if (state.capped || state.writeFailed) break;
+          start = end;
+        }
+      }
+      function data(chunk) {
+        const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+        state.receivedBytes += bytes.length;
+        record(decoder.write(bytes));
+      }
+      function finish() {
+        if (ended) return;
+        ended = true;
+        record(decoder.end());
+        if (pending && !droppingLine) writeLine(`${pending}\n`);
+        pending = '';
+      }
+      stream.on('data', data);
+      stream.on('end', finish);
+      stream.on('error', fail);
+      streams.push({ stream, data, finish });
+    }
+  }
+  return {
+    state,
+    failed,
+    attach,
+    close() {
+      closing ??= (async () => {
+        try {
+          for (const { stream, data, finish } of streams) {
+            finish();
+            stream.off('data', data);
+            stream.off('end', finish);
+            stream.off('error', fail);
+          }
+          if (state.truncated) writeBytes(truncationNotice);
+        } finally {
+          await handle.close();
+        }
+        // A partial write may end inside a credential or UTF-8 sequence. Keep
+        // the publication marker even when the child and descriptor did close.
+        if (state.writeFailed) throw failure('APPIUM_LOG_WRITE_FAILED');
+      })();
+      return closing;
+    },
+  };
+}
 
 function failure(code) {
   return Object.assign(new Error(code), { code });
@@ -284,6 +424,10 @@ export async function runCiMobileAgent(
     pollIntervalMs: 250,
     stopTimeoutMs: 5000,
     killTimeoutMs: 5000,
+    logLimitBytes,
+    logLineLimitBytes,
+    openLog: open,
+    writeLog: writeSync,
     ...dependencies,
   };
   assert.equal(
@@ -301,7 +445,6 @@ export async function runCiMobileAgent(
   await mkdir(reportDir, { recursive: true });
   await assertAppiumStopped(reportDir);
   const logDir = join(reportDir, 'appium');
-  const serverLog = join(logDir, 'server.log');
   const marker = join(reportDir, markerName);
   const controller = new AbortController();
   let interrupted;
@@ -322,13 +465,15 @@ export async function runCiMobileAgent(
   let agent;
   let build;
   let buildLog;
+  let buildCapture;
   let buildLogsClosed;
   let processLog;
+  let processCapture;
   let serverLogsClosed;
   let logCloseFailed = false;
   let marked = false;
   let result = { exitCode: 1, signal: null, launchError: true };
-  const diagnostics = { version: pkg.version, url, ready: false };
+  const diagnostics = { version: pkg.version, url, ready: false, logs: {} };
   try {
     await runtime.assertPortAvailable();
     if (interrupted) throw failure('APPIUM_INTERRUPTED');
@@ -340,10 +485,20 @@ export async function runCiMobileAgent(
       { flag: 'wx', mode: 0o600 },
     );
     marked = true;
-    processLog = await open(join(logDir, 'process.log'), 'wx', 0o600);
-    // Reject stale logs. Appium unlinks/recreates this file; the private parent
-    // directory protects both the initial file and the replacement.
-    await writeFile(serverLog, '', { flag: 'wx', mode: 0o600 });
+    processLog = await runtime.openLog(join(logDir, 'process.log'), 'wx', 0o600);
+    let listening = false;
+    const listenerTails = { stdout: '', stderr: '' };
+    processCapture = captureLog(processLog, {
+      limitBytes: runtime.logLimitBytes,
+      lineLimitBytes: runtime.logLineLimitBytes,
+      write: runtime.writeLog,
+      onText(stream, text) {
+        const combined = listenerTails[stream] + text;
+        listening ||= combined.includes(listenerMessage);
+        listenerTails[stream] = combined.slice(-(listenerMessage.length - 1));
+      },
+    });
+    diagnostics.logs.process = processCapture.state;
     const serverEnv = { ...env };
     delete serverEnv.AGENT_QA_AUTH_JSON;
     delete serverEnv.AGENT_QA_APPIUM_URL;
@@ -352,7 +507,13 @@ export async function runCiMobileAgent(
     if (env.PLAYGROUND_PLATFORM === 'ios') {
       const plan = await prepareCiWda(env, runnerTemp, appiumHome);
       diagnostics.wda = { ...plan, startedAt: new Date().toISOString(), ready: false };
-      buildLog = await open(join(logDir, 'wda-build.log'), 'wx', 0o600);
+      buildLog = await runtime.openLog(join(logDir, 'wda-build.log'), 'wx', 0o600);
+      buildCapture = captureLog(buildLog, {
+        limitBytes: runtime.logLimitBytes,
+        lineLimitBytes: runtime.logLineLimitBytes,
+        write: runtime.writeLog,
+      });
+      diagnostics.logs.wdaBuild = buildCapture.state;
       if (interrupted) throw failure('APPIUM_INTERRUPTED');
       const child = runtime.spawn('xcodebuild', plan.args, {
         cwd: plan.cwd,
@@ -364,33 +525,12 @@ export async function runCiMobileAgent(
         ...runtime,
         signalChild: (signal) => runtime.signalOwnedBuildGroup(child, signal),
       });
-      let logFailure;
-      let buildLogFailed = false;
-      const logFailed = new Promise((resolveFailure) => {
-        logFailure = resolveFailure;
-      });
-      const failBuildLog = () => {
-        buildLogFailed = true;
-        logFailure({ type: 'log' });
-      };
-      const record = (chunk) => {
-        try {
-          const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-          let offset = 0;
-          while (offset < bytes.length) offset += writeSync(buildLog.fd, bytes, offset);
-        } catch {
-          failBuildLog();
-        }
-      };
+      buildCapture.attach(child);
       buildLogsClosed = build.completion
-        .then(() => buildLog.close())
+        .then(() => buildCapture.close())
         .catch(() => {
           logCloseFailed = true;
         });
-      for (const stream of [child.stdout, child.stderr]) {
-        stream.on('data', record);
-        stream.on('error', failBuildLog);
-      }
       // 'close' includes the pipe streams, so descendants cannot still write
       // build logs when this fd is closed and the sanitation marker is cleared.
       const timer = new AbortController();
@@ -400,14 +540,15 @@ export async function runCiMobileAgent(
           build.completion.then((outcome) => ({ type: 'build', outcome })),
           delay(runtime.wdaBuildTimeoutMs, { type: 'timeout' }, { signal: timer.signal }),
           interruption,
-          logFailed,
+          buildCapture.failed,
         ]);
       } finally {
         timer.abort();
       }
       if (completed.type === 'signal') throw failure('APPIUM_INTERRUPTED');
       if (completed.type === 'timeout') throw failure('APPIUM_WDA_BUILD_TIMED_OUT');
-      if (completed.type === 'log' || buildLogFailed) throw failure('APPIUM_WDA_LOG_FAILED');
+      if (completed.type === 'log' || buildCapture.state.writeFailed)
+        throw failure('APPIUM_WDA_LOG_FAILED');
       diagnostics.wda.process = completed.outcome;
       diagnostics.wda.completedAt = new Date().toISOString();
       await buildLogsClosed;
@@ -431,34 +572,31 @@ export async function runCiMobileAgent(
       };
     }
     if (interrupted) throw failure('APPIUM_INTERRUPTED');
-    server = ownChild(
-      runtime.spawn(
-        process.execPath,
-        [
-          appiumEntry,
-          '--address',
-          '127.0.0.1',
-          '--port',
-          '4723',
-          // The workflow boots via simctl. Match that headless state instead
-          // of restarting the simulator merely to attach a GUI during POST /session.
-          ...(iosCapabilities ? ['--default-capabilities', JSON.stringify(iosCapabilities)] : []),
-          '--relaxed-security',
-          '--log',
-          serverLog,
-          '--log-level',
-          'info:debug',
-          '--log-timestamp',
-          '--log-no-colors',
-        ],
-        { cwd: root, env: serverEnv, stdio: ['ignore', processLog.fd, processLog.fd] },
-      ),
-      runtime,
+    const serverChild = runtime.spawn(
+      process.execPath,
+      [
+        appiumEntry,
+        '--address',
+        '127.0.0.1',
+        '--port',
+        '4723',
+        // The workflow boots via simctl. Match that headless state instead
+        // of restarting the simulator merely to attach a GUI during POST /session.
+        ...(iosCapabilities ? ['--default-capabilities', JSON.stringify(iosCapabilities)] : []),
+        '--relaxed-security',
+        '--log-level',
+        'info',
+        '--log-timestamp',
+        '--log-no-colors',
+      ],
+      { cwd: root, env: serverEnv, stdio: ['ignore', 'pipe', 'pipe'] },
     );
+    server = ownChild(serverChild, runtime);
+    processCapture.attach(serverChild);
     // Even a close arriving after the bounded cleanup deadline releases our fd.
     // The active marker remains until the normal cleanup path confirms all writers.
     serverLogsClosed = server.completion
-      .then(() => processLog.close())
+      .then(() => processCapture.close())
       .catch(() => {
         logCloseFailed = true;
       });
@@ -466,14 +604,10 @@ export async function runCiMobileAgent(
     while (Date.now() < deadline) {
       if (interrupted) throw failure('APPIUM_INTERRUPTED');
       if (server.closed || server.exited) throw failure('APPIUM_EXITED_BEFORE_READY');
+      if (processCapture.state.writeFailed) throw failure('APPIUM_LOG_FAILED');
       // The owned server's listener message closes the preflight bind-check race:
-      // readiness from an unrelated listener is insufficient to proceed.
-      const log = await readFile(serverLog, 'utf8').catch((error) => {
-        // Pinned Appium 3.8.0 deletes --log before attaching its file transport.
-        if (error.code === 'ENOENT') return '';
-        throw error;
-      });
-      const listening = log.includes(listenerMessage);
+      // readiness from an unrelated listener is insufficient to proceed. Observe
+      // its decoded pipes even after capture is capped; do not read another file.
       const remainingMs = deadline - Date.now();
       if (remainingMs <= 0) break;
       if (
@@ -481,6 +615,7 @@ export async function runCiMobileAgent(
         (await runtime.probeStatus(controller.signal, Math.min(2000, remainingMs)))
       ) {
         if (server.closed || server.exited) throw failure('APPIUM_EXITED_BEFORE_READY');
+        if (processCapture.state.writeFailed) throw failure('APPIUM_LOG_FAILED');
         if (Date.now() >= deadline) break;
         diagnostics.ready = true;
         diagnostics.readyAt = new Date().toISOString();
@@ -501,14 +636,16 @@ export async function runCiMobileAgent(
     const completed = await Promise.race([
       agent.completion.then((outcome) => ({ type: 'agent', outcome })),
       server.completion.then(() => ({ type: 'server' })),
+      processCapture.failed,
       interruption,
     ]);
     if (completed.type === 'agent') result = completed.outcome;
     else {
       await agent.stop();
       result = await agent.completion;
-      if (completed.type === 'server') {
-        result.appiumError = 'APPIUM_EXITED_DURING_JOURNEYS';
+      if (completed.type === 'server' || completed.type === 'log') {
+        result.appiumError =
+          completed.type === 'server' ? 'APPIUM_EXITED_DURING_JOURNEYS' : 'APPIUM_LOG_FAILED';
         if (result.exitCode === 0) result.exitCode = 1;
       }
     }
@@ -526,7 +663,10 @@ export async function runCiMobileAgent(
         diagnostics.wda.process = await build.completion;
         diagnostics.wda.completedAt ??= new Date().toISOString();
         await buildLogsClosed;
-      } else if (!build) await buildLog?.close();
+      } else if (!build) {
+        if (buildCapture) await buildCapture.close();
+        else await buildLog?.close();
+      }
       buildClosed = !build || (build.closed && !build.abandoned);
     } catch {
       result.appiumError = 'APPIUM_WRITER_NOT_CONFIRMED_STOPPED';
@@ -537,7 +677,8 @@ export async function runCiMobileAgent(
       // it does not assert that the build group exited, so the marker stays.
       build?.abandon();
       try {
-        await buildLog?.close();
+        if (buildCapture) await buildCapture.close();
+        else await buildLog?.close();
       } catch {
         logCloseFailed = true;
       }
@@ -556,6 +697,7 @@ export async function runCiMobileAgent(
       // the marker, so even always() workflow steps cannot upload unsanitized logs.
       if (!server || server.closed) {
         if (server) await serverLogsClosed;
+        else if (processCapture) await processCapture.close();
         else await processLog?.close();
         if (logCloseFailed) throw failure('APPIUM_WRITER_NOT_CONFIRMED_STOPPED');
         if (marked && buildClosed && (!agent || agent.closed)) await rm(marker);
@@ -563,6 +705,14 @@ export async function runCiMobileAgent(
     } catch {
       result.appiumError = 'APPIUM_WRITER_NOT_CONFIRMED_STOPPED';
       if (result.exitCode === 0) result.exitCode = 1;
+      diagnostics.shutdownUnconfirmed = true;
+      server?.abandon();
+      try {
+        if (processCapture) await processCapture.close();
+        else await processLog?.close();
+      } catch {
+        logCloseFailed = true;
+      }
     }
     runtime.signalSource.off('SIGINT', onInt);
     runtime.signalSource.off('SIGTERM', onTerm);
