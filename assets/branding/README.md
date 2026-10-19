@@ -23,9 +23,9 @@ background, white vostride wordmark, Playground mark, and bundled Geist Mono fon
 It includes real Brello and PepaPog web captures and CI screenshots of Komazon on
 Android and Looking on iOS, arranged in upright browser and phone frames.
 The browser previews extend beyond the banner edges; both phones are fully
-visible beside the centered Playground wordmark, without platform captions. The native
-screenshots are copied unchanged; web captures exclude the global test toolbar
-through screenshot framing. Product content is not retouched.
+visible and aligned to the bottom edge, without platform captions. The Playground
+wordmark stays centered. The native screenshots are copied unchanged; web captures
+exclude the global test toolbar through screenshot framing. Product content is not retouched.
 
 Inputs, screenshot provenance, and checksums are recorded in `readme/sources.json`.
 Preserve the font license in `readme/Geist-OFL.txt` alongside
