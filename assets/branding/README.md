@@ -21,7 +21,9 @@ the Vostride attribution opens `https://vostride.com/`. Both require a user sele
 `playground-banner.png` is a 1600 × 960 composition of the owner's dark grain
 background, white vostride wordmark, Playground mark, and bundled Geist Mono font.
 It includes real Brello and PepaPog web captures and CI screenshots of Komazon on
-Android and Looking on iOS, arranged in browser and phone frames. The native
+Android and Looking on iOS, arranged in upright browser and phone frames that
+extend beyond the banner edges. The Playground wordmark is centered on the
+canvas; the two phone frames are labelled Android and iOS. The native
 screenshots are copied unchanged; web captures exclude the global test toolbar
 through screenshot framing. Product content is not retouched.
 
