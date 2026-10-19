@@ -1,5 +1,5 @@
 {
-  "description": "Original owner-supplied branding assets, copied without modification. Geist Mono is distributed under the bundled SIL Open Font License.",
+  "description": "Owner-supplied branding assets and real product screenshots. Geist Mono is distributed under the bundled SIL Open Font License. Screens are composed in HTML device frames without retouching product content.",
   "assets": [
     {
       "file": "background.png",
@@ -20,6 +20,46 @@
       "file": "Geist-OFL.txt",
       "source": "Branding/99-Production/Compositions/factory-mono-v4/Geist-OFL.txt",
       "sha256": "930853ee1daa68554d9e35c8a9175affb74f699fad9a5da6ee5ebe76379d9137"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "screens/web-pepapog.png",
+      "platform": "web",
+      "route": "/observability/",
+      "capturedAt": "2026-10-19",
+      "dimensions": [2560, 1600],
+      "capture": "Fresh browser session against the local production preview, default Overview. Viewport 1280x837 at 2x, clipped below the 37px global test toolbar. No DOM or CSS modifications.",
+      "sha256": "218cb0e6a1c5ec01aac2988ab3af89c25003fb69a80a7903646ba900e29b970c"
+    },
+    {
+      "file": "screens/web-brello.png",
+      "platform": "web",
+      "route": "/tasks/",
+      "capturedAt": "2026-10-19",
+      "dimensions": [3072, 1600],
+      "capture": "Fresh browser session against the local production preview, default Product launch board. Viewport 1536x837 at 2x, clipped below the 37px global test toolbar. No DOM or CSS modifications.",
+      "sha256": "cdceb277d4975c4d36a1061b5e5a80da06364744c7520a0bcfb3a6ad1983ca5c"
+    },
+    {
+      "file": "screens/android-komazon.png",
+      "platform": "android",
+      "dimensions": [1440, 3120],
+      "capture": "Unmodified Komazon catalog screenshot from the sanitized CI report. Public seed products only.",
+      "screenshotRun": "https://github.com/vostride/playground/actions/runs/39241403406",
+      "buildRun": "https://github.com/vostride/playground/actions/runs/39230290615",
+      "appSourceRevision": "8b0df15e3d9bde5683a2c7128644c36a5eaad0bc",
+      "sha256": "6e4b27d6e5024ab43a9bf0bee20e0899b3c5d6c0541466739a6ef97973de9766"
+    },
+    {
+      "file": "screens/ios-looking.png",
+      "platform": "ios",
+      "dimensions": [1178, 2556],
+      "capture": "Unmodified Looking flight-results screenshot from the CI simulator report. Public seed flights only.",
+      "screenshotRun": "https://github.com/vostride/playground/actions/runs/39169054673",
+      "buildRun": "https://github.com/vostride/playground/actions/runs/39162778135",
+      "appSourceRevision": "d73e4c49a51bba845340970a23cb0ad20c2f535f",
+      "sha256": "94e1e48effde15dcb6fa34d869ef7318810713e2fd0339bdbe469caf14ae72af"
     }
   ],
   "playgroundMark": "../playground-mark.svg",

@@ -18,10 +18,17 @@ the Vostride attribution opens `https://vostride.com/`. Both require a user sele
 
 ## Repository banner
 
-`playground-banner.png` is generated from the owner's dark grain background and
-white Vostride wordmark, with the bundled Geist Mono font. Inputs and their source
-paths are recorded in `readme/sources.json`; preserve the font license in
-`readme/Geist-OFL.txt` alongside `readme/GeistMono-Regular.ttf`.
+`playground-banner.png` is a 1600 × 960 composition of the owner's dark grain
+background, white vostride wordmark, Playground mark, and bundled Geist Mono font.
+It includes real Brello and PepaPog web captures and CI screenshots of Komazon on
+Android and Looking on iOS, arranged in browser and phone frames. The native
+screenshots are copied unchanged; web captures exclude the global test toolbar
+through screenshot framing. Product content is not retouched.
+
+Inputs, screenshot provenance, and checksums are recorded in `readme/sources.json`.
+Preserve the font license in `readme/Geist-OFL.txt` alongside
+`readme/GeistMono-Regular.ttf`. The exporter uses only bundled assets and blocks
+network requests; no simulator, account, or running app is needed to regenerate it.
 
 Regenerate with `node scripts/export-readme-banner.mjs` from the repository root.
 Set `PLAYWRIGHT_CHROME_PATH` only when using an alternate local Chromium executable.

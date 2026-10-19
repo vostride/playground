@@ -1,4 +1,4 @@
-[![Playground by vostride](assets/branding/playground-banner.png)](https://playground.vostride.dev/)
+[![Playground by vostride: Brello and PepaPog on web, Komazon on Android, and Looking on iOS](assets/branding/playground-banner.png)](https://playground.vostride.dev/)
 
 Shopping, flight booking, observability, and task boards for testing on web and mobile.
 
