@@ -55,7 +55,7 @@ try {
     .display{position:relative;overflow:hidden;border-radius:27px;background:#080808;box-shadow:0 0 0 2px #060709}
     .display img{display:block;width:100%;height:auto}
     .camera{position:absolute;top:7px;left:50%;transform:translateX(-50%);background:#020304;box-shadow:0 0 0 1px #22262b}
-    .android{left:36px;bottom:0;width:270px;border-radius:23px;background:linear-gradient(110deg,#73777d,#24272c 20%,#17191d 65%,#656b76)}
+    .android{left:120px;bottom:0;width:270px;border-radius:23px;background:linear-gradient(110deg,#73777d,#24272c 20%,#17191d 65%,#656b76)}
     .android .display{border-radius:16px}
     .android .camera{width:9px;height:9px;border-radius:50%}
     .ios{left:1294px;bottom:0;width:270px}
