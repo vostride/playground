@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { chmod, mkdir, readFile, writeFile, rm, readdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { resolve, join } from 'node:path';
+import { resolve, join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { writeAnalyticsIdentity } from '@vostride/agent-qa-core';
 
@@ -73,19 +73,39 @@ function mask(store) {
   }
 }
 
-export function sanitizeReportBytes(bytes, values) {
+function redactText(text, values) {
+  for (const value of values) text = text.replaceAll(value, '[REDACTED]');
+  return text.replace(
+    /\beyJ[A-Za-z0-9_-]{12,}\.[A-Za-z0-9_-]{12,}\.[A-Za-z0-9_-]{12,}\b/g,
+    '[REDACTED JWT]',
+  );
+}
+
+export function sanitizeReportBytes(bytes, values, relativePath = '(unspecified)') {
   let text;
+  let format = 'invalid-utf8';
   try {
     text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-    if (bytes.includes(0)) text = undefined;
+    if (bytes.includes(0)) {
+      text = undefined;
+      format = 'utf8-with-nul';
+    }
   } catch {
     /* Binary evidence must remain byte-for-byte unchanged. */
   }
   if (text === undefined) {
+    // Report location and classification only, never a byte/header preview. A
+    // filename can itself contain secrets or terminal controls, so scrub it
+    // exactly like text evidence before formatting it as a single safe line.
+    const path = JSON.stringify(redactText(relativePath, values)).replace(
+      /[^\u0020-\u007e]/g,
+      (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`,
+    );
+    const context = `path=${path}; format=${format}; bytes=${bytes.length}`;
     for (const value of values) {
       assert.ok(
         !bytes.includes(Buffer.from(value)),
-        'Credential bytes found in binary evidence; refusing upload.',
+        `Credential bytes found in binary evidence; refusing upload (${context}).`,
       );
     }
     const supported =
@@ -94,16 +114,10 @@ export function sanitizeReportBytes(bytes, values) {
       (bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP') ||
       bytes.toString('ascii', 4, 8) === 'ftyp' ||
       bytes.subarray(0, 4).equals(Buffer.from([26, 69, 223, 163]));
-    assert.ok(supported, 'Unexpected binary report format; refusing upload.');
+    assert.ok(supported, `Unexpected binary report format; refusing upload (${context}).`);
     return bytes;
   }
-  for (const value of values) text = text.replaceAll(value, '[REDACTED]');
-  return Buffer.from(
-    text.replace(
-      /\beyJ[A-Za-z0-9_-]{12,}\.[A-Za-z0-9_-]{12,}\.[A-Za-z0-9_-]{12,}\b/g,
-      '[REDACTED JWT]',
-    ),
-  );
+  return Buffer.from(redactText(text, values));
 }
 
 async function sanitizeReports(directory) {
@@ -134,7 +148,7 @@ async function sanitizeReports(directory) {
       else if (entry.isFile()) {
         assert.ok(!/^auth\.json$/i.test(entry.name), 'An auth file must never be uploaded.');
         const bytes = await readFile(file);
-        await writeFile(file, sanitizeReportBytes(bytes, values));
+        await writeFile(file, sanitizeReportBytes(bytes, values, relative(root, file)));
       }
     }
   }
