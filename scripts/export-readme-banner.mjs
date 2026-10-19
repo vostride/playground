@@ -36,7 +36,7 @@ try {
     .background{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
     .shade{position:absolute;inset:0;background:linear-gradient(180deg,#0b111521,transparent 32%,#080c1240)}
     .wordmark{position:absolute;left:62px;top:48px;width:179.16px;height:32px}
-    .brand{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:max-content;display:flex;align-items:center;justify-content:center;z-index:5}
+    .brand{position:absolute;left:50%;top:30%;transform:translate(-50%,-50%);width:max-content;display:flex;align-items:center;justify-content:center;z-index:5}
     .mark{width:65px;height:78px;flex:none}
     h1{margin:0;font:400 104px/1.2 GeistMono,monospace;letter-spacing:-6.76px}
     .devices{position:absolute;inset:0}
@@ -47,15 +47,15 @@ try {
     .dots i:nth-child(2){background:#f7c45a}.dots i:nth-child(3){background:#58c965}
     .address{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap}
     .browser img{display:block;width:100%;height:auto;border:1px solid #313a46;border-radius:3px 3px 8px 8px}
-    .desktop{left:610px;top:590px;width:1090px;z-index:1}
-    .board{left:330px;top:730px;width:900px;z-index:2}
+    .desktop{left:32px;top:440px;width:1000px;z-index:1}
+    .board{left:210px;top:650px;width:920px;z-index:2}
     .phone{position:absolute;padding:7px;background:linear-gradient(110deg,#a7adb4,#4c535d 17%,#13161b 48%,#747a84 84%,#b3b6bb);border:1px solid #999fa9;border-radius:35px;box-shadow:0 27px 65px #000b,0 4px 10px #0009,inset 0 0 0 2px #ffffff18;z-index:3}
     .phone::before,.phone::after{content:'';position:absolute;width:3px;background:#5b626e;border:1px solid #8a9099;border-radius:2px}
     .phone::before{left:-3px;top:100px;height:47px}.phone::after{right:-3px;top:145px;height:58px}
     .display{position:relative;overflow:hidden;border-radius:27px;background:#080808;box-shadow:0 0 0 2px #060709}
     .display img{display:block;width:100%;height:auto}
     .camera{position:absolute;top:7px;left:50%;transform:translateX(-50%);background:#020304;box-shadow:0 0 0 1px #22262b}
-    .android{left:120px;bottom:0;width:270px;border-radius:23px;background:linear-gradient(110deg,#73777d,#24272c 20%,#17191d 65%,#656b76)}
+    .android{left:1000px;bottom:0;width:270px;border-radius:23px;background:linear-gradient(110deg,#73777d,#24272c 20%,#17191d 65%,#656b76)}
     .android .display{border-radius:16px}
     .android .camera{width:9px;height:9px;border-radius:50%}
     .ios{left:1294px;bottom:0;width:270px}
