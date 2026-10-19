@@ -18,6 +18,11 @@ on:
         description: 'Explicit completed main-push Web or Mobile workflow run ID. No latest-build fallback.'
         type: string
         required: true
+      appium_log_level:
+        description: 'Mobile diagnostics only; captured logs remain bounded and sanitized.'
+        type: choice
+        default: info
+        options: [info, debug]
 
 # Failures make this workflow red. No release/deployment job depends on it.
 permissions:
@@ -152,6 +157,7 @@ jobs:
     env:
       AGENT_QA_ANALYTICS_ID: ${{ vars.AGENT_QA_ANALYTICS_ID }}
       PLAYGROUND_PLATFORM: ${{ matrix.platform }}
+      PLAYGROUND_APPIUM_LOG_LEVEL: ${{ inputs.appium_log_level || 'info' }}
       PLAYGROUND_SOURCE_SHA: ${{ matrix.sourceSha }}
       PLAYGROUND_BASE_URL: http://127.0.0.1:4173
       PLAYGROUND_DEVICE_ID: ${{ matrix.platform == 'android' && 'emulator-5554' || '' }}
@@ -295,7 +301,7 @@ jobs:
           xcrun simctl install "$PLAYGROUND_SIMULATOR_ID" "$RUNNER_TEMP/playground-agent-qa-app/Playground.app"
       - name: Configure and validate the selected test target
         run: |
-          node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs tests/agent-qa/ci-analytics.test.mjs tests/agent-qa/appium.test.mjs
+          node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs tests/agent-qa/ci-analytics.test.mjs tests/agent-qa/appium.test.mjs tests/agent-qa/provider.test.mjs
           node tests/agent-qa/configure.mjs "$PLAYGROUND_PLATFORM"
           npm run agent-qa:validate
       - name: Prepare isolated Codex subscription authentication

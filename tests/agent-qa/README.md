@@ -1,6 +1,6 @@
 # Advisory agent-qa journeys
 
-Eight natural-language tests cover Komazon, Looking, Brello, and PepaPog on web and native mobile. They use **agent-qa 0.1.21**, the **OpenAI subscription** provider, and **gpt-6.1-sol**. The same four mobile tests run against Android and iOS through a generated platform config. These are developer dependencies; the shipped apps do not include agent-qa.
+Eight natural-language tests cover Komazon, Looking, Brello, and PepaPog on web and native mobile. They use **agent-qa 0.1.21**, the **OpenAI subscription** provider, and **gpt-6.1-sol**. The same four mobile tests run against Android and iOS through a generated platform config. These are developer dependencies; the shipped apps do not include agent-qa. The scoped npm override updates core’s transitive `@ai-sdk/openai` from 3.0.58 to 3.0.130 within SDK major 3: GPT-6.1 Sol support was added in 3.0.121. agent-qa and its subscription plugin remain pinned to 0.1.21. This corrects model capability handling; it does not change test steps or establish that every agent journey passes. The provider integration tests exercise the actual subscription adapter, SDK and planner using synthetic responses and no credentials or network.
 
 ## Local dashboard and devices
 
@@ -90,7 +90,7 @@ Set `PLAYGROUND_BASE_URL` before configuration to test another web deployment. T
 
 `.github/workflows/agent-qa.yml` runs separately after the trusted main-push web/mobile build workflows finish. It downloads the exact source run's static build, APK, or simulator app; it does not compile another native app. Failed tests or setup make this workflow red. Release and deployment jobs never depend on it, so publication continues independently. Remaining platforms still run after a failure, and cleanup, sanitation and report upload retain their existing always-run conditions. Missing credentials or missing build artifacts produce explicit skip reasons. Optional memory-cache restore/save failures remain warnings.
 
-Manual dispatch requires a completed main-push source run ID. Choosing `all` resolves the counterpart web/mobile workflow at the exact same source SHA. Reports, screenshots, source identity, and exit status are retained as `agent-qa-<platform>-<run-id>` artifacts for 14 days. Report sanitization must succeed before upload. Generated local evidence stays under ignored `tests/agent-qa/reports/`.
+Manual dispatch requires a completed main-push source run ID. Set `appium_log_level` to `debug` only when diagnosing mobile startup; automatic runs default to `info`, and both modes keep the same log limits and sanitizer. Choosing `all` resolves the counterpart web/mobile workflow at the exact same source SHA. Reports, screenshots, source identity, and exit status are retained as `agent-qa-<platform>-<run-id>` artifacts for 14 days. Report sanitization must succeed before upload. Generated local evidence stays under ignored `tests/agent-qa/reports/`.
 
 CI mobile runs own one pinned Appium 3.8.0 server for all four journeys, bound to `127.0.0.1:4723` with the existing relaxed-security capability. Startup refuses an occupied port and requires the owned listener plus a ready `/status` response within 30 seconds. Only the agent-qa CLI receives `AGENT_QA_APPIUM_URL`. Local dashboard and web execution keep their existing Appium behavior.
 
@@ -103,5 +103,5 @@ Appium runs at info level, with stdout/stderr retained in the wrapper-owned `rep
 Validate helper behavior without model calls or device execution:
 
 ```sh
-node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs tests/agent-qa/ci-analytics.test.mjs tests/agent-qa/appium.test.mjs
+node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs tests/agent-qa/ci-analytics.test.mjs tests/agent-qa/appium.test.mjs tests/agent-qa/provider.test.mjs
 ```

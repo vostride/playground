@@ -11,6 +11,11 @@
   "engines": {
     "node": ">=24.0.0"
   },
+  "overrides": {
+    "@vostride/agent-qa-core": {
+      "@ai-sdk/openai": "3.0.130"
+    }
+  },
   "scripts": {
     "dev": "npm run dev -w @playground/shop",
     "build": "node scripts/build.mjs",

@@ -413,6 +413,11 @@ export async function runCiMobileAgent(
   dependencies = {},
 ) {
   const { runnerTemp, appiumHome } = validateCiAppiumEnvironment(env);
+  const diagnosticLogLevel = env.PLAYGROUND_APPIUM_LOG_LEVEL ?? 'info';
+  assert.ok(
+    ['info', 'debug'].includes(diagnosticLogLevel),
+    'PLAYGROUND_APPIUM_LOG_LEVEL must be info or debug.',
+  );
   const runtime = {
     spawn,
     assertPortAvailable,
@@ -473,7 +478,13 @@ export async function runCiMobileAgent(
   let logCloseFailed = false;
   let marked = false;
   let result = { exitCode: 1, signal: null, launchError: true };
-  const diagnostics = { version: pkg.version, url, ready: false, logs: {} };
+  const diagnostics = {
+    version: pkg.version,
+    url,
+    ready: false,
+    logLevel: diagnosticLogLevel,
+    logs: {},
+  };
   try {
     await runtime.assertPortAvailable();
     if (interrupted) throw failure('APPIUM_INTERRUPTED');
@@ -585,7 +596,7 @@ export async function runCiMobileAgent(
         ...(iosCapabilities ? ['--default-capabilities', JSON.stringify(iosCapabilities)] : []),
         '--relaxed-security',
         '--log-level',
-        'info',
+        diagnosticLogLevel,
         '--log-timestamp',
         '--log-no-colors',
       ],

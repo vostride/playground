@@ -626,10 +626,44 @@ test('one private parent-owned log captures the server without a duplicate file 
   const server = f.calls[0];
   assert.equal(server.args.includes('--log'), false);
   assert.equal(server.args[server.args.indexOf('--log-level') + 1], 'info');
+  assert.equal(result.appium.logLevel, 'info');
   assert.deepEqual(server.options.stdio, ['ignore', 'pipe', 'pipe']);
   await assert.rejects(access(join(logDir, 'server.log')), { code: 'ENOENT' });
   await assertAppiumStopped(f.reportDir);
   f.assertLogClosed();
+});
+
+test('explicit debug logging retains the same bounded capture and owned cleanup on both platforms', async (t) => {
+  for (const platform of ['ios', 'android']) {
+    const f = await fixture(t, { platform });
+    f.env.PLAYGROUND_APPIUM_LOG_LEVEL = 'debug';
+    const result = await runCiMobileAgent(f.options, f.dependencies);
+    const server = f.calls.find((call) => call.args.includes('--address'));
+    assert.equal(server.args[server.args.indexOf('--log-level') + 1], 'debug');
+    assert.equal(server.args.includes('--log'), false);
+    assert.equal(result.appium.logLevel, 'debug');
+    assert.equal(result.appium.ready, true);
+    assert.equal(result.appium.logs.process.limitBytes, 8 * 1024 * 1024);
+    assert.equal(result.appium.logs.process.lineLimitBytes, 64 * 1024);
+    assert.deepEqual(f.server.signals, ['SIGTERM']);
+    await assertAppiumStopped(f.reportDir);
+    f.assertLogClosed();
+  }
+});
+
+test('invalid diagnostic levels fail before any WDA, server, or CLI process starts', async (t) => {
+  const f = await fixture(t, { platform: 'ios' });
+  for (const level of ['', 'warn', 'INFO', 'info:debug', 'debug --log other.log']) {
+    f.env.PLAYGROUND_APPIUM_LOG_LEVEL = level;
+    await assert.rejects(
+      runCiMobileAgent(f.options, f.dependencies),
+      /PLAYGROUND_APPIUM_LOG_LEVEL must be info or debug/,
+    );
+    assert.equal(f.calls.length, 0);
+    assert.equal(f.statusProbes, 0);
+    assert.equal(f.signalSource.listenerCount('SIGTERM'), 0);
+    await assertAppiumStopped(f.reportDir);
+  }
 });
 
 test('independent stream decoders preserve split Unicode and normalize invalid bytes and NUL for sanitation', async (t) => {
