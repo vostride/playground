@@ -181,7 +181,8 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.build == 'true' && (github.event_name == 'push' || inputs.platform != 'android')
     runs-on: macos-15
-    timeout-minutes: 90
+    # Compilation plus the measured full device gate can exceed 90 minutes.
+    timeout-minutes: 120
     permissions:
       contents: read
       id-token: write
@@ -286,6 +287,8 @@ jobs:
           xcrun simctl bootstatus "$PLAYGROUND_SIMULATOR_ID" -b
           xcrun simctl install "$PLAYGROUND_SIMULATOR_ID" mobile/ios/build/Build/Products/Release-iphonesimulator/Playground.app
       - name: Verify product journeys, native URLs and touch dragging on the simulator build
+        # Bound acceptance separately so a failed gate can still upload evidence.
+        timeout-minutes: 90
         env:
           PLAYGROUND_SIMULATOR_ID: ${{ steps.simulator.outputs.id }}
         run: node tests/mobile/run-diagnostic.mjs ios "$PLAYGROUND_SIMULATOR_ID" all

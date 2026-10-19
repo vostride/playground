@@ -24,6 +24,8 @@ The workflow pins Maestro 2.11.0 and verifies the downloaded archive checksum. E
 
 The shared CI diagnostic runner gives the iOS Maestro driver up to ten minutes to start, using the documented [`MAESTRO_DRIVER_STARTUP_TIMEOUT`](https://docs.maestro.dev/maestro-cli/run-your-first-test-with-the-maestro-cli) setting. In run `39173155632`, the cold driver became ready roughly seven minutes after CLI launch, after the former two-minute limit had already failed. The override applies only to the iOS Maestro child process and is recorded in `diagnostic-status.json`; there is one attempt, and a startup failure still fails acceptance. Product assertion timeouts, Android startup, the independent XCTest checks and the offline watchdog deadlines stay unchanged.
 
+The iOS release job allows 120 minutes, with a separate 90-minute acceptance-step limit so an overlong gate can still upload its evidence. Recorded passing instances of the five journeys total roughly 57 minutes, excluding cold driver startup; observed setup/compilation takes about 24 minutes, followed by roughly seven minutes for the native XCTest command and two for offline verification. These measurements come from separate retained runs, not a passing combined release. The former 90-minute whole-job budget could expire during legitimate verification. Android and focused diagnostic budgets are unchanged; no assertion is skipped or retried to fit the job limit.
+
 For local source validation only:
 
 ```sh
