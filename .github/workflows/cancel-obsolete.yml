@@ -1,0 +1,37 @@
+name: Cancel superseded CI runs
+
+on:
+  push:
+    branches: ['**']
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: cancel-obsolete-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cancel:
+    name: Keep only the latest push on this branch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+      - name: Verify cancellation safeguards
+        run: node --test scripts/cancel-obsolete-runs.test.mjs
+      - name: Cancel older branch runs across workflows
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {cancelObsoleteRuns} = await import(`${process.env.GITHUB_WORKSPACE}/scripts/cancel-obsolete-runs.mjs`);
+            const result = await cancelObsoleteRuns({github, context, core});
+            await core.summary.addHeading('Superseded CI runs')
+              .addRaw(`Requested cancellation of ${result.cancelledRunIds.length} older runs. ${result.skippedReason || 'Current-commit parallel jobs are preserved.'}\n`)
+              .write();

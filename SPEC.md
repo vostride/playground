@@ -111,7 +111,8 @@ locally, including Android adaptive/themed icons and the iOS icon catalog.
   a developer's machine. A release is never edited; a new build is a new release. agent-qa pins one
   release and its checksums, and `agent-qa init` downloads both files from it, so users get exactly
   the build agent-qa was tested with.
-  Each push to `main` builds its latest commit and publishes after both platform checks pass.
+  Each push to `main` starts a build of its latest commit and publishes after both platform checks pass.
+  A newer push cancels unfinished GitHub Actions runs on the same branch; superseded commits may not publish.
   Versions use the commit's UTC date and seven-character hash: `yy.mm.dd-<hash>`;
   tags use `mobile-<version>`. A multi-commit push releases only its latest commit.
   Rerunning a published commit preserves its existing assets. All building and publication happen

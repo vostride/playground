@@ -43,6 +43,7 @@ jobs:
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'workflow_dispatch' ||
        (github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.conclusion != 'cancelled' &&
         github.event.workflow_run.head_branch == 'main' &&
         github.event.workflow_run.head_repository.id == github.event.repository.id))
     runs-on: ubuntu-24.04
@@ -96,6 +97,16 @@ jobs:
             if (context.eventName === 'workflow_run' &&
                 (String(source.id) !== String(context.payload.workflow_run.id) || source.head_sha !== context.payload.workflow_run.head_sha)) {
               throw new Error('Trigger and source-run identity differ.');
+            }
+            if (context.eventName === 'workflow_run') {
+              const {data: tip} = await github.rest.git.getRef({...context.repo, ref: `heads/${source.head_branch}`});
+              if (source.conclusion === 'cancelled' || source.head_sha !== tip.object.sha) {
+                core.setOutput('ready', 'false');
+                core.setOutput('matrix', JSON.stringify({include: []}));
+                await core.summary.addHeading('Advisory agent-qa selection')
+                  .addRaw('Skipped: the source build was cancelled or superseded by a newer push.\n').write();
+                return;
+              }
             }
             const requested = process.env.REQUESTED_PLATFORM;
             if (!['automatic', 'all', 'web', 'android', 'ios'].includes(requested)) throw new Error('Unsupported platform.');
@@ -301,7 +312,7 @@ jobs:
           xcrun simctl install "$PLAYGROUND_SIMULATOR_ID" "$RUNNER_TEMP/playground-agent-qa-app/Playground.app"
       - name: Configure and validate the selected test target
         run: |
-          node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs tests/agent-qa/ci-analytics.test.mjs tests/agent-qa/appium.test.mjs tests/agent-qa/provider.test.mjs
+          node --test tests/agent-qa/auth.test.mjs tests/agent-qa/memory.test.mjs tests/agent-qa/ci-analytics.test.mjs tests/agent-qa/appium.test.mjs tests/agent-qa/provider.test.mjs tests/agent-qa/workflow-selection.test.mjs
           node tests/agent-qa/configure.mjs "$PLAYGROUND_PLATFORM"
           npm run agent-qa:validate
       - name: Prepare isolated Codex subscription authentication
