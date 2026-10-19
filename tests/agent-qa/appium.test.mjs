@@ -192,6 +192,29 @@ test('an occupied port is refused without starting, adopting, probing, or killin
   await assertAppiumStopped(f.reportDir);
 });
 
+test('only iOS requests headless simulator mode from the owned Appium server', async (t) => {
+  for (const platform of ['ios', 'android']) {
+    const f = await fixture(t, { agentExitCode: 0 });
+    f.env.PLAYGROUND_PLATFORM = platform;
+    const result = await runCiMobileAgent(f.options, f.dependencies);
+    const args = f.calls[0].args;
+    const defaultsIndex = args.indexOf('--default-capabilities');
+    if (platform === 'ios') {
+      assert.ok(defaultsIndex > 0);
+      assert.deepEqual(JSON.parse(args[defaultsIndex + 1]), { 'appium:isHeadless': true });
+    } else {
+      assert.equal(defaultsIndex, -1);
+      assert.equal(
+        args.some((arg) => arg.includes('isHeadless')),
+        false,
+      );
+    }
+    assert.deepEqual(f.calls[1].args, f.options.args, 'Agent arguments stay unchanged.');
+    assert.equal(result.exitCode, 0);
+    await assertAppiumStopped(f.reportDir);
+  }
+});
+
 test('HTTP readiness rejects error responses and ready:false before launching journeys', async (t) => {
   const f = await fixture(t, { agentExitCode: 0 });
   delete f.dependencies.probeStatus;

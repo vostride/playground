@@ -196,6 +196,11 @@ export async function runCiMobileAgent(
           '127.0.0.1',
           '--port',
           '4723',
+          // The workflow boots via simctl. Match that headless state instead
+          // of restarting the simulator merely to attach a GUI during POST /session.
+          ...(env.PLAYGROUND_PLATFORM === 'ios'
+            ? ['--default-capabilities', JSON.stringify({ 'appium:isHeadless': true })]
+            : []),
           '--relaxed-security',
           '--log',
           serverLog,
