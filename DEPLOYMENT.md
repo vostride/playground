@@ -8,7 +8,7 @@ Cloudflare's existing Git integration owns deployment. Every push to `main` depl
 
 The live Pages project is `playground`, serving [playground.vostride.dev](https://playground.vostride.dev/) and [playground-kgs.pages.dev](https://playground-kgs.pages.dev/). Its build command is `npm run build`, with output directory `dist/` and repository root as the build root. Keep this Git connection as the only production deployer.
 
-GitHub Actions runs typechecks, product/browser tests and released-contract checks, and retains the static builds. Separate agent-qa journeys report results without gating deployment or mobile publication. To audit an already deployed site, run `PLAYGROUND_URL=https://playground.vostride.dev npm run check:site`; its report is observational and does not control Cloudflare deployment.
+GitHub Actions runs typechecks, product/browser tests and released-contract checks, and retains the static builds. Failed agent-qa journeys make their separate workflow red without gating deployment or mobile publication. To audit an already deployed site, run `PLAYGROUND_URL=https://playground.vostride.dev npm run check:site`; its report is observational and does not control Cloudflare deployment.
 
 The custom domain passed 35 baseline browser checks and eight supplemental checks. Branch `verify/pages-8e5602b` also verified automatic preview deployment and all 24 registered released-flow checks. Evidence is retained under `test-results/hosted-audit/2026-10-18/` and `test-results/hosted-audit/2026-10-19/`. Pages keep noindex/security headers; bot challenges and Access gates must remain off because automated visitors are intended users.
 

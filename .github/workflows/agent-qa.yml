@@ -19,7 +19,7 @@ on:
         type: string
         required: true
 
-# This workflow only reports. No release/deployment job depends on it.
+# Failures make this workflow red. No release/deployment job depends on it.
 permissions:
   contents: read
   actions: read
@@ -42,7 +42,6 @@ jobs:
         github.event.workflow_run.head_repository.id == github.event.repository.id))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    continue-on-error: true
     outputs:
       ready: ${{ steps.select.outputs.ready }}
       matrix: ${{ steps.select.outputs.matrix }}
@@ -150,7 +149,6 @@ jobs:
       matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 110
-    continue-on-error: true
     env:
       AGENT_QA_ANALYTICS_ID: ${{ vars.AGENT_QA_ANALYTICS_ID }}
       PLAYGROUND_PLATFORM: ${{ matrix.platform }}
@@ -311,12 +309,10 @@ jobs:
       - name: Run advisory web or iOS journeys
         if: matrix.platform != 'android'
         id: test
-        continue-on-error: true
         run: npm run agent-qa:test
       - name: Run advisory Android journeys on the downloaded APK
         if: matrix.platform == 'android'
         id: android-test
-        continue-on-error: true
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35

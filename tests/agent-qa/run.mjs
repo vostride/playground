@@ -59,5 +59,5 @@ await writeFile(
     2,
   ) + '\n',
 );
-// Keep the actual result. Only the separate CI workflow makes it non-blocking.
+// Keep the actual result so this workflow fails. Releases do not depend on it.
 process.exitCode = result.exitCode;

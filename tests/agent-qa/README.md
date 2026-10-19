@@ -88,7 +88,7 @@ npm run agent-qa:test
 
 Set `PLAYGROUND_BASE_URL` before configuration to test another web deployment. These tests reset product state and exercise checkout/order cancellation, arbitrary flight dates and booking, task edits/movement, and trace/monitor workflows. Local test execution reports its real exit code.
 
-`.github/workflows/agent-qa.yml` runs separately after the trusted main-push web/mobile build workflows finish. It downloads the exact source run's static build, APK, or simulator app; it does not compile another native app. Release and deployment jobs never depend on this advisory workflow. Missing credentials or missing build artifacts produce explicit skip reasons. Test failures are recorded without blocking publication.
+`.github/workflows/agent-qa.yml` runs separately after the trusted main-push web/mobile build workflows finish. It downloads the exact source run's static build, APK, or simulator app; it does not compile another native app. Failed tests or setup make this workflow red. Release and deployment jobs never depend on it, so publication continues independently. Remaining platforms still run after a failure, and cleanup, sanitation and report upload retain their existing always-run conditions. Missing credentials or missing build artifacts produce explicit skip reasons. Optional memory-cache restore/save failures remain warnings.
 
 Manual dispatch requires a completed main-push source run ID. Choosing `all` resolves the counterpart web/mobile workflow at the exact same source SHA. Reports, screenshots, source identity, and exit status are retained as `agent-qa-<platform>-<run-id>` artifacts for 14 days. Report sanitization must succeed before upload. Generated local evidence stays under ignored `tests/agent-qa/reports/`.
 
