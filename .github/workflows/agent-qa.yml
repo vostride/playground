@@ -150,7 +150,7 @@ jobs:
     if: needs.select.outputs.ready == 'true'
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 3
       matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 110
@@ -408,7 +408,7 @@ jobs:
           await assertAppiumStopped(resolve('tests/agent-qa/reports'));
           NODE
           node tests/agent-qa/auth.mjs sanitize-reports
-      - name: Save sanitized product memory for subsequent platforms and runs
+      - name: Save sanitized product memory for future runs
         if: always() && steps.sanitize.outcome == 'success' && steps.memory-executed.outputs.eligible == 'true'
         id: memory-save
         continue-on-error: true
@@ -429,7 +429,7 @@ jobs:
           node --input-type=module <<'NODE'
           import {appendFileSync} from 'node:fs';
           appendFileSync(process.env.GITHUB_STEP_SUMMARY,
-            `Product memory: restored **${process.env.MEMORY_RESTORED || 'none'}**; save step **${process.env.MEMORY_SAVED || 'skipped'}**. Web, Android, and iOS share the latest compatible sanitized snapshot. Concurrent workflow runs can start from the same snapshot; their additions are not merged, so cross-run continuity is best effort. Auth, databases, reports, locks, and runtime counters are never cached.\n`);
+            `Product memory: restored **${process.env.MEMORY_RESTORED || 'none'}**; save step **${process.env.MEMORY_SAVED || 'skipped'}**. Web, Android, and iOS share the latest compatible sanitized snapshot. Concurrent jobs and workflow runs can start from the same snapshot; their additions are not merged, so memory continuity is best effort. Auth, databases, reports, locks, and runtime counters are never cached.\n`);
           NODE
       - name: Remove subscription authentication
         if: always()
