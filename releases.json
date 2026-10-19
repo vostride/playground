@@ -64,5 +64,25 @@
       "testSha256": "39fd02cfeb11f1c455d9ea1aa385024965ab6029f285dbe34bcbb0bd5a151f05"
     }
   ],
-  "mobile": []
+  "mobile": [
+    {
+      "id": "mobile-26.10.19-05e1e50",
+      "version": "26.10.19-05e1e50",
+      "nativeVersion": "26.10.19",
+      "buildNumber": 1026,
+      "iosBuildNumber": "1026",
+      "sourceCommit": "05e1e50d2a443a70fbc25c9007bdbc4c0515c18a",
+      "tag": "mobile-26.10.19-05e1e50",
+      "url": "https://github.com/vostride/playground/releases/tag/mobile-26.10.19-05e1e50",
+      "runUrl": "https://github.com/vostride/playground/actions/runs/39216992913",
+      "android": {
+        "file": "playground-android-26.10.19-05e1e50.apk",
+        "sha256": "a4c7b9d768fe47255ae4379c817bcf8160d4ecc502123099b0c428b600f3424b"
+      },
+      "ios": {
+        "file": "playground-ios-simulator-26.10.19-05e1e50.zip",
+        "sha256": "f0539fc73fe7cac126bb0b9df2871a6827fbf682626f30cfb0bbc5bd99adf1af"
+      }
+    }
+  ]
 }

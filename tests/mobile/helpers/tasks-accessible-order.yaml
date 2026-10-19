@@ -46,7 +46,7 @@ appId: dev.vostride.playground
     element:
       id: task-detail-undo
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - tapOn:
     id: task-detail-undo
 - scrollUntilVisible:

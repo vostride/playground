@@ -55,7 +55,7 @@ name: Brello boards, task properties, refresh, move, undo, and both bug switches
     id: task-status-progress
     selected: true
 - scrollUntilVisible:
-    centerElement: true
+    centerElement: false
     element:
       id: task-detail-undo
     direction: DOWN
