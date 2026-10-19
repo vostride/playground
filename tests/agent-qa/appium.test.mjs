@@ -116,11 +116,13 @@ async function fixture(t, options = {}) {
   }
   const dependencies = {
     signalSource,
-    startupTimeoutMs: 100,
+    // Successful/output-validation fixtures must allow shared-runner scheduling;
+    // timeout scenarios below keep their explicit short deadline overrides.
+    startupTimeoutMs: 10000,
     pollIntervalMs: 1,
     stopTimeoutMs: 5,
     killTimeoutMs: 5,
-    wdaBuildTimeoutMs: 100,
+    wdaBuildTimeoutMs: 10000,
     signalOwnedBuildGroup(child, signal) {
       assert.equal(child, build, 'Only the spawned build group is signaled.');
       child.kill(signal);
