@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   View,
   FlatList,
@@ -66,6 +66,8 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [shippingSubmitted, setShippingSubmitted] = useState(false);
+  const checkoutRef = useRef<ScrollView>(null);
   const [notice, setNotice] = useState('');
   const [step, setStep] = useState(1);
   const [delivery, setDelivery] = useState<'standard' | 'express'>('standard');
@@ -74,6 +76,11 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [afterSignIn, setAfterSignIn] = useState('catalog');
   const current = route || 'catalog';
+  const shippingErrors =
+    shippingSubmitted && current === 'checkout' && step === 1 && bug !== 'checkout-validation'
+      ? validateShipping(shipping)
+      : {};
+  const visibleError = Object.values(shippingErrors).join('\n') || error;
   const activeRoute = current === 'signin' ? afterSignIn : current;
   const totals = cartTotals(state.cart, delivery, bug);
   const count = state.cart.reduce((n, i) => n + i.quantity, 0);
@@ -104,6 +111,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
             : 'catalog',
       );
     setError('');
+    setShippingSubmitted(false);
     navigate('shop', next);
   };
   function add(p: Product, q = 1) {
@@ -156,9 +164,9 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
           </Text>
         </Pressable>
       ) : null}
-      {error ? (
+      {visibleError ? (
         <Text accessibilityRole="alert" style={s.error}>
-          {error}
+          {visibleError}
         </Text>
       ) : null}
     </>
@@ -530,7 +538,7 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
       );
     if (current === 'checkout')
       return (
-        <Screen key={`${current}-${step}`}>
+        <Screen key={`${current}-${step}`} scrollRef={checkoutRef}>
           {header}
           <Modal
             visible={countryOpen}
@@ -606,11 +614,13 @@ export default function ShopScreen({ route, bug, navigate }: MobileScreenProps) 
                     onPress={() => {
                       const errors =
                         bug === 'checkout-validation' ? {} : validateShipping(shipping);
+                      setShippingSubmitted(true);
+                      setError('');
                       if (Object.keys(errors).length) {
-                        setError(Object.values(errors).join('\n'));
+                        checkoutRef.current?.scrollTo({ y: 0, animated: true });
                         return;
                       }
-                      setError('');
+                      setShippingSubmitted(false);
                       setStep(2);
                     }}
                   />

@@ -50,9 +50,15 @@ export function useSessionState<T>(
       }),
   ];
 }
-export function Screen({ children, contentContainerStyle, ...props }: ScrollViewProps) {
+export function Screen({
+  children,
+  contentContainerStyle,
+  scrollRef,
+  ...props
+}: ScrollViewProps & { scrollRef?: React.Ref<ScrollView> }) {
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.screen}
       automaticallyAdjustKeyboardInsets
       keyboardShouldPersistTaps="handled"

@@ -1091,39 +1091,38 @@ function MobileMonitors({
   const [threshold, setThreshold] = useState('2');
   const [warning, setWarning] = useState('1');
   const [warningEnabled, setWarningEnabled] = useState(true);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [validationAttempted, setValidationAttempted] = useState(false);
   const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
   const formRef = useRef<ScrollView>(null);
   const filtered = monitors.filter((rule) =>
     `${rule.name} ${rule.service}`.toLowerCase().includes(search.toLowerCase()),
   );
+  const draft = editing
+    ? {
+        ...editing,
+        name: editing.name.trim(),
+        threshold: threshold.trim() ? Number(threshold) : NaN,
+        warningThreshold: warningEnabled ? (warning.trim() ? Number(warning) : NaN) : null,
+      }
+    : null;
+  const errors: Record<string, string> = validationAttempted && draft ? validateAlert(draft) : {};
   function start(rule = newMonitor()) {
     setEditing({ ...rule });
     setThreshold(String(rule.threshold));
     setWarning(rule.warningThreshold === null ? '' : String(rule.warningThreshold));
     setWarningEnabled(rule.warningThreshold !== null);
-    setErrors({});
+    setValidationAttempted(false);
   }
   function patch<K extends keyof AlertRule>(key: K, value: AlertRule[K]) {
     setEditing((old) => (old ? { ...old, [key]: value } : old));
-    setErrors((old) => {
-      const next = { ...old };
-      delete next[key];
-      return next;
-    });
   }
   function save() {
-    if (!editing) return;
-    const next = {
-      ...editing,
-      name: editing.name.trim(),
-      threshold: threshold.trim() ? Number(threshold) : NaN,
-      warningThreshold: warningEnabled ? (warning.trim() ? Number(warning) : NaN) : null,
-    };
+    if (!draft) return;
+    const next = draft;
     const validation = validateAlert(next);
-    setErrors(validation);
     if (Object.keys(validation).length) {
+      setValidationAttempted(true);
       formRef.current?.scrollTo({ y: 0, animated: true });
       return;
     }
