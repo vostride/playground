@@ -101,9 +101,10 @@ locally, including Android adaptive/themed icons and the iOS icon catalog.
 
 ## Distribution
 
-- **Web:** Cloudflare Pages builds and deploys `main` to `playground.vostride.dev`. Branches get
-  preview deploys. Before a deploy, a site check walks every released sample flow on the preview and
-  reports anything broken. It reports; it never blocks.
+- **Web:** Cloudflare Pages' Git integration builds and deploys `main` directly to
+  `playground.vostride.dev`. Branches get preview deploys. The owner explicitly chose immediate
+  production deployment without a preview-before-merge gate or additional deployment credentials.
+  CI product checks, site-check reports and agent-qa journeys do not gate Cloudflare deployment.
 - **Mobile:** each version of the super app is a GitHub Release of this repo with two files: the APK
   and the zipped iOS simulator app, each with a SHA-256 checksum. CI builds and publishes them on
   GitHub's runners (macOS for the iOS build), with build attestations. Release builds never happen on

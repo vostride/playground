@@ -136,7 +136,7 @@ Komazon's printed sign-in is `alex@example.com` / `komazon123`. Two Everyday Cer
 
 The source of truth for current CI behavior is `.github/workflows/`:
 
-- `web.yml`: typechecks, core tests, production builds, browser journeys, and released-contract checks. Its configured Actions deployment path uploads a preview, runs an advisory released-flow audit, then deploys the same build to production.
+- `web.yml`: typechecks, core tests, production builds, browser journeys, and released-contract checks. Cloudflare's separate Git integration deploys `main` directly to production and creates branch previews; these checks do not gate that deployment.
 - `mobile-ci.yml`: native TypeScript, core/helper/YAML checks, and Android/iOS Metro bundles.
 - `mobile-release.yml`: every push to `main` builds the **latest commit in that push**, then publishes only after both native platforms pass the required checks. A multi-commit push does not create a release for each intermediate commit. Manual dispatch builds candidates and never publishes.
 - `mobile-acceptance.yml`: retests preserved CI-built candidates with a selected harness. It checks application-source identity and never publishes or substitutes for the release gate.
@@ -154,7 +154,7 @@ Android release inspection permits only AndroidX's exact app-owned signature rec
 
 As of 2026-10-19, commit `fd8e7f9` has passed both native CI gates, but publication failed because the default Actions token cannot publish that historical target with changed workflow files. The owner chose to use the built-in `GITHUB_TOKEN` for the current main-commit release and leave the optional `MOBILE_RELEASE_TOKEN` unset. Do not request a personal token or retry that historical publisher. Check the release and its assets before describing a build as available to consumers.
 
-Cloudflare's live Git integration and the Actions preview/audit path have different sequencing. The owner has chosen to keep Git-connected deployment without Cloudflare secrets in Actions. Read [DEPLOYMENT.md](DEPLOYMENT.md) before changing deployment ownership; do not enable competing production deployers or claim post-deployment checks prove preview-before-production ordering. An advisory audit still must execute and report its outcome.
+The owner explicitly chose direct production deployment from `main` through Cloudflare's Git integration, with no preview-before-merge gate or Cloudflare secrets in Actions. Read [DEPLOYMENT.md](DEPLOYMENT.md) before changing deployment ownership; do not introduce a second deployer or request credentials for the existing connection. Report advisory test outcomes separately from deployment status.
 
 ## Diagnosing and reporting changes
 

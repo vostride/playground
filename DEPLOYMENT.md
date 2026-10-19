@@ -4,27 +4,15 @@
 
 The repository's web workflow builds static files in `dist/`. Every product owns its output directory; no server framework or Pages Functions are needed.
 
-The current deployment owner is Cloudflare's existing Git integration. The owner has chosen to keep it: no Cloudflare account ID or API token needs to be added to GitHub Actions. The Actions deployment steps remain skipped without those credentials; web checks and advisory agent-qa journeys still run.
+Cloudflare's existing Git integration owns deployment. Every push to `main` deploys directly to production; branch pushes can create previews. The owner explicitly chose this behavior instead of a preview-before-merge gate. No Cloudflare account ID, API token, deploy hook, or additional GitHub secret is required.
 
-The live Git-connected Pages project is named `playground`, with [playground-kgs.pages.dev](https://playground-kgs.pages.dev/) and custom domain [playground.vostride.dev](https://playground.vostride.dev/). Cloudflare deployed source `49d24f6`; both hostnames returned HTTPS 200, and all 35 browser checks passed against the custom domain on 2026-10-18. The four web registry contracts are now released with their test-file hashes. Evidence: `test-results/hosted-audit/2026-10-18/`.
+The live Pages project is `playground`, serving [playground.vostride.dev](https://playground.vostride.dev/) and [playground-kgs.pages.dev](https://playground-kgs.pages.dev/). Its build command is `npm run build`, with output directory `dist/` and repository root as the build root. Keep this Git connection as the only production deployer.
 
-Automatic branch previews are verified: branch `verify/pages-8e5602b` deployed source `8e5602b` to [its preview URL](https://verify-pages-8e5602b.playground-kgs.pages.dev/), where all 24 registered released-flow checks passed. The production launcher also passed checks at desktop and phone widths, including all four product links, the agent-qa GitHub destination, lowercase attribution, no horizontal overflow and no external requests. Evidence is in the `branch-preview/` and `launcher/` subdirectories of that hosted audit.
+GitHub Actions runs typechecks, product/browser tests and released-contract checks, and retains the static builds. Separate agent-qa journeys report results without gating deployment or mobile publication. To audit an already deployed site, run `PLAYGROUND_URL=https://playground.vostride.dev npm run check:site`; its report is observational and does not control Cloudflare deployment.
 
-The first hosted audit ran **after** that Git-integrated deployment. Cloudflare's automatic Git deployments do not wait for the separate GitHub Actions audit, so these results do not establish the spec's preview-audit-before-production ordering. The owner has retained Git deployment. The optional Actions path below can provide that ordering if deployment ownership changes later; Cloudflare supports Wrangler uploads into Git-connected projects. Do not enable a second automatic deployer alongside the current one.
+The custom domain passed 35 baseline browser checks and eight supplemental checks. Branch `verify/pages-8e5602b` also verified automatic preview deployment and all 24 registered released-flow checks. Evidence is retained under `test-results/hosted-audit/2026-10-18/` and `test-results/hosted-audit/2026-10-19/`. Pages keep noindex/security headers; bot challenges and Access gates must remain off because automated visitors are intended users.
 
-Optional alternative: setup for an Actions-controlled preview/report/production sequence. Do not enable this alongside the current automatic Git deployment:
-
-1. Use the existing Git-connected Pages project `playground` with automatic Git builds disabled, or create a **Direct Upload** project for a new installation. Production branch is `main`. If using a different project name, set the repository variable `CLOUDFLARE_PAGES_PROJECT`.
-2. Set GitHub Actions secrets `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. The token needs Pages edit access to that account. Do not commit these values.
-3. Attach `playground.vostride.dev` as a Pages custom domain and complete the Cloudflare DNS setup.
-4. Disable bot challenges, Access gates, and challenge rules for this hostname and preview URLs. Automated visitors are the intended users. Noindex is set in each document, `robots.txt`, and `_headers`.
-5. Enable Actions for the public repository. Push the verified source to `main`.
-
-The workflow deploys a preview, runs the complete registered sample flows against that preview, and uploads its report. **Site-check failure is advisory and does not block promotion to production.** Compilation failures remain build failures. Branch pushes create previews; main pushes also deploy production. After configuring Cloudflare, the workflow can also be run manually on `main` to perform the same preview, report, and production steps without a source change. Manual runs on other branches create previews only. If Cloudflare credentials have not been configured, the workflow warns and skips publication while retaining the tested build artifact.
-
-Do not configure a second automatic production deployment in Cloudflare Git integration: it would bypass the preview/report ordering implemented by the workflow.
-
-Reference: [Git integration and disabling automatic builds](https://developers.cloudflare.com/pages/configuration/git-integration/), [Pages deployment commands](https://developers.cloudflare.com/workers/wrangler/commands/pages/), [branch controls](https://developers.cloudflare.com/pages/configuration/branch-build-controls/).
+Reference: [Cloudflare Git integration](https://developers.cloudflare.com/pages/configuration/git-integration/), [branch controls](https://developers.cloudflare.com/pages/configuration/branch-build-controls/).
 
 ## Mobile releases
 
