@@ -1,8 +1,22 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { access, chmod, mkdir, open, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { writeSync } from 'node:fs';
+import {
+  access,
+  chmod,
+  mkdir,
+  open,
+  readFile,
+  readdir,
+  realpath,
+  rm,
+  stat,
+  writeFile,
+} from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { createServer } from 'node:net';
-import { isAbsolute, join, parse, resolve } from 'node:path';
+import { dirname, isAbsolute, join, parse, relative, resolve, sep } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
 const url = 'http://127.0.0.1:4723';
@@ -11,6 +25,132 @@ const markerName = 'appium-writer-active.json';
 
 function failure(code) {
   return Object.assign(new Error(code), { code });
+}
+
+async function requireContained(path, directory) {
+  const actual = await realpath(path);
+  const local = relative(await realpath(directory), actual);
+  assert.ok(
+    local && local !== '..' && !local.startsWith(`..${sep}`) && !isAbsolute(local),
+    'WDA path must remain inside its isolated directory.',
+  );
+  return actual;
+}
+
+async function prepareCiWda(env, runnerTemp, appiumHome) {
+  assert.match(
+    env.PLAYGROUND_DEVICE_ID ?? '',
+    /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i,
+    'WDA requires the explicit CI simulator UUID.',
+  );
+  const driverDir = await requireContained(
+    join(appiumHome, 'node_modules/appium-xcuitest-driver'),
+    appiumHome,
+  );
+  const driverPackage = await requireContained(join(driverDir, 'package.json'), driverDir);
+  const driver = JSON.parse(await readFile(driverPackage, 'utf8'));
+  assert.equal(driver.name, 'appium-xcuitest-driver');
+  assert.equal(driver.version, '12.12.4', 'Recheck prebuild support when upgrading XCUITest.');
+  const wdaPackage = await requireContained(
+    createRequire(driverPackage).resolve('appium-webdriveragent/package.json'),
+    appiumHome,
+  );
+  const wda = JSON.parse(await readFile(wdaPackage, 'utf8'));
+  assert.equal(wda.name, 'appium-webdriveragent');
+  assert.equal(wda.version, '16.12.8', 'Recheck prebuild support when upgrading WebDriverAgent.');
+  const wdaDir = dirname(wdaPackage);
+  const project = await requireContained(join(wdaDir, 'WebDriverAgent.xcodeproj'), wdaDir);
+  assert.ok((await stat(project)).isDirectory(), 'WDA project must be a directory.');
+  const derivedDataPath = join(runnerTemp, 'playground-agent-qa-wda');
+  // An exclusive fresh directory prevents reuse of an unrelated or stale build.
+  await mkdir(derivedDataPath, { mode: 0o700 });
+  await requireContained(derivedDataPath, runnerTemp);
+  return {
+    driverVersion: driver.version,
+    version: wda.version,
+    deviceId: env.PLAYGROUND_DEVICE_ID,
+    derivedDataPath,
+    project,
+    cwd: wdaDir,
+    args: [
+      'build-for-testing',
+      '-project',
+      project,
+      '-scheme',
+      'WebDriverAgentRunner',
+      '-derivedDataPath',
+      derivedDataPath,
+      '-destination',
+      `id=${env.PLAYGROUND_DEVICE_ID}`,
+      'IPHONEOS_DEPLOYMENT_TARGET=18.5',
+      'GCC_TREAT_WARNINGS_AS_ERRORS=0',
+      'COMPILER_INDEX_STORE_ENABLE=NO',
+      'CODE_SIGNING_ALLOWED=NO',
+    ],
+  };
+}
+
+async function validateWdaBuild(plan) {
+  const products = await requireContained(
+    join(plan.derivedDataPath, 'Build/Products'),
+    plan.derivedDataPath,
+  );
+  const runnerApp = await requireContained(
+    join(products, 'Debug-iphonesimulator/WebDriverAgentRunner-Runner.app'),
+    products,
+  );
+  assert.ok((await stat(runnerApp)).isDirectory(), 'WDA runner app was not built.');
+  const info = await requireContained(join(runnerApp, 'Info.plist'), runnerApp);
+  const infoStat = await stat(info);
+  assert.ok(infoStat.isFile() && infoStat.size > 0, 'WDA runner app metadata is missing or empty.');
+  // WDA 16.12.8's UI-testing target produces these executable names. Check the
+  // runner and its test bundle, not merely the directories and plist wrappers.
+  const runnerExecutable = await requireExecutable(
+    join(runnerApp, 'WebDriverAgentRunner-Runner'),
+    runnerApp,
+  );
+  const testBundle = await requireContained(
+    join(runnerApp, 'PlugIns/WebDriverAgentRunner.xctest'),
+    runnerApp,
+  );
+  const testExecutable = await requireExecutable(
+    join(testBundle, 'WebDriverAgentRunner'),
+    testBundle,
+  );
+  const candidates = (await readdir(products)).filter((name) =>
+    /^WebDriverAgentRunner_iphonesimulator.*\.xctestrun$/.test(name),
+  );
+  assert.equal(candidates.length, 1, 'Expected exactly one simulator WDA xctestrun.');
+  const xctestrun = await requireContained(join(products, candidates[0]), products);
+  assert.ok((await stat(xctestrun)).isFile(), 'WDA xctestrun must be a file.');
+  const bytes = await readFile(xctestrun);
+  assert.ok(bytes.length > 0, 'WDA xctestrun is empty.');
+  return {
+    runnerApp,
+    runnerExecutable,
+    testExecutable,
+    xctestrun,
+    xctestrunSha256: createHash('sha256').update(bytes).digest('hex'),
+  };
+}
+
+async function requireExecutable(path, directory) {
+  const executable = await requireContained(path, directory);
+  const metadata = await stat(executable);
+  assert.ok(
+    metadata.isFile() && metadata.size > 0 && (metadata.mode & 0o111) !== 0,
+    'WDA executable payload is missing, empty, or not executable.',
+  );
+  return executable;
+}
+
+function signalOwnedBuildGroup(child, signal) {
+  if (!child.pid) return;
+  try {
+    process.kill(-child.pid, signal);
+  } catch (error) {
+    if (error.code !== 'ESRCH') throw error;
+  }
 }
 
 export function validateCiAppiumEnvironment(env) {
@@ -57,10 +197,11 @@ async function probeStatus(signal, timeoutMs) {
   }
 }
 
-function ownChild(child, { stopTimeoutMs, killTimeoutMs }) {
+function ownChild(child, { stopTimeoutMs, killTimeoutMs, signalChild }) {
   let closed = false;
   let exited = false;
   let launchError = false;
+  let abandoned = false;
   let stopping;
   const completion = new Promise((resolveChild) => {
     child.once('error', () => {
@@ -98,11 +239,27 @@ function ownChild(child, { stopTimeoutMs, killTimeoutMs }) {
     get exited() {
       return exited;
     },
+    get abandoned() {
+      return abandoned;
+    },
+    abandon() {
+      // This is irreversible uncertainty, not successful process cleanup. The
+      // caller keeps the marker and records the failure before releasing handles.
+      abandoned = true;
+      for (const stream of [child.stdout, child.stderr]) {
+        stream?.removeAllListeners('data');
+        stream?.destroy();
+        stream?.unref?.();
+      }
+      child.unref();
+    },
     stop() {
       stopping ??= (async () => {
-        if (!closed && !exited) child.kill('SIGTERM');
+        if (!closed && (!exited || signalChild))
+          (signalChild ?? ((signal) => child.kill(signal)))('SIGTERM');
         if (await closedWithin(stopTimeoutMs)) return;
-        if (!closed && !exited) child.kill('SIGKILL');
+        if (!closed && (!exited || signalChild))
+          (signalChild ?? ((signal) => child.kill(signal)))('SIGKILL');
         if (!(await closedWithin(killTimeoutMs))) throw failure('APPIUM_CHILD_DID_NOT_CLOSE');
       })();
       return stopping;
@@ -121,6 +278,8 @@ export async function runCiMobileAgent(
     assertPortAvailable,
     probeStatus,
     signalSource: process,
+    signalOwnedBuildGroup,
+    wdaBuildTimeoutMs: 10 * 60 * 1000,
     startupTimeoutMs: 30000,
     pollIntervalMs: 250,
     stopTimeoutMs: 5000,
@@ -161,6 +320,9 @@ export async function runCiMobileAgent(
   runtime.signalSource.on('SIGTERM', onTerm);
   let server;
   let agent;
+  let build;
+  let buildLog;
+  let buildLogsClosed;
   let processLog;
   let serverLogsClosed;
   let logCloseFailed = false;
@@ -186,6 +348,88 @@ export async function runCiMobileAgent(
     delete serverEnv.AGENT_QA_AUTH_JSON;
     delete serverEnv.AGENT_QA_APPIUM_URL;
     delete serverEnv.PLAYGROUND_AGENT_QA_ANALYTICS_PRELOAD;
+    let iosCapabilities;
+    if (env.PLAYGROUND_PLATFORM === 'ios') {
+      const plan = await prepareCiWda(env, runnerTemp, appiumHome);
+      diagnostics.wda = { ...plan, startedAt: new Date().toISOString(), ready: false };
+      buildLog = await open(join(logDir, 'wda-build.log'), 'wx', 0o600);
+      if (interrupted) throw failure('APPIUM_INTERRUPTED');
+      const child = runtime.spawn('xcodebuild', plan.args, {
+        cwd: plan.cwd,
+        env: serverEnv,
+        detached: true,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      build = ownChild(child, {
+        ...runtime,
+        signalChild: (signal) => runtime.signalOwnedBuildGroup(child, signal),
+      });
+      let logFailure;
+      let buildLogFailed = false;
+      const logFailed = new Promise((resolveFailure) => {
+        logFailure = resolveFailure;
+      });
+      const failBuildLog = () => {
+        buildLogFailed = true;
+        logFailure({ type: 'log' });
+      };
+      const record = (chunk) => {
+        try {
+          const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+          let offset = 0;
+          while (offset < bytes.length) offset += writeSync(buildLog.fd, bytes, offset);
+        } catch {
+          failBuildLog();
+        }
+      };
+      buildLogsClosed = build.completion
+        .then(() => buildLog.close())
+        .catch(() => {
+          logCloseFailed = true;
+        });
+      for (const stream of [child.stdout, child.stderr]) {
+        stream.on('data', record);
+        stream.on('error', failBuildLog);
+      }
+      // 'close' includes the pipe streams, so descendants cannot still write
+      // build logs when this fd is closed and the sanitation marker is cleared.
+      const timer = new AbortController();
+      let completed;
+      try {
+        completed = await Promise.race([
+          build.completion.then((outcome) => ({ type: 'build', outcome })),
+          delay(runtime.wdaBuildTimeoutMs, { type: 'timeout' }, { signal: timer.signal }),
+          interruption,
+          logFailed,
+        ]);
+      } finally {
+        timer.abort();
+      }
+      if (completed.type === 'signal') throw failure('APPIUM_INTERRUPTED');
+      if (completed.type === 'timeout') throw failure('APPIUM_WDA_BUILD_TIMED_OUT');
+      if (completed.type === 'log' || buildLogFailed) throw failure('APPIUM_WDA_LOG_FAILED');
+      diagnostics.wda.process = completed.outcome;
+      diagnostics.wda.completedAt = new Date().toISOString();
+      await buildLogsClosed;
+      if (
+        completed.outcome.exitCode !== 0 ||
+        completed.outcome.signal ||
+        completed.outcome.launchError
+      )
+        throw failure('APPIUM_WDA_BUILD_FAILED');
+      if (logCloseFailed) throw failure('APPIUM_WRITER_NOT_CONFIRMED_STOPPED');
+      try {
+        Object.assign(diagnostics.wda, await validateWdaBuild(plan), { ready: true });
+      } catch {
+        throw failure('APPIUM_WDA_BUILD_OUTPUT_INVALID');
+      }
+      iosCapabilities = {
+        'appium:isHeadless': true,
+        'appium:usePrebuiltWDA': true,
+        'appium:derivedDataPath': plan.derivedDataPath,
+        'appium:showXcodeLog': true,
+      };
+    }
     if (interrupted) throw failure('APPIUM_INTERRUPTED');
     server = ownChild(
       runtime.spawn(
@@ -198,9 +442,7 @@ export async function runCiMobileAgent(
           '4723',
           // The workflow boots via simctl. Match that headless state instead
           // of restarting the simulator merely to attach a GUI during POST /session.
-          ...(env.PLAYGROUND_PLATFORM === 'ios'
-            ? ['--default-capabilities', JSON.stringify({ 'appium:isHeadless': true })]
-            : []),
+          ...(iosCapabilities ? ['--default-capabilities', JSON.stringify(iosCapabilities)] : []),
           '--relaxed-security',
           '--log',
           serverLog,
@@ -277,6 +519,29 @@ export async function runCiMobileAgent(
         ? error.code
         : 'APPIUM_DIAGNOSTICS_FAILED';
   } finally {
+    let buildClosed = false;
+    try {
+      await build?.stop();
+      if (build?.closed) {
+        diagnostics.wda.process = await build.completion;
+        diagnostics.wda.completedAt ??= new Date().toISOString();
+        await buildLogsClosed;
+      } else if (!build) await buildLog?.close();
+      buildClosed = !build || (build.closed && !build.abandoned);
+    } catch {
+      result.appiumError = 'APPIUM_WRITER_NOT_CONFIRMED_STOPPED';
+      if (result.exitCode === 0) result.exitCode = 1;
+      if (diagnostics.wda) diagnostics.wda.shutdownUnconfirmed = true;
+      // Do not let a child or descendant holding pipes keep run.mjs alive after
+      // the bounded TERM/KILL attempt. Closing our readers stops local logging;
+      // it does not assert that the build group exited, so the marker stays.
+      build?.abandon();
+      try {
+        await buildLog?.close();
+      } catch {
+        logCloseFailed = true;
+      }
+    }
     try {
       await agent?.stop();
       if (agent?.closed) result.agentExitCode = (await agent.completion).exitCode;
@@ -293,7 +558,7 @@ export async function runCiMobileAgent(
         if (server) await serverLogsClosed;
         else await processLog?.close();
         if (logCloseFailed) throw failure('APPIUM_WRITER_NOT_CONFIRMED_STOPPED');
-        if (marked && (!agent || agent.closed)) await rm(marker);
+        if (marked && buildClosed && (!agent || agent.closed)) await rm(marker);
       }
     } catch {
       result.appiumError = 'APPIUM_WRITER_NOT_CONFIRMED_STOPPED';
