@@ -55,11 +55,10 @@ try {
     .display{position:relative;overflow:hidden;border-radius:27px;background:#080808;box-shadow:0 0 0 2px #060709}
     .display img{display:block;width:100%;height:auto}
     .camera{position:absolute;top:7px;left:50%;transform:translateX(-50%);background:#020304;box-shadow:0 0 0 1px #22262b}
-    .platform{position:absolute;left:0;right:0;top:-30px;text-align:center;font:12px GeistMono,monospace;letter-spacing:1px;color:#c7d0dc}
-    .android{left:36px;top:552px;width:270px;border-radius:23px;background:linear-gradient(110deg,#73777d,#24272c 20%,#17191d 65%,#656b76)}
+    .android{left:36px;top:200px;width:270px;border-radius:23px;background:linear-gradient(110deg,#73777d,#24272c 20%,#17191d 65%,#656b76)}
     .android .display{border-radius:16px}
     .android .camera{width:9px;height:9px;border-radius:50%}
-    .ios{left:1294px;top:552px;width:270px}
+    .ios{left:1294px;top:200px;width:270px}
     .ios .camera{width:57px;height:16px;border-radius:12px;top:9px;box-shadow:none}
     </style></head><body><img class="background" src="${background}" alt="">
     <div class="shade"></div>
@@ -74,8 +73,8 @@ try {
         <div class="chrome"><span class="dots"><i></i><i></i><i></i></span><span class="address">playground.vostride.dev/tasks</span></div>
         <img src="${brello}" alt="Brello task board">
       </section>
-      <section class="phone android" aria-label="Komazon on Android"><span class="platform">Android</span><div class="display"><img src="${android}" alt="Komazon Android product grid"><span class="camera"></span></div></section>
-      <section class="phone ios" aria-label="Looking on iOS"><span class="platform">iOS</span><div class="display"><img src="${ios}" alt="Looking iOS flight results"><span class="camera"></span></div></section>
+      <section class="phone android" aria-label="Komazon on Android"><div class="display"><img src="${android}" alt="Komazon Android product grid"><span class="camera"></span></div></section>
+      <section class="phone ios" aria-label="Looking on iOS"><div class="display"><img src="${ios}" alt="Looking iOS flight results"><span class="camera"></span></div></section>
     </main>
     </body></html>`);
   await page.evaluate(async () => {
