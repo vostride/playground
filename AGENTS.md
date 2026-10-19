@@ -152,7 +152,7 @@ Android release inspection permits only AndroidX's exact app-owned signature rec
 
 [GitHub Releases](https://github.com/vostride/playground/releases) is the published native history. A compiled or diagnostic artifact is not a published release. Never overwrite released files or append invented assets/checksums to `releases.json`. Record the source commit, run and artifact IDs, file hash, platform, and exact completed checks when reporting native evidence.
 
-As of 2026-10-19, the first automatic mobile release is still awaiting CI acceptance and publication. Check the release and its assets before describing a build as available to consumers.
+As of 2026-10-19, commit `fd8e7f9` has passed both native CI gates, but publication failed because the default Actions token cannot publish that historical target with changed workflow files. The workflow accepts `MOBILE_RELEASE_TOKEN` with repository Contents and Workflows write permission. Check the release and its assets before describing a build as available to consumers.
 
 Cloudflare's live Git integration and the Actions preview/audit path have different sequencing. Read [DEPLOYMENT.md](DEPLOYMENT.md) before changing deployment ownership; do not silently remove preview-before-production auditing or enable competing production deployers. An advisory audit still must execute and report its outcome.
 

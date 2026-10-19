@@ -276,6 +276,15 @@ appId: dev.vostride.playground
 - tapOn:
     id: button-a-quick-guide-to-the-playground
 - assertVisible: '^Help$'
+# The cold iOS WebView may mount its native sheet before rendering local HTML.
+# Require content readiness without reopening the sheet or retrying the flow.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: '^Navigation$'
+          timeout: 60000
 - assertVisible: '^Navigation$'
 - takeScreenshot: local-webview-guide
 - tapOn:

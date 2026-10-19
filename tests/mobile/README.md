@@ -26,6 +26,8 @@ The shared CI diagnostic runner gives the iOS Maestro driver up to ten minutes t
 
 The iOS release job allows 120 minutes, with a separate 90-minute acceptance-step limit so an overlong gate can still upload its evidence. Recorded passing instances of the five journeys total roughly 57 minutes, excluding cold driver startup; observed setup/compilation takes about 24 minutes, followed by roughly seven minutes for the native XCTest command and two for offline verification. These measurements come from separate retained runs, not a passing combined release. The former 90-minute whole-job budget could expire during legitimate verification. Android and focused diagnostic budgets are unchanged; no assertion is skipped or retried to fit the job limit.
 
+The iOS controls journey waits up to 60 seconds for the local WebView's `Navigation` heading before continuing. Run `39174195252` showed the native Help sheet with a blank body after 17 seconds; the same binary's later offline XCTest rendered and verified the heading and full paragraph. The bounded wait tests content readiness without reopening the sheet, reloading the app, or making the content assertion optional. Its effectiveness still requires a new device result.
+
 For local source validation only:
 
 ```sh
