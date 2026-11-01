@@ -11,9 +11,9 @@ and Android legacy, adaptive and monochrome icons. Android's adaptive foreground
 has extra inset for launcher masks. Exports use the repository's pinned
 Playwright Chromium and contain no external assets.
 
-The launchers' `agent-qa.png` is the owner's unmodified light wordmark from
-`Branding/05-Products/agent-qa/agent-qa with logo - light.png`, bundled in the
-web and native apps. The banner opens `https://github.com/vostride/agent-qa`;
+The launchers' `agent-qa.png` is the owner's unmodified dark wordmark, with dark text
+for the light launchers, from `Branding/05-Products/agent-qa/agent-qa with logo - dark.png`,
+bundled in the web and native apps. The banner opens `https://github.com/vostride/agent-qa`;
 the Vostride attribution opens `https://vostride.com/`. Both require a user selection.
 
 ## Repository banner

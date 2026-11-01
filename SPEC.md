@@ -18,7 +18,8 @@ Static sites under `playground.vostride.dev`, one path per app. Each app has its
 shown on its pages and in its page titles (`<page> · <name>`, for example `Cart · Komazon`). Paths
 stay plain words.
 
-Use a dark shadcn/ui interface with readable text and an original simple logo for each product.
+Use a light shadcn/ui interface with readable text and an original simple logo for each product.
+The apps are light-only and do not follow the operating system's color scheme.
 Navigation is flat, without boxed active pills or accent strips. Rectangular UI uses 0–2px corners.
 Use compact spacing, transparent sections and divider-separated rows instead of card containers.
 Komazon retains a responsive product grid with flat tiles and no enclosing card borders.
@@ -44,7 +45,7 @@ Looking, Brello, PepaPog and Komazon. Together they cover tab and stack navigati
 keyboard, date and option pickers, switches, bottom sheets and modals, long lists, pull to refresh,
 drag and drop by touch, gestures, a WebView screen, and a deep link into each flow.
 
-Use a compact dark interface with readable typography and locally owned shadcn-style
+Use a compact light interface with readable typography and locally owned shadcn-style
 native components. Each product has its own bottom tabs, such as Komazon's Shop,
 Cart, Orders and Profile; the header app chooser switches between products.
 Playground's app icon is a cyan P formed from Vostride's original spiral and a

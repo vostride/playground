@@ -332,7 +332,7 @@ function App() {
           )}
           <Button
             variant="ghost"
-            className="bag-button border border-[#355448] bg-[#1c352c] text-[#b2f5d9]"
+            className="bag-button border border-(--shop-accent-line) bg-(--shop-accent-surface) text-(color:--shop-accent-strong) hover:bg-(--shop-accent-surface-hover) hover:text-(color:--shop-accent-strong)"
             onClick={() => go('cart')}
             aria-label={`Shopping bag (${cartCount})`}
           >
@@ -495,7 +495,7 @@ function App() {
                       <Card role="article" className="product-card" key={product.id}>
                         <Button
                           variant="ghost"
-                          className={`product-image relative h-auto w-full rounded-none p-0 has-[>svg]:px-0 art-${product.art}`}
+                          className={`product-image relative h-auto w-full rounded-none bg-(--shop-tile) p-0 hover:bg-(--shop-tile) has-[>svg]:px-0 art-${product.art}`}
                           onClick={() => {
                             setSelected(product);
                             setQty(1);
@@ -510,13 +510,16 @@ function App() {
                           {product.tag && (
                             <Badge
                               variant="secondary"
-                              className={`tag px-1 py-0 text-[9px] ${product.tag === 'New arrival' ? 'new' : ''}`}
+                              className={`tag border-(--shop-tag-line) bg-(--shop-tag-surface) px-1 py-0 text-[9px] text-(color:--shop-tag-text) ${product.tag === 'New arrival' ? 'new' : ''}`}
                             >
                               {product.tag}
                             </Badge>
                           )}
                           {!product.stock && (
-                            <Badge variant="secondary" className="tag px-1 py-0 text-[9px]">
+                            <Badge
+                              variant="secondary"
+                              className="tag border-(--shop-tag-line) bg-(--shop-tag-surface) px-1 py-0 text-[9px] text-(color:--shop-tag-text)"
+                            >
                               Sold out
                             </Badge>
                           )}
@@ -984,7 +987,10 @@ function App() {
                         November 1, 2026 · {order.items.reduce((n, i) => n + i.quantity, 0)} items
                       </span>
                     </div>
-                    <Badge variant="secondary" className={`status ${order.status.toLowerCase()}`}>
+                    <Badge
+                      variant="secondary"
+                      className={`status border-(--shop-status-line) bg-(--shop-status-surface) text-(color:--shop-status-text) ${order.status.toLowerCase()}`}
+                    >
                       {order.status}
                     </Badge>
                     <b>{money(order.total)}</b>

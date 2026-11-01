@@ -10,7 +10,7 @@ export function Input({ style, onFocus, onBlur, ...props }: TextInputProps) {
     <TextInput
       placeholderTextColor={colors.muted}
       selectionColor={colors.ring}
-      keyboardAppearance="dark"
+      keyboardAppearance="light"
       style={[
         styles.input,
         focused && styles.focused,

@@ -1170,7 +1170,7 @@ export default function App() {
                 <Button variant="ghost" key={item.id} onClick={() => chooseBoard(item.id)}>
                   <span
                     className="browse-board-icon"
-                    style={{ background: `${item.color}20`, color: item.color }}
+                    style={{ '--board-color': item.color } as CSSProperties}
                   >
                     <Columns3 size={19} />
                   </span>

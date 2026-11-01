@@ -45,26 +45,53 @@
 
 @layer base {
   :root {
-    color-scheme: dark;
-    --background: #0b1019;
-    --foreground: #edf2f7;
-    --card: #141c29;
-    --card-foreground: #edf2f7;
-    --popover: #182231;
-    --popover-foreground: #edf2f7;
-    --primary: #7c9dff;
-    --primary-foreground: #081122;
-    --secondary: #233045;
-    --secondary-foreground: #e6edf7;
-    --muted: #1c2738;
-    --muted-foreground: #a7b4c7;
-    --accent: #233248;
-    --accent-foreground: #f1f5fc;
-    --destructive: #f87171;
-    --border: #2a3648;
-    --input: #344258;
-    --ring: #7c9dff;
+    color-scheme: light;
+    --background: #ffffff;
+    --foreground: #18181b;
+    --card: #ffffff;
+    --card-foreground: #18181b;
+    --popover: #ffffff;
+    --popover-foreground: #18181b;
+    --primary: #18181b;
+    --primary-foreground: #ffffff;
+    --primary-hover: color-mix(in oklab, var(--primary) 86%, black);
+    --secondary: #f4f4f5;
+    --secondary-foreground: #18181b;
+    --muted: #f4f4f5;
+    --muted-foreground: #52525b;
+    --accent: #f4f4f5;
+    --accent-foreground: #18181b;
+    --destructive: #dc2626;
+    --border: #e4e4e7;
+    --input: #8a8a93;
+    --ring: #71717a;
     --radius: 2px;
+    /* Semantic palette shared by the product stylesheets. */
+    --surface: #ffffff;
+    --surface-subtle: #fafafa;
+    --surface-muted: #f4f4f5;
+    --surface-strong: #e4e4e7;
+    --line: #e4e4e7;
+    --line-strong: #d4d4d8;
+    --text: #18181b;
+    --text-secondary: #3f3f46;
+    --text-muted: #52525b;
+    --text-subtle: #71717a;
+    --success: #047857;
+    --success-surface: #ecfdf5;
+    --success-line: #a7f3d0;
+    --warning: #b45309;
+    --warning-surface: #fffbeb;
+    --warning-line: #fde68a;
+    --danger: #b91c1c;
+    --danger-surface: #fef2f2;
+    --danger-line: #fecaca;
+    --info: #1d4ed8;
+    --info-surface: #eff6ff;
+    --info-line: #bfdbfe;
+    --shadow-sm: 0 1px 2px rgb(24 24 27 / 6%);
+    --shadow-md: 0 4px 12px rgb(24 24 27 / 8%), 0 1px 3px rgb(24 24 27 / 6%);
+    --shadow-lg: 0 16px 40px rgb(24 24 27 / 14%), 0 2px 8px rgb(24 24 27 / 6%);
     color: var(--foreground);
     background: var(--background);
     font-family: var(--font-sans);
@@ -101,7 +128,7 @@
   }
   input::placeholder,
   textarea::placeholder {
-    color: #92a2b9;
+    color: var(--text-subtle);
     opacity: 1;
   }
   ::selection {

@@ -54,8 +54,8 @@ const pages: { key: Page; label: string; icon: IconName }[] = [
   { key: 'traces', label: 'Traces', icon: 'gitBranch' },
   { key: 'monitors', label: 'Monitors', icon: 'bell' },
 ];
-const statusColors = { healthy: '#4ade80', warning: '#fbbf24', error: '#fb7185' };
-const switchColors = { false: '#3f3f46', true: '#a1a1aa' };
+const statusColors = { healthy: colors.success, warning: colors.warning, error: colors.danger };
+const switchColors = { false: colors.input, true: colors.primary };
 const logs = seededLogs();
 const traces = seededTraces();
 const labels: Record<TimeRange, string> = {
@@ -197,7 +197,7 @@ function Field({
         placeholder={placeholder}
         placeholderTextColor={colors.muted}
         selectionColor={colors.text}
-        keyboardAppearance="dark"
+        keyboardAppearance="light"
         keyboardType={numeric ? 'decimal-pad' : 'default'}
         multiline={multiline}
         returnKeyType={multiline ? 'default' : 'done'}
@@ -299,7 +299,7 @@ function Select({
 }
 function MetricChart({
   values,
-  color = '#60a5fa',
+  color = '#2563eb',
   label,
   height = 130,
 }: {
@@ -406,7 +406,7 @@ export default function ObservabilityScreen({ route, bug, navigate }: MobileScre
               value={live}
               onValueChange={setLive}
               trackColor={switchColors}
-              thumbColor={colors.text}
+              thumbColor={colors.background}
             />
           </View>
         </View>
@@ -572,7 +572,7 @@ function MobileOverview({
       <Panel>
         <Text style={s.panelTitle}>Response time</Text>
         <Text style={s.smallLabel}>95th percentile latency · milliseconds</Text>
-        <MetricChart values={series.latency} color="#a78bfa" label="P95 latency" />
+        <MetricChart values={series.latency} color="#7c3aed" label="P95 latency" />
         <Text style={s.healthy}>Within 300 ms latency budget</Text>
       </Panel>
       <Text accessibilityRole="header" style={s.sectionTitle}>
@@ -764,7 +764,7 @@ function MobileLogs({
                   value={levels.includes(level)}
                   onValueChange={() => setLevels(toggle(levels, level))}
                   trackColor={switchColors}
-                  thumbColor={colors.text}
+                  thumbColor={colors.background}
                 />
               </View>
             ))}
@@ -779,7 +779,7 @@ function MobileLogs({
                   value={services.includes(service)}
                   onValueChange={() => setServices(toggle(services, service))}
                   trackColor={switchColors}
-                  thumbColor={colors.text}
+                  thumbColor={colors.background}
                 />
               </View>
             ))}
@@ -875,7 +875,7 @@ function MobileTraces({
     [range, status, query, sort],
   );
   useEffect(() => setSpan(null), [selected]);
-  const palette = ['#60a5fa', '#a78bfa', '#22d3ee', '#34d399', '#fbbf24', '#a1a1aa'];
+  const palette = ['#2563eb', '#7c3aed', '#0891b2', '#059669', '#d97706', '#71717a'];
   function spanDepth(item: TraceSpan) {
     let depth = 0;
     let parentId = item.parentId;
@@ -1219,7 +1219,7 @@ function MobileMonitors({
                   notify(value ? 'Monitor resumed.' : 'Monitor paused.');
                 }}
                 trackColor={switchColors}
-                thumbColor={colors.text}
+                thumbColor={colors.background}
               />
             </View>
             <Pressable
@@ -1330,7 +1330,7 @@ function MobileMonitors({
                   value={warningEnabled}
                   onValueChange={setWarningEnabled}
                   trackColor={switchColors}
-                  thumbColor={colors.text}
+                  thumbColor={colors.background}
                 />
               </View>
               {warningEnabled && (
@@ -1375,7 +1375,7 @@ function MobileMonitors({
                   value={editing.enabled}
                   onValueChange={(value) => patch('enabled', value)}
                   trackColor={switchColors}
-                  thumbColor={colors.text}
+                  thumbColor={colors.background}
                 />
               </View>
             </Panel>
@@ -1663,9 +1663,9 @@ const s = StyleSheet.create({
   error: { color: statusColors.error, fontSize: 12, lineHeight: 18 },
   errorSummary: {
     color: statusColors.error,
-    backgroundColor: '#261419',
+    backgroundColor: colors.dangerSurface,
     borderWidth: 1,
-    borderColor: '#572330',
+    borderColor: colors.dangerBorder,
     padding: 12,
     borderRadius: 2,
     fontSize: 13,

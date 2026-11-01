@@ -129,12 +129,12 @@ function Button({
 function Status({ value }: { value: string }) {
   const tone =
     value === 'warning'
-      ? 'border-amber-400/25 bg-amber-400/10 text-amber-300'
+      ? 'border-(--warning-line) bg-(--warning-surface) text-(--warning)'
       : value === 'alert' || value === 'error'
-        ? 'border-rose-400/25 bg-rose-400/10 text-rose-300'
+        ? 'border-(--danger-line) bg-(--danger-surface) text-(--danger)'
         : value === 'paused'
-          ? 'border-slate-400/25 bg-slate-400/10 text-slate-300'
-          : 'border-emerald-400/25 bg-emerald-400/10 text-emerald-300';
+          ? 'border-(--line-strong) bg-(--surface-muted) text-(--text-muted)'
+          : 'border-(--success-line) bg-(--success-surface) text-(--success)';
   return (
     <Badge variant="outline" className={`status status-${value} ${tone} text-xs font-semibold`}>
       <span />
@@ -209,7 +209,7 @@ function Dialog({
 
 function Chart({
   values,
-  color = '#6c9cff',
+  color = 'var(--obs-series-requests)',
   height = 160,
   label,
   compact = false,
@@ -234,6 +234,10 @@ function Chart({
       canvas.height = height * dpr;
       const context = canvas.getContext('2d');
       if (!context) return;
+      const styles = getComputedStyle(canvas);
+      const resolve = (value: string) =>
+        value.startsWith('var(') ? styles.getPropertyValue(value.slice(4, -1)).trim() : value;
+      const stroke = resolve(color);
       context.scale(dpr, dpr);
       const left = compact ? 0 : 48,
         top = 10,
@@ -244,8 +248,8 @@ function Chart({
       context.clearRect(0, 0, width, height);
       if (!compact) {
         context.font = '500 12px Inter, sans-serif';
-        context.fillStyle = '#a7b4c7';
-        context.strokeStyle = '#283548';
+        context.fillStyle = resolve('var(--obs-chart-axis)');
+        context.strokeStyle = resolve('var(--obs-chart-grid)');
         context.lineWidth = 1;
         for (let i = 0; i < 4; i++) {
           const y = top + (usableHeight * i) / 3;
@@ -264,8 +268,8 @@ function Chart({
           ] as const,
       );
       const gradient = context.createLinearGradient(0, top, 0, height);
-      gradient.addColorStop(0, `${color}24`);
-      gradient.addColorStop(1, `${color}00`);
+      gradient.addColorStop(0, `${stroke}24`);
+      gradient.addColorStop(1, `${stroke}00`);
       context.beginPath();
       context.moveTo(left, top + usableHeight);
       points.forEach(([x, y]) => context.lineTo(x, y));
@@ -275,14 +279,14 @@ function Chart({
       context.fill();
       context.beginPath();
       points.forEach(([x, y], i) => (i === 0 ? context.moveTo(x, y) : context.lineTo(x, y)));
-      context.strokeStyle = color;
+      context.strokeStyle = stroke;
       context.lineWidth = compact ? 1.6 : 2;
       context.lineJoin = 'round';
       context.stroke();
       if (hover !== null) {
         const point = points[hover];
         if (point) {
-          context.strokeStyle = '#9db5d8';
+          context.strokeStyle = resolve('var(--obs-chart-cursor)');
           context.setLineDash([3, 3]);
           context.beginPath();
           context.moveTo(point[0], top);
@@ -291,7 +295,7 @@ function Chart({
           context.setLineDash([]);
           context.beginPath();
           context.arc(point[0], point[1], 4, 0, Math.PI * 2);
-          context.fillStyle = color;
+          context.fillStyle = stroke;
           context.fill();
         }
       }
@@ -683,7 +687,7 @@ function Overview({
             change: '+12.8%',
             good: true,
             values: scaledRequests,
-            color: '#6c9cff',
+            color: 'var(--obs-series-requests)',
             note: 'vs. previous period',
           },
           {
@@ -693,7 +697,7 @@ function Overview({
             change: '−8.2%',
             good: true,
             values: latency,
-            color: '#a294ff',
+            color: 'var(--obs-series-latency)',
             note: 'vs. previous period',
           },
           {
@@ -703,7 +707,7 @@ function Overview({
             change: '−0.12%',
             good: true,
             values: errors,
-            color: '#f48cab',
+            color: 'var(--obs-series-errors)',
             note: 'vs. previous period',
           },
           {
@@ -713,7 +717,7 @@ function Overview({
             change: '100%',
             good: true,
             values: cpu.map(() => 100),
-            color: '#58cda5',
+            color: 'var(--obs-series-services)',
             note: 'services reporting',
           },
         ].map((metric) => (
@@ -758,7 +762,7 @@ function Overview({
               <h2>Request volume</h2>
             </div>
             <span className="chart-legend">
-              <i style={{ background: '#6c9cff' }} />
+              <i style={{ background: 'var(--obs-series-requests)' }} />
               Requests / second
             </span>
           </div>
@@ -793,13 +797,13 @@ function Overview({
               <h2>Response time</h2>
             </div>
             <span className="chart-legend">
-              <i style={{ background: '#a294ff' }} />
+              <i style={{ background: 'var(--obs-series-latency)' }} />
               P95 latency
             </span>
           </div>
           <Chart
             values={latency}
-            color="#a294ff"
+            color="var(--obs-series-latency)"
             label="P95 response time over selected time range"
             height={195}
             unit=" ms"
@@ -867,7 +871,7 @@ function Overview({
                 <td className="table-chart">
                   <Chart
                     values={metricSeries('1h', tick + i * 4, 'requests')}
-                    color={i === 2 ? '#6c9cff' : '#77a293'}
+                    color={i === 2 ? 'var(--obs-series-requests)' : 'var(--obs-series-healthy)'}
                     compact
                     height={31}
                     label={`${service} request history`}
@@ -944,7 +948,7 @@ function Overview({
             <span>Memory usage</span>
             <strong>62%</strong>
             <div>
-              <i style={{ width: '62%', background: '#8295bc' }} />
+              <i style={{ width: '62%', background: 'var(--obs-series-neutral)' }} />
             </div>
           </div>
         </Card>
@@ -1531,7 +1535,10 @@ function Traces({
                     <i
                       style={{
                         width: `${Math.max(8, (trace.duration / 1900) * 95)}%`,
-                        background: trace.status === 'error' ? '#c6807e' : '#8295bc',
+                        background:
+                          trace.status === 'error'
+                            ? 'var(--obs-level-error)'
+                            : 'var(--obs-series-neutral)',
                       }}
                     />
                   </div>
@@ -2076,7 +2083,7 @@ function Monitors({
                       ? 'errors'
                       : 'requests',
                 )}
-                color="#8295bc"
+                color="var(--obs-series-neutral)"
                 label="Selected metric preview"
                 height={130}
               />

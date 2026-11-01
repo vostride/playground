@@ -83,7 +83,7 @@ const bugDefinitions: Record<string, { id: string; label: string }[]> = {
   ],
 };
 type Location = { app: AppId; route: string };
-const helpHtml = `<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><style>body{font:15px -apple-system,BlinkMacSystemFont,sans-serif;color:#fafafa;background:#09090b;padding:16px;line-height:1.6}h1{font-size:24px;line-height:1.25}h2{font-size:18px;margin-top:20px;padding-top:16px;border-top:1px solid #27272a}code{font-size:12px}</style></head><body><h1>Navigation</h1><p>Choose an app from Home. Use the grid button to switch apps and the bottom tabs to navigate within each app. The back button returns to the previous screen.</p><h2>Session controls</h2><p>Open Test controls to reset changes or enable a deliberate bug. Bugs are off by default.</p><h2>Direct links</h2><p><code>playground://shop</code><br><code>playground://flights</code><br><code>playground://tasks</code><br><code>playground://observability</code></p></body></html>`;
+const helpHtml = `<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><style>body{font:15px -apple-system,BlinkMacSystemFont,sans-serif;color:#18181b;background:#ffffff;padding:16px;line-height:1.6}h1{font-size:24px;line-height:1.25}h2{font-size:18px;margin-top:20px;padding-top:16px;border-top:1px solid #e4e4e7}code{font-size:12px}</style></head><body><h1>Navigation</h1><p>Choose an app from Home. Use the grid button to switch apps and the bottom tabs to navigate within each app. The back button returns to the previous screen.</p><h2>Session controls</h2><p>Open Test controls to reset changes or enable a deliberate bug. Bugs are off by default.</p><h2>Direct links</h2><p><code>playground://shop</code><br><code>playground://flights</code><br><code>playground://tasks</code><br><code>playground://observability</code></p></body></html>`;
 export default function App() {
   const [stack, setStack] = useState<Location[]>([{ app: 'home', route: '' }]),
     [bugs, setBugs] = useState<Record<string, string>>({}),
@@ -93,7 +93,7 @@ export default function App() {
     [navigationKey, setNavigationKey] = useState(0),
     [session, setSession] = useState(0);
   useEffect(() => {
-    Appearance.setColorScheme('dark');
+    Appearance.setColorScheme('light');
   }, []);
   const current = stack[stack.length - 1];
   const product = apps.find((a) => a.id === current.app);
@@ -157,7 +157,7 @@ export default function App() {
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <SafeAreaView style={styles.safe}>
-        <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+        <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
         <View style={styles.header}>
           <View style={styles.headerBrand}>
@@ -360,7 +360,8 @@ export default function App() {
                           onValueChange={(enabled) =>
                             setBugs((previous) => ({ ...previous, [app.id]: enabled ? b.id : '' }))
                           }
-                          trackColor={{ false: colors.input, true: colors.muted }}
+                          trackColor={{ false: colors.input, true: colors.primary }}
+                          thumbColor={colors.background}
                         />
                       </Row>
                     ))}
@@ -434,13 +435,13 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   bugBanner: {
-    backgroundColor: '#30230c',
+    backgroundColor: colors.warningSurface,
     borderBottomWidth: 1,
-    borderBottomColor: '#594018',
+    borderBottomColor: colors.warningBorder,
     paddingVertical: 8,
     paddingHorizontal: 16,
   },
-  bugText: { fontSize: 12, lineHeight: 18, color: '#fcd68a' },
+  bugText: { fontSize: 12, lineHeight: 18, color: colors.warning },
   appCard: {
     minHeight: 76,
     paddingVertical: 16,
@@ -486,11 +487,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginVertical: 8,
   },
-  scrim: { flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000099' },
+  scrim: { flex: 1, justifyContent: 'flex-end', backgroundColor: colors.scrim },
   switcherSheet: {
     backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.input,
+    borderTopColor: colors.borderStrong,
     paddingHorizontal: 16,
     paddingBottom: 16,
   },

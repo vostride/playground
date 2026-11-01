@@ -12,7 +12,6 @@ import {
   DialogTrigger,
 } from './components/ui/dialog';
 
-if (typeof document !== 'undefined') document.documentElement.classList.add('dark');
 export type BugDefinition = { id: string; label: string; description: string };
 export function useSessionState<T>(
   key: string,

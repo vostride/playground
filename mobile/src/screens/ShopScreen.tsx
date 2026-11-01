@@ -793,7 +793,7 @@ const s = StyleSheet.create({
   filterButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 },
   filterLabel: { fontSize: 12, fontWeight: '500' },
   cartLine: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  cartArt: { width: 80, height: 80, backgroundColor: '#e7e4dd', borderRadius: 2 },
+  cartArt: { width: 80, height: 80, backgroundColor: colors.tile, borderRadius: 2 },
   summaryRow: { justifyContent: 'space-between' },
   profileIdentity: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 16 },
   avatar: {
@@ -826,7 +826,7 @@ const s = StyleSheet.create({
   product: { flex: 1, maxWidth: '50%', gap: 8, marginBottom: 20 },
   art: {
     aspectRatio: 1,
-    backgroundColor: '#e7e4dd',
+    backgroundColor: colors.tile,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 2,
@@ -851,7 +851,7 @@ const s = StyleSheet.create({
   },
   productPrice: { fontSize: 15, fontWeight: '600', color: colors.ink, marginTop: 4 },
   price: { fontSize: 23, color: colors.ink },
-  scrim: { flex: 1, backgroundColor: '#00000099', justifyContent: 'flex-end' },
+  scrim: { flex: 1, backgroundColor: colors.scrim, justifyContent: 'flex-end' },
   sheetScroll: {
     maxHeight: '92%',
     backgroundColor: colors.surface,
@@ -870,7 +870,7 @@ const s = StyleSheet.create({
   },
   largeArt: {
     height: 220,
-    backgroundColor: '#e7e4dd',
+    backgroundColor: colors.tile,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 2,

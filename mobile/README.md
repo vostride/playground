@@ -4,7 +4,7 @@ A bare React Native application with four bundled products: Komazon, Looking, Br
 
 ## Interface and navigation
 
-The UI uses locally owned native adaptations of [React Native Reusables](https://github.com/founded-labs/react-native-reusables). Button variants, contextual text, inputs and semantic theme tokens live in `src/components/ui/`; the upstream MIT notice is retained there. Components use native StyleSheet rather than NativeWind, with no UI-library dependency. Home and the header app switcher open products; each product owns its bottom tabs. The header sliders button opens Test controls.
+The UI uses locally owned native adaptations of [React Native Reusables](https://github.com/founded-labs/react-native-reusables). Button variants, contextual text, inputs and semantic theme tokens live in `src/components/ui/`; the upstream MIT notice is retained there. Components use native StyleSheet rather than NativeWind, with no UI-library dependency. The interface is light-only: `Appearance` is pinned to light, iOS sets `UIUserInterfaceStyle` to `Light`, and Android uses an AppCompat Light theme, so a device in dark mode renders the same screens. Home and the header app switcher open products; each product owns its bottom tabs. The header sliders button opens Test controls.
 
 ## Development
 

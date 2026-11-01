@@ -9,10 +9,15 @@
   box-sizing: border-box;
 }
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+  --text: #18181b;
+  --text-muted: #52525b;
+  --text-subtle: #71717a;
+  --line: #e4e4e7;
+  --accent: #0e7490;
   font-family: Inter, system-ui, sans-serif;
-  color: #edf2f7;
-  background: #0b1019;
+  color: var(--text);
+  background: #ffffff;
 }
 body {
   margin: 0;
@@ -27,7 +32,7 @@ header {
   align-items: center;
   gap: 10px;
   padding: 18px max(24px, calc((100vw - 880px) / 2));
-  border-bottom: 1px solid #2a3648;
+  border-bottom: 1px solid var(--line);
 }
 h1 {
   font-size: 20px;
@@ -50,20 +55,20 @@ main {
   gap: 12px;
   min-width: 0;
   padding: 16px 0;
-  border-bottom: 1px solid #2a3648;
-  color: #edf2f7;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
   text-decoration: none;
   font-size: 17px;
   font-weight: 650;
   transition: color 150ms;
 }
 .app-link:hover {
-  color: #a5c8fc;
+  color: var(--accent);
 }
 .app-link:focus-visible,
 .agent-banner:focus-visible,
 footer a:focus-visible {
-  outline: 2px solid #7c9dff;
+  outline: 2px solid var(--accent);
   outline-offset: 4px;
 }
 .symbol {
@@ -75,7 +80,7 @@ footer a:focus-visible {
 }
 .arrow {
   margin-left: auto;
-  color: #a7b4c7;
+  color: var(--text-subtle);
   font-size: 20px;
   font-weight: 500;
 }
@@ -84,8 +89,8 @@ footer a:focus-visible {
   align-items: center;
   gap: 16px;
   padding: 18px 0;
-  border-bottom: 1px solid #2a3648;
-  color: #a7b4c7;
+  border-bottom: 1px solid var(--line);
+  color: var(--text-muted);
   text-decoration: none;
 }
 .agent-banner-content {
@@ -103,7 +108,7 @@ footer a:focus-visible {
 }
 .agent-banner:hover,
 footer a:hover {
-  color: #edf2f7;
+  color: var(--text);
 }
 footer {
   width: 100%;
@@ -112,7 +117,7 @@ footer {
   padding: 20px 24px;
 }
 footer a {
-  color: #a7b4c7;
+  color: var(--text-muted);
   font-size: 13px;
   font-weight: 500;
   text-decoration: none;

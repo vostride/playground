@@ -9,9 +9,9 @@
     flex-wrap: wrap;
     min-height: 36px;
     padding: 2px 24px;
-    color: #d1dbea;
-    background: #090e16;
-    border-bottom: 1px solid #273244;
+    color: var(--text-secondary);
+    background: var(--surface-subtle);
+    border-bottom: 1px solid var(--line);
     font:
       550 12px/1.5 'Inter Variable',
       Inter,
@@ -24,38 +24,38 @@
   }
   .pg-home {
     padding: 5px 8px;
-    color: #d1dbea;
+    color: var(--text-secondary);
     text-decoration: none;
   }
   .pg-tools [data-slot='button'] {
-    color: #d1dbea;
+    color: var(--text-secondary);
     font-size: 12px;
   }
   .pg-menu {
     padding: 20px;
   }
   .pg-menu p {
-    color: #acb9cc;
+    color: var(--text-muted);
     line-height: 1.65;
   }
   .pg-control-label {
     display: grid;
     gap: 8px;
-    color: #edf2f7;
+    color: var(--text);
     font-size: 14px;
     font-weight: 600;
   }
   .pg-control-label select {
     width: 100%;
     padding: 10px 12px;
-    border: 1px solid #344258;
+    border: 1px solid var(--line-strong);
     border-radius: 2px;
-    background: #101824;
-    color: #edf2f7;
+    background: var(--surface);
+    color: var(--text);
   }
   .pg-bug-options > div {
     padding: 16px 0;
-    border-bottom: 1px solid #2a3648;
+    border-bottom: 1px solid var(--line);
   }
   .pg-bug-options b {
     display: block;
@@ -67,8 +67,8 @@
     padding: 3px 7px;
     margin-top: 9px;
     border-radius: 2px;
-    background: #233045;
-    color: #a5c8fc;
+    background: var(--surface-muted);
+    color: var(--info);
     font-size: 12px;
   }
   .pg-bug {
@@ -76,8 +76,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    color: #ffd18b;
-    border-top: 1px solid #5e4827;
+    color: var(--warning);
+    border-top: 1px solid var(--warning-line);
     padding-top: 4px;
   }
   @media (max-width: 600px) {

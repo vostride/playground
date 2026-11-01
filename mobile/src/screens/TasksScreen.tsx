@@ -54,7 +54,7 @@ function TaskInput(props: TextInputProps) {
     <Input
       placeholderTextColor={theme.muted}
       selectionColor={theme.primary}
-      keyboardAppearance="dark"
+      keyboardAppearance="light"
       {...props}
     />
   );
@@ -1559,7 +1559,7 @@ const styles = StyleSheet.create({
   columnContent: { paddingTop: 8, paddingBottom: 24, gap: 8 },
   taskCard: {
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: theme.borderStrong,
     backgroundColor: theme.surface,
     borderRadius: 2,
   },
@@ -1644,7 +1644,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.soft,
     elevation: 14,
     shadowColor: '#000',
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.16,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     gap: 8,
@@ -1692,7 +1692,7 @@ const styles = StyleSheet.create({
   selectedChoice: { backgroundColor: theme.soft, borderColor: theme.ink },
   selectedChoiceText: { color: theme.ink, fontWeight: '600' },
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 4 },
-  modalOuter: { flex: 1, justifyContent: 'flex-end', backgroundColor: '#000000b3' },
+  modalOuter: { flex: 1, justifyContent: 'flex-end', backgroundColor: theme.scrim },
   sheet: {
     maxHeight: '94%',
     minHeight: '55%',
