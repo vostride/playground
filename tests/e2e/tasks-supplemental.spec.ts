@@ -56,3 +56,27 @@ test('Brello: edited due date survives detail reopening and reload', async ({ pa
   await task.click();
   await expect(dueDate).toHaveValue('2027-02-18');
 });
+
+test('Brello: a panel title edit survives an immediate change to another field', async ({
+  page,
+}) => {
+  await page.goto('/tasks/');
+  const task = page.locator('[data-task-id="CKB-001"]');
+  const title = task.getByRole('heading', { level: 3 });
+  const panel = page.getByRole('dialog', { name: 'Task CKB-001', exact: true });
+  const undo = page.getByRole('button', { name: 'Undo last change', exact: true });
+
+  // fill() blurs the title and changes the date before React can re-render.
+  await task.click();
+  await panel.getByLabel('Task title', { exact: true }).fill('Agent QA onboarding review');
+  await panel.getByLabel('Due date', { exact: true }).fill('2026-11-15');
+  await panel.getByRole('button', { name: 'Close task details', exact: true }).click();
+  await expect(title).toHaveText('Agent QA onboarding review');
+  await expect(task.locator('.due-date')).toHaveText('Nov 15');
+
+  await undo.click();
+  await expect(title).toHaveText('Agent QA onboarding review');
+  await expect(task.locator('.due-date')).toHaveCount(0);
+  await page.reload();
+  await expect(title).toHaveText('Agent QA onboarding review');
+});

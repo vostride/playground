@@ -19,7 +19,8 @@ appId: dev.vostride.playground
     direction: DOWN
 - tapOn: '\+'
 - scrollUntilVisible:
-    centerElement: true
+    # Add to bag stays at the foot of the product sheet, below the centering band.
+    centerElement: false
     element:
       id: button-add-to-bag
     direction: DOWN

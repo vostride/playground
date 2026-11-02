@@ -13,7 +13,8 @@ appId: dev.vostride.playground
     element:
       text: '^Create monitor$'
     direction: DOWN
-    centerElement: true
+    # The submit button stays at the foot of the sheet, below the centering band.
+    centerElement: false
 - tapOn: '^Create monitor$'
 - assertVisible: '^New metric monitor$'
 - assertVisible: '^Review the highlighted fields before creating your monitor\.$'
@@ -71,7 +72,7 @@ appId: dev.vostride.playground
     element:
       text: '^Create monitor$'
     direction: DOWN
-    centerElement: true
+    centerElement: false
 - tapOn: '^Create monitor$'
 - extendedWaitUntil:
     notVisible: '^New metric monitor$'

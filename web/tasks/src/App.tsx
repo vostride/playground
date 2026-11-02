@@ -176,6 +176,9 @@ function Modal({
 export default function App() {
   const [state, setState] = useState<TasksState>(initialState);
   const [past, setPast] = useState<TasksState[]>([]);
+  // Edits build on the latest state so commits made before a re-render compose.
+  const currentState = useRef(state);
+  currentState.current = state;
   const [boardId, setBoardId] = useSessionState('corkboard-board-v1', 'board-1');
   const [filters, setFilters] = useState<TaskFilters>({});
   const [showFilters, setShowFilters] = useState(false);
@@ -246,21 +249,24 @@ export default function App() {
   }, [state, keyboardMove]);
 
   function commit(next: TasksState, notice = 'Task updated') {
-    if (next === state) return;
-    setPast((items) => [...items.slice(-19), state]);
+    const previous = currentState.current;
+    if (next === previous) return;
+    setPast((items) => [...items.slice(-19), previous]);
+    currentState.current = next;
     setState(next);
     setMessage(notice);
   }
   function undo() {
     if (!past.length) return;
+    currentState.current = past[past.length - 1];
     setState(past[past.length - 1]);
     setPast(past.slice(0, -1));
     setMessage('Change undone');
   }
   function patch(id: string, changes: Parameters<typeof updateTask>[2], notice?: string) {
-    commit(updateTask(state, id, changes), notice);
+    commit(updateTask(currentState.current, id, changes), notice);
   }
-  function move(id: string, status: TaskStatus, position: number, from = state) {
+  function move(id: string, status: TaskStatus, position: number, from = currentState.current) {
     let next = moveTask(from, id, status, position);
     if (
       activeBugs.includes('move-drops-label') &&
@@ -292,6 +298,7 @@ export default function App() {
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
+        currentState.current = keyboardMove.before;
         setState(keyboardMove.before);
         setKeyboardMove(null);
         setMessage('Move cancelled');
@@ -328,6 +335,7 @@ export default function App() {
               ? task.position + 1
               : task.position;
         const next = move(task.id, status, position);
+        currentState.current = next;
         setState(next);
         const moved = next.tasks.find((item) => item.id === task.id)!;
         setMessage(
@@ -337,7 +345,7 @@ export default function App() {
       }
     } else if (event.key === ' ') {
       event.preventDefault();
-      setKeyboardMove({ id: task.id, before: state });
+      setKeyboardMove({ id: task.id, before: currentState.current });
       setMessage(`${task.id} picked up. Use arrow keys to move, Space to place, Escape to cancel.`);
     } else if (event.key === 'Enter') {
       event.preventDefault();
@@ -345,9 +353,10 @@ export default function App() {
     }
   }
   function drop(id: string, status: TaskStatus, beforeId?: string) {
-    const source = state.tasks.find((task) => task.id === id);
+    const current = currentState.current;
+    const source = current.tasks.find((task) => task.id === id);
     if (!source) return;
-    const columnTasks = getBoardTasks(state, board.id, status).filter((task) => task.id !== id);
+    const columnTasks = getBoardTasks(current, board.id, status).filter((task) => task.id !== id);
     const index =
       beforeId && beforeId !== id
         ? columnTasks.findIndex((task) => task.id === beforeId)
@@ -1020,8 +1029,11 @@ export default function App() {
                               move(
                                 task.id,
                                 event.target.value as TaskStatus,
-                                getBoardTasks(state, board.id, event.target.value as TaskStatus)
-                                  .length,
+                                getBoardTasks(
+                                  currentState.current,
+                                  board.id,
+                                  event.target.value as TaskStatus,
+                                ).length,
                               ),
                               `${task.id} moved`,
                             )
@@ -1111,12 +1123,16 @@ export default function App() {
           patch={(changes) => patch(selected.id, changes)}
           onMove={(status) =>
             commit(
-              move(selected.id, status, getBoardTasks(state, board.id, status).length),
+              move(
+                selected.id,
+                status,
+                getBoardTasks(currentState.current, board.id, status).length,
+              ),
               `${selected.id} moved to ${TASK_COLUMNS.find((column) => column.id === status)?.name}`,
             )
           }
           onDelete={() => {
-            commit(deleteTask(state, selected.id), `${selected.id} deleted`);
+            commit(deleteTask(currentState.current, selected.id), `${selected.id} deleted`);
             setSelectedId(null);
           }}
         />
@@ -1126,7 +1142,7 @@ export default function App() {
           status={newTaskStatus}
           onClose={() => setNewTaskStatus(null)}
           onCreate={(title, description, status, priority) => {
-            const next = createTask(state, board.id, title, status);
+            const next = createTask(currentState.current, board.id, title, status);
             const created = next.tasks[next.tasks.length - 1];
             commit(
               updateTask(next, created.id, { description, priority }),
